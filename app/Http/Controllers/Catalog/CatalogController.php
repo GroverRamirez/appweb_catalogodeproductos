@@ -44,8 +44,8 @@ class CatalogController extends Controller
     public function home(): Response
     {
         $storeName = Setting::get('store_name', config('app.name'));
-        $tagline   = Setting::get('store_tagline', '');
-        $logoUrl   = $this->assetUrl(Setting::get('logo_path'));
+        $tagline = Setting::get('store_tagline', '');
+        $logoUrl = $this->assetUrl(Setting::get('logo_path'));
 
         return Inertia::render('catalog/Home', [
             'banners' => Banner::query()
@@ -54,12 +54,12 @@ class CatalogController extends Controller
                 ->orderByDesc('id')
                 ->get()
                 ->map(fn ($b) => [
-                    'id'        => $b->id,
-                    'title'     => $b->title,
-                    'subtitle'  => $b->subtitle,
+                    'id' => $b->id,
+                    'title' => $b->title,
+                    'subtitle' => $b->subtitle,
                     'image_url' => $b->image_url,
-                    'link'      => $b->link,
-                    'cta_text'  => $b->cta_text,
+                    'link' => $b->link,
+                    'cta_text' => $b->cta_text,
                 ]),
 
             'featured' => ProductResource::collection(
@@ -83,17 +83,17 @@ class CatalogController extends Controller
             'categories' => Category::cachedHomeRoots(),
 
             'seo' => [
-                'title'       => '',            // empty → title callback returns just appName
+                'title' => '',            // empty → title callback returns just appName
                 'description' => $tagline ?: null,
-                'canonical'   => url('/'),
-                'og_image'    => $logoUrl,
+                'canonical' => url('/'),
+                'og_image' => $logoUrl,
             ],
         ]);
     }
 
     public function index(Request $request): Response
     {
-        $perPage   = (int) (Setting::get('products_per_page', 12)) ?: 12;
+        $perPage = (int) (Setting::get('products_per_page', 12)) ?: 12;
         $storeName = Setting::get('store_name', config('app.name'));
 
         $products = Product::query()
@@ -102,7 +102,7 @@ class CatalogController extends Controller
             ->search($request->string('q')->toString() ?: null)
             ->when($request->filled('category'), function ($q) use ($request) {
                 $slug = $request->string('category')->toString();
-                $cat  = Category::where('slug', $slug)->first();
+                $cat = Category::where('slug', $slug)->first();
                 if ($cat) {
                     // incluir subcategorías
                     $ids = Category::where('id', $cat->id)
@@ -112,7 +112,7 @@ class CatalogController extends Controller
                 }
             })
             ->when($request->filled('brand'), function ($q) use ($request) {
-                $slug  = $request->string('brand')->toString();
+                $slug = $request->string('brand')->toString();
                 $brand = Brand::where('slug', $slug)->first();
                 if ($brand) {
                     $q->where('marca_id', $brand->id);
@@ -135,19 +135,20 @@ class CatalogController extends Controller
             ->withQueryString();
 
         return Inertia::render('catalog/Index', [
-            // ProductResource::collection() sobre un LengthAwarePaginator preserva
-            // la estructura { data, links, meta } que Inertia y el frontend esperan.
-            'products'   => ProductResource::collection($products),
-            'filters'    => $request->only(['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort']),
+            // through() transforma cada item con ProductResource pero conserva la
+            // estructura plana del paginador (data, total, from, to, links[]) que
+            // espera Index.vue y el componente Pagination.
+            'products' => $products->through(fn (Product $p) => (new ProductResource($p))->resolve()),
+            'filters' => $request->only(['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort']),
             'categories' => Category::cachedAll(),
-            'brands'     => Brand::cachedAll(),
-            'seo'        => [
-                'title'       => 'Catálogo',
+            'brands' => Brand::cachedAll(),
+            'seo' => [
+                'title' => 'Catálogo',
                 'description' => $this->excerpt("Explora nuestro catálogo de productos de {$storeName}. Filtra por categoría, marca y precio."),
-                'canonical'   => url('/catalogo'),
-                'og_image'    => $this->assetUrl(Setting::get('logo_path')),
+                'canonical' => url('/catalogo'),
+                'og_image' => $this->assetUrl(Setting::get('logo_path')),
                 // noindex filtered/sorted views so only the canonical is indexed
-                'noindex'     => $request->hasAny(['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort']),
+                'noindex' => $request->hasAny(['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort']),
             ],
         ]);
     }
@@ -177,8 +178,8 @@ class CatalogController extends Controller
             );
         }
 
-        $related     = $this->buildRelated($product, 8);
-        $alsoViewed  = $this->buildAlsoViewed($product, 4);
+        $related = $this->buildRelated($product, 8);
+        $alsoViewed = $this->buildAlsoViewed($product, 4);
 
         // SEO — calcular antes de pasar el producto al Resource
         $mainImagePath = $product->images->firstWhere('principal', true)?->path
@@ -187,43 +188,43 @@ class CatalogController extends Controller
 
         $description = $this->excerpt($product->short_description ?? $product->description);
 
-        $storeName  = Setting::get('store_name', config('app.name'));
-        $currency   = Setting::get('currency', 'PEN');
+        $storeName = Setting::get('store_name', config('app.name'));
+        $currency = Setting::get('currency', 'PEN');
         $showPrices = (bool) Setting::get('show_prices', true);
 
         $jsonLd = [
-            '@context'    => 'https://schema.org',
-            '@type'       => 'Product',
-            'name'        => $product->name,
+            '@context' => 'https://schema.org',
+            '@type' => 'Product',
+            'name' => $product->name,
             'description' => $description,
-            'sku'         => $product->code,
-            'url'         => url('/catalogo/'.$product->slug),
-            'image'       => $ogImage ? [$ogImage] : [],
-            'brand'       => $product->brand
+            'sku' => $product->code,
+            'url' => url('/catalogo/'.$product->slug),
+            'image' => $ogImage ? [$ogImage] : [],
+            'brand' => $product->brand
                 ? ['@type' => 'Brand', 'name' => $product->brand->name]
                 : null,
-            'offers'      => $showPrices ? [
-                '@type'         => 'Offer',
+            'offers' => $showPrices ? [
+                '@type' => 'Offer',
                 'priceCurrency' => $currency,
-                'price'         => $product->sale_price ?? $product->price,
-                'availability'  => $product->stock > 0
+                'price' => $product->sale_price ?? $product->price,
+                'availability' => $product->stock > 0
                     ? 'https://schema.org/InStock'
                     : 'https://schema.org/OutOfStock',
-                'seller'        => ['@type' => 'Organization', 'name' => $storeName],
+                'seller' => ['@type' => 'Organization', 'name' => $storeName],
             ] : null,
         ];
 
         return Inertia::render('catalog/Show', [
-            'product'    => new ProductResource($product),
-            'related'    => ProductResource::collection($related),
+            'product' => new ProductResource($product),
+            'related' => ProductResource::collection($related),
             'alsoViewed' => ProductResource::collection($alsoViewed),
-            'seo'        => [
-                'title'       => $product->name,
+            'seo' => [
+                'title' => $product->name,
                 'description' => $description,
-                'canonical'   => url('/catalogo/'.$product->slug),
-                'og_image'    => $ogImage,
-                'og_type'     => 'product',
-                'json_ld'     => $jsonLd,
+                'canonical' => url('/catalogo/'.$product->slug),
+                'og_image' => $ogImage,
+                'og_type' => 'product',
+                'json_ld' => $jsonLd,
             ],
         ]);
     }
@@ -255,7 +256,7 @@ class CatalogController extends Controller
         }
 
         if ($collected->count() < $count && $product->category_id) {
-            $needed    = $count - $collected->count();
+            $needed = $count - $collected->count();
             $collected = $collected->concat(
                 (clone $base)
                     ->where('categoria_id', $product->category_id)
@@ -267,7 +268,7 @@ class CatalogController extends Controller
         }
 
         if ($collected->count() < $count && $product->brand_id) {
-            $needed    = $count - $collected->count();
+            $needed = $count - $collected->count();
             $collected = $collected->concat(
                 (clone $base)
                     ->where('marca_id', $product->brand_id)

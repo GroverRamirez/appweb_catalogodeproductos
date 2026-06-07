@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -41,6 +42,12 @@ class AppServiceProvider extends ServiceProvider
         if (app()->isProduction()) {
             URL::forceScheme('https');
         }
+
+        // El frontend (Inertia/Vue) consume colecciones planas (featured.length,
+        // products.data/total/links) y paginadores con sus campos al nivel superior.
+        // Sin esto, ProductResource::collection() envuelve todo en una clave "data"
+        // extra que rompe el renderizado del catálogo y la paginación.
+        JsonResource::withoutWrapping();
 
         Date::use(CarbonImmutable::class);
 

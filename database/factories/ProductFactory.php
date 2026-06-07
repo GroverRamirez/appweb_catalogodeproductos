@@ -51,7 +51,6 @@ class ProductFactory extends Factory
         ];
         $name = fake()->randomElement($productTypes).' '.fake()->randomElement($features).' '.fake()->numberBetween(100, 999);
         $price = fake()->randomFloat(2, 5, 2000);
-        $onSale = fake()->boolean(20);
 
         return [
             'codigo' => 'P-'.strtoupper(Str::random(8)),
@@ -69,7 +68,10 @@ class ProductFactory extends Factory
                 'Registro de ejemplo creado para validar la gestion de productos. La informacion es referencial y permite probar flujos de administracion, consultas de clientes, reportes y visualizacion de fichas comerciales.',
             ]),
             'precio' => $price,
-            'precio_oferta' => $onSale ? round($price * fake()->randomFloat(2, 0.5, 0.9), 2) : null,
+            // Sin oferta por defecto: así los tests que fijan `precio` obtienen un total
+            // predecible. Para un producto en oferta usa el estado ->onSale(), que
+            // calcula `precio_oferta` SIEMPRE a partir del precio final (nunca lo supera).
+            'precio_oferta' => null,
             'costo' => round($price * 0.6, 2),
             'stock' => fake()->numberBetween(0, 80),
             'stock_minimo' => 5,
@@ -85,6 +87,17 @@ class ProductFactory extends Factory
     public function featured(): static
     {
         return $this->state(fn () => ['destacado' => true]);
+    }
+
+    /**
+     * Producto en oferta: precio_oferta como fracción del precio final
+     * (entre 50% y 90%), garantizando precio_oferta < precio.
+     */
+    public function onSale(): static
+    {
+        return $this->state(fn (array $attrs) => [
+            'precio_oferta' => round(($attrs['precio'] ?? 100) * fake()->randomFloat(2, 0.5, 0.9), 2),
+        ]);
     }
 
     public function outOfStock(): static

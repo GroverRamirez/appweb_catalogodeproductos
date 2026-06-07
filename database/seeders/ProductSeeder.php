@@ -31,7 +31,12 @@ class ProductSeeder extends Seeder
 
         for ($i = 0; $i < $targetCount; $i++) {
             $product = $demoProducts->get($i);
-            $data = Product::factory()->make([
+            $factory = Product::factory();
+            // ~20% de los productos demo en oferta, para mostrar descuentos en el catálogo.
+            if (random_int(1, 100) <= 20) {
+                $factory = $factory->onSale();
+            }
+            $data = $factory->make([
                 'categoria_id' => $leafCategoryIds->random(),
             ])->getAttributes();
 

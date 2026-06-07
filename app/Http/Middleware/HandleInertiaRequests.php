@@ -62,8 +62,10 @@ class HandleInertiaRequests extends Middleware
             'locale' => App::getLocale(),
             'translations' => fn () => trans('catalog'),
             'flash' => [
-                'success' => fn () => $request->session()->get('success'),
-                'error' => fn () => $request->session()->get('error'),
+                // Durante el renderizado de errores (p. ej. un 404) la sesión puede no
+                // estar disponible; guardamos contra ello para no degradar el 404 a un 500.
+                'success' => fn () => $request->hasSession() ? $request->session()->get('success') : null,
+                'error' => fn () => $request->hasSession() ? $request->session()->get('error') : null,
             ],
             'store' => fn () => [
                 'name' => Setting::get('store_name', 'Mi Catálogo'),

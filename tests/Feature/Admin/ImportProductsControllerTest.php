@@ -71,10 +71,11 @@ test('import rejects non-csv file', function () {
 test('import returns error when required columns are missing', function () {
     $file = csvFile("nombre,precio\nProducto Sin Codigo,10");
 
-    $this->actingAs($this->admin)
+    $response = $this->actingAs($this->admin)
         ->post(route('admin.products.import'), ['file' => $file])
-        ->assertUnprocessable()
-        ->assertJsonFragment(['message' => fn ($msg) => str_contains($msg, 'codigo')]);
+        ->assertUnprocessable();
+
+    expect($response->json('message'))->toContain('codigo');
 });
 
 test('import rejects entire batch when any row has validation errors', function () {
@@ -308,15 +309,14 @@ test('import error entries have row, code and errors keys', function () {
 // ─── TRANSACCIÓN / ROLLBACK ──────────────────────────────────────────────────
 
 test('import wraps all upserts in a single database transaction', function () {
-    // Verificar que el import usa una transacción real escuchando los eventos de query.
-    // Dentro de RefreshDatabase (que ya tiene una TX activa), Laravel usa SAVEPOINT
-    // para las transacciones anidadas — eso es lo que buscamos.
-    $sawTransaction = false;
+    // Verificar que el import usa una transacción real. RefreshDatabase ya mantiene una
+    // transacción externa (nivel 1); si el import abre su propia transacción, el nivel
+    // durante el INSERT será mayor a 1. (DB::listen no captura SAVEPOINT/BEGIN de forma
+    // fiable entre drivers, por eso medimos el nivel de transacción directamente.)
+    $levelDuringInsert = 0;
 
-    DB::listen(function (\Illuminate\Database\Events\QueryExecuted $query) use (&$sawTransaction) {
-        if (stripos($query->sql, 'SAVEPOINT') !== false || stripos($query->sql, 'BEGIN') !== false) {
-            $sawTransaction = true;
-        }
+    Product::creating(function () use (&$levelDuringInsert) {
+        $levelDuringInsert = max($levelDuringInsert, DB::transactionLevel());
     });
 
     $csv = "codigo,nombre,precio\nTX-001,Producto A,10\nTX-002,Producto B,20";
@@ -325,7 +325,7 @@ test('import wraps all upserts in a single database transaction', function () {
         ->post(route('admin.products.import'), ['file' => csvFile($csv)])
         ->assertOk();
 
-    expect($sawTransaction)->toBeTrue('Se esperaba un SAVEPOINT o BEGIN de transacción DB');
+    expect($levelDuringInsert)->toBeGreaterThan(1);
     // Ambos productos deben haberse creado en la misma transacción
     expect(Product::whereIn('codigo', ['TX-001', 'TX-002'])->count())->toBe(2);
 });

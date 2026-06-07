@@ -32,13 +32,6 @@ class RecordProductView implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * Cola genérica (separada de la cola 'notifications' de email).
-     * Arrancar el worker con:
-     *   php artisan queue:work --queue=notifications,default
-     */
-    public string $queue = 'default';
-
-    /**
      * Un único reintento: si el INSERT falla por una falla transitoria de la DB
      * se reintenta una vez. Perder una vista no es crítico, así que no acumulamos
      * más intentos en failed_jobs.
@@ -52,7 +45,7 @@ class RecordProductView implements ShouldQueue
     public int $timeout = 30;
 
     public function __construct(
-        public readonly int    $productId,
+        public readonly int $productId,
         public readonly string $ipAddress,
         public readonly string $sessionId,
         public readonly string $userAgent,
@@ -73,8 +66,8 @@ class RecordProductView implements ShouldQueue
             'ip_address' => $this->ipAddress,
             'session_id' => $this->sessionId,
             'user_agent' => $this->userAgent,
-            'referrer'   => $this->referrer,
-            'viewed_at'  => now(),
+            'referrer' => $this->referrer,
+            'viewed_at' => now(),
         ]);
 
         // Contador denormalizado para evitar COUNT(*) en queries frecuentes.

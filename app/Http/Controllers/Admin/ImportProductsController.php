@@ -32,9 +32,18 @@ class ImportProductsController extends Controller
      */
     public function __invoke(Request $request): JsonResponse
     {
-        $request->validate([
+        // Endpoint XHR: devolvemos siempre JSON 422 ante errores de validación del
+        // archivo (no un redirect 302), aunque el cliente no envíe Accept: application/json.
+        $fileValidator = Validator::make($request->all(), [
             'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
         ]);
+
+        if ($fileValidator->fails()) {
+            return response()->json([
+                'message' => $fileValidator->errors()->first('file'),
+                'errors' => $fileValidator->errors()->toArray(),
+            ], 422);
+        }
 
         $path = $request->file('file')->getRealPath();
 
@@ -48,6 +57,7 @@ class ImportProductsController extends Controller
         $rawHeaders = fgetcsv($handle, 0, ',');
         if ($rawHeaders === false || $rawHeaders === null) {
             fclose($handle);
+
             return response()->json(['message' => 'El archivo está vacío.'], 422);
         }
 
@@ -57,6 +67,7 @@ class ImportProductsController extends Controller
         $missing = array_diff($requiredCols, $headers);
         if (! empty($missing)) {
             fclose($handle);
+
             return response()->json([
                 'message' => 'Faltan columnas requeridas: '.implode(', ', $missing),
             ], 422);
@@ -77,8 +88,8 @@ class ImportProductsController extends Controller
 
         /** @var array<int, array{codigo: string, nombre: string, payload: array<string, mixed>}> $validRows */
         $validRows = [];
-        $errors    = [];
-        $row       = 1; // la fila 0 fue el header
+        $errors = [];
+        $row = 1; // la fila 0 fue el header
 
         while (($cols = fgetcsv($handle, 0, ',')) !== false) {
             $row++;
@@ -96,20 +107,21 @@ class ImportProductsController extends Controller
 
             // Validación de tipos y rangos
             $v = Validator::make($data, [
-                'codigo'        => ['required', 'string', 'max:100'],
-                'nombre'        => ['required', 'string', 'max:255'],
-                'precio'        => ['required', 'numeric', 'min:0'],
+                'codigo' => ['required', 'string', 'max:100'],
+                'nombre' => ['required', 'string', 'max:255'],
+                'precio' => ['required', 'numeric', 'min:0'],
                 'precio_oferta' => ['nullable', 'numeric', 'min:0'],
-                'stock'         => ['nullable', 'integer', 'min:0'],
-                'activo'        => ['nullable'],
+                'stock' => ['nullable', 'integer', 'min:0'],
+                'activo' => ['nullable'],
             ]);
 
             if ($v->fails()) {
                 $errors[] = [
-                    'row'    => $row,
-                    'code'   => $data['codigo'] ?? '',
+                    'row' => $row,
+                    'code' => $data['codigo'] ?? '',
                     'errors' => $v->errors()->all(),
                 ];
+
                 continue;
             }
 
@@ -120,10 +132,11 @@ class ImportProductsController extends Controller
                 $categoriaId = $categoryMap->get($key)?->id;
                 if (! $categoriaId) {
                     $errors[] = [
-                        'row'    => $row,
-                        'code'   => $data['codigo'],
+                        'row' => $row,
+                        'code' => $data['codigo'],
                         'errors' => ["Categoría «{$data['categoria']}» no encontrada."],
                     ];
+
                     continue;
                 }
             }
@@ -135,10 +148,11 @@ class ImportProductsController extends Controller
                 $marcaId = $brandMap->get($key)?->id;
                 if (! $marcaId) {
                     $errors[] = [
-                        'row'    => $row,
-                        'code'   => $data['codigo'],
+                        'row' => $row,
+                        'code' => $data['codigo'],
                         'errors' => ["Marca «{$data['marca']}» no encontrada."],
                     ];
+
                     continue;
                 }
             }
@@ -157,14 +171,17 @@ class ImportProductsController extends Controller
             $validRows[] = [
                 'codigo' => $data['codigo'],
                 'nombre' => $data['nombre'],
+                // Claves en inglés porque son las que figuran en $fillable del modelo
+                // Product; los alias en español sólo aplican a lectura/escritura de
+                // atributos individuales, no a la asignación masiva (mass assignment).
                 'payload' => [
-                    'nombre'        => $data['nombre'],
-                    'precio'        => (float) $data['precio'],
-                    'precio_oferta' => $data['precio_oferta'] !== '' ? (float) $data['precio_oferta'] : null,
-                    'stock'         => $data['stock'] !== '' ? (int) $data['stock'] : 0,
-                    'categoria_id'  => $categoriaId,
-                    'marca_id'      => $marcaId,
-                    'activo'        => $activo,
+                    'name' => $data['nombre'],
+                    'price' => (float) $data['precio'],
+                    'sale_price' => ($data['precio_oferta'] ?? '') !== '' ? (float) $data['precio_oferta'] : null,
+                    'stock' => ($data['stock'] ?? '') !== '' ? (int) $data['stock'] : 0,
+                    'category_id' => $categoriaId,
+                    'brand_id' => $marcaId,
+                    'is_active' => $activo,
                 ],
             ];
         }
@@ -176,8 +193,8 @@ class ImportProductsController extends Controller
         if (! empty($errors)) {
             return response()->json([
                 'imported' => 0,
-                'updated'  => 0,
-                'errors'   => $errors,
+                'updated' => 0,
+                'errors' => $errors,
             ], 422);
         }
 
@@ -186,7 +203,7 @@ class ImportProductsController extends Controller
         // rollback automático antes de re-lanzar el Throwable.
 
         $imported = 0;
-        $updated  = 0;
+        $updated = 0;
 
         try {
             DB::transaction(function () use ($validRows, &$imported, &$updated): void {
@@ -197,9 +214,9 @@ class ImportProductsController extends Controller
                         $existing->update($item['payload']);
                         $updated++;
                     } else {
-                        $payload           = $item['payload'];
-                        $payload['codigo'] = $item['codigo'];
-                        $payload['slug']   = Product::uniqueSlug($item['nombre']);
+                        $payload = $item['payload'];
+                        $payload['code'] = $item['codigo'];
+                        $payload['slug'] = Product::uniqueSlug($item['nombre']);
                         Product::create($payload);
                         $imported++;
                     }
@@ -209,17 +226,17 @@ class ImportProductsController extends Controller
             report($e);
 
             return response()->json([
-                'message'  => 'Error inesperado al guardar los productos. Se revirtieron todos los cambios.',
+                'message' => 'Error inesperado al guardar los productos. Se revirtieron todos los cambios.',
                 'imported' => 0,
-                'updated'  => 0,
-                'errors'   => [],
+                'updated' => 0,
+                'errors' => [],
             ], 500);
         }
 
         return response()->json([
             'imported' => $imported,
-            'updated'  => $updated,
-            'errors'   => [],
+            'updated' => $updated,
+            'errors' => [],
         ]);
     }
 }

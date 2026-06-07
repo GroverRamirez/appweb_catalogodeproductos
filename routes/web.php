@@ -5,9 +5,6 @@ use App\Http\Controllers\Catalog\CatalogController;
 use App\Http\Controllers\Catalog\InquiryController as PublicInquiryController;
 use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LocaleController;
-use App\Http\Controllers\Teams\TeamController;
-use App\Http\Controllers\Teams\TeamInvitationController;
-use App\Http\Controllers\Teams\TeamMemberController;
 use App\Models\Inquiry;
 use App\Support\AuthRedirect;
 use Illuminate\Http\Request;
@@ -59,14 +56,6 @@ Route::get('/locale/{locale}', [LocaleController::class, 'set'])->name('locale.s
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', fn (Request $r) => redirect(AuthRedirect::for($r->user())))
         ->name('dashboard');
-
-    Route::resource('teams', TeamController::class)->except(['show', 'create']);
-    Route::post('teams/{team}/switch', [TeamController::class, 'switch'])->name('teams.switch');
-    Route::post('teams/{team}/invitations', [TeamInvitationController::class, 'store'])->name('teams.invitations.store');
-    Route::delete('teams/{team}/invitations/{invitation}', [TeamInvitationController::class, 'destroy'])->name('teams.invitations.destroy');
-    Route::patch('teams/{team}/members/{user}', [TeamMemberController::class, 'update'])->name('teams.members.update');
-    Route::delete('teams/{team}/members/{user}', [TeamMemberController::class, 'destroy'])->name('teams.members.destroy');
-    Route::get('invitations/{invitation}/accept', [TeamInvitationController::class, 'accept'])->name('invitations.accept');
 });
 
 require __DIR__.'/admin.php';

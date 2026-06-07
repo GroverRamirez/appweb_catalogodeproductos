@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem C:\\\\laragon\\\\www\\\\appweb_catalogodeproductos\\\\resources\\\\js -Recurse -Depth 3 | Where-Object { $_.LastWriteTime -gt \\(Get-Date\\).AddDays\\(-7\\) } | Select-Object Name, LastWriteTime | Sort-Object LastWriteTime -Descending | Select-Object -First 20)",
+      "PowerShell(cd C:\\\\laragon\\\\www\\\\appweb_catalogodeproductos; git init -b main 2>&1; git add -A 2>&1 | Out-Null; git commit -q -m \"chore: snapshot inicial antes de saneamiento\" 2>&1 | Out-Null; \"Commit:\"; git rev-parse --short HEAD; \"Tracked files:\"; \\(git ls-files | Measure-Object -Line\\).Lines)"
+    ]
+  }
+}

@@ -37,6 +37,19 @@ const lowStock = computed(
     () => props.product.stock > 0 && props.product.stock <= 5,
 );
 
+// Color del indicador de stock: verde disponible, ámbar pocas unidades, rojo agotado
+const stockDotClass = computed(() => {
+    if (outOfStock.value) {
+        return 'bg-destructive';
+    }
+
+    if (lowStock.value) {
+        return 'bg-amber-500';
+    }
+
+    return 'bg-emerald-500';
+});
+
 const isNew = computed(() => {
     if (!props.product.created_at) {
         return false;
@@ -109,25 +122,6 @@ const onAdd = (e: MouseEvent) => {
                     </span>
                 </div>
 
-                <!-- Stock -->
-                <div
-                    v-if="store.show_stock && (outOfStock || lowStock)"
-                    class="absolute top-2 right-2"
-                >
-                    <span
-                        v-if="outOfStock"
-                        class="rounded bg-foreground/80 px-1.5 py-0.5 text-[11px] font-medium text-background"
-                    >
-                        Sin stock
-                    </span>
-                    <span
-                        v-else-if="lowStock"
-                        class="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-foreground"
-                    >
-                        Últimas {{ product.stock }}
-                    </span>
-                </div>
-
                 <!-- CTAs en hover -->
                 <div
                     class="absolute inset-x-2 bottom-2 flex gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
@@ -172,24 +166,45 @@ const onAdd = (e: MouseEvent) => {
                     {{ product.brand.name }}
                 </p>
 
-                <div
-                    v-if="store.show_prices"
-                    class="mt-auto flex items-baseline gap-2 pt-2"
-                >
-                    <span class="text-base font-semibold text-foreground">
-                        {{
-                            formatPrice(
-                                product.sale_price ?? product.price,
-                                store.currency_symbol,
-                            )
-                        }}
-                    </span>
-                    <span
-                        v-if="showSale"
-                        class="text-xs text-muted-foreground line-through"
+                <div class="mt-auto pt-2">
+                    <div
+                        v-if="store.show_prices"
+                        class="flex items-baseline gap-2"
                     >
-                        {{ formatPrice(product.price, store.currency_symbol) }}
-                    </span>
+                        <span class="text-base font-semibold text-foreground">
+                            {{
+                                formatPrice(
+                                    product.sale_price ?? product.price,
+                                    store.currency_symbol,
+                                )
+                            }}
+                        </span>
+                        <span
+                            v-if="showSale"
+                            class="text-xs text-muted-foreground line-through"
+                        >
+                            {{
+                                formatPrice(product.price, store.currency_symbol)
+                            }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="store.show_stock"
+                        class="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground"
+                    >
+                        <span
+                            class="size-1.5 rounded-full"
+                            :class="stockDotClass"
+                        ></span>
+                        <span v-if="outOfStock">Sin stock</span>
+                        <span v-else>
+                            Stock:
+                            <span class="font-medium text-foreground">{{
+                                product.stock
+                            }}</span>
+                        </span>
+                    </div>
                 </div>
             </div>
         </Link>

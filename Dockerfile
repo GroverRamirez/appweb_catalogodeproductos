@@ -63,6 +63,8 @@ RUN apk add --no-cache \
         icu-dev \
         # Multibye strings
         oniguruma-dev \
+        # mysqldump para los backups
+        mariadb-client \
         # Misc
         shadow \
         bash
@@ -101,8 +103,9 @@ COPY docker/php.ini         "$PHP_INI_DIR/conf.d/99-app.ini"
 COPY docker/nginx.conf      /etc/nginx/nginx.conf
 COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY docker/entrypoint.sh   /entrypoint.sh
+COPY docker/backup.sh       /usr/local/bin/backup.sh
 
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh /usr/local/bin/backup.sh
 
 # ── Directories + permissions ─────────────────────────────────────────────────
 RUN mkdir -p \

@@ -28,12 +28,6 @@ class NewInquiryNotification extends Notification implements ShouldQueue
     use Queueable;
 
     /**
-     * Cola dedicada para notificaciones de email.
-     * Permite procesarlas con prioridad separada del resto de jobs.
-     */
-    public string $queue = 'notifications';
-
-    /**
      * Número máximo de intentos antes de mover el job a failed_jobs.
      * 3 intentos cubre fallas transitorias del servidor SMTP.
      */
@@ -59,16 +53,17 @@ class NewInquiryNotification extends Notification implements ShouldQueue
      */
     public bool $deleteWhenMissingModels = true;
 
-    /**
-     * Despachar el job solo DESPUÉS de que la transacción activa haga commit.
-     * Protege contra el caso en que notifyAdmin() se llame dentro de una TX:
-     * el worker nunca intentará leer un Inquiry que aún no está en la DB.
-     */
-    public bool $afterCommit = true;
-
     public function __construct(public Inquiry $inquiry)
     {
+        // $queue y $afterCommit se asignan aquí (no como propiedades tipadas)
+        // porque el trait Queueable ya las declara sin tipo y redeclararlas
+        // tipadas provoca un fatal de composición en PHP 8.3.
         //
+        // Cola dedicada para procesar los emails con prioridad separada, y
+        // afterCommit para no leer un Inquiry que aún no hizo commit cuando
+        // notifyAdmin() se invoca dentro de una transacción.
+        $this->onQueue('notifications');
+        $this->afterCommit = true;
     }
 
     public function via(object $notifiable): array

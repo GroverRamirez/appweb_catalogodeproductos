@@ -160,7 +160,7 @@ const sendWhatsApp = () => {
         :json-ld="seo.json_ld ?? undefined"
     />
 
-    <div class="mx-auto max-w-[1600px] px-4 py-6">
+    <div class="mx-auto max-w-[1200px] px-4 py-6">
         <!-- Breadcrumb -->
         <nav
             class="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
@@ -181,9 +181,9 @@ const sendWhatsApp = () => {
             <span class="text-foreground">{{ product.name }}</span>
         </nav>
 
-        <div class="grid gap-8 lg:grid-cols-2">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,460px)_1fr]">
             <!-- Galería -->
-            <div class="space-y-3">
+            <div class="space-y-3 lg:sticky lg:top-24 lg:self-start">
                 <div
                     class="relative aspect-square overflow-hidden rounded-lg border bg-muted"
                 >

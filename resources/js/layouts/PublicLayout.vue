@@ -106,7 +106,7 @@ useReveal();
             class="hidden bg-[hsl(222_33%_13%)] text-[12px] text-white/80 md:block"
         >
             <div
-                class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-1.5"
+                class="mx-auto flex max-w-[1600px] items-center justify-between gap-4 px-4 py-1.5"
             >
                 <div class="flex items-center gap-4">
                     <span
@@ -145,7 +145,7 @@ useReveal();
         <!-- Header -->
         <header class="sticky top-0 z-30 border-b border-border bg-background">
             <div
-                class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:gap-6"
+                class="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 md:gap-6"
             >
                 <Link href="/" class="flex shrink-0 items-center gap-2.5">
                     <img
@@ -340,7 +340,7 @@ useReveal();
         >
             <div
                 v-if="showFlash && flash.success"
-                class="sticky top-20 z-20 mx-auto max-w-7xl px-4 pt-3"
+                class="sticky top-20 z-20 mx-auto max-w-[1600px] px-4 pt-3"
             >
                 <div
                     class="rounded-md border border-primary/30 bg-accent px-4 py-3 text-sm font-medium text-accent-foreground"
@@ -359,7 +359,7 @@ useReveal();
 
         <footer class="mt-16 bg-[hsl(222_33%_13%)] text-white">
             <div
-                class="mx-auto grid max-w-7xl gap-10 px-4 py-14 text-sm md:grid-cols-4"
+                class="mx-auto grid max-w-[1600px] gap-10 px-4 py-14 text-sm md:grid-cols-4"
             >
                 <div class="md:col-span-2">
                     <h4 class="mb-2 font-display text-xl font-bold">

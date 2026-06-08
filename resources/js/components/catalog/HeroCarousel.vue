@@ -81,7 +81,7 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
                     ></div>
 
                     <div
-                        class="absolute inset-0 mx-auto flex max-w-7xl flex-col items-start justify-center gap-4 px-6 text-white md:px-10 lg:px-12"
+                        class="absolute inset-0 mx-auto flex max-w-[1600px] flex-col items-start justify-center gap-4 px-6 text-white md:px-10 lg:px-12"
                     >
                         <h2
                             v-if="b.title"

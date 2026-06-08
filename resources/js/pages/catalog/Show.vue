@@ -160,7 +160,7 @@ const sendWhatsApp = () => {
         :json-ld="seo.json_ld ?? undefined"
     />
 
-    <div class="mx-auto max-w-7xl px-4 py-6">
+    <div class="mx-auto max-w-[1600px] px-4 py-6">
         <!-- Breadcrumb -->
         <nav
             class="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"

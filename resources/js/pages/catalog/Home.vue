@@ -93,7 +93,7 @@ const perks = [
         <!-- Hero fallback cuando no hay banners -->
         <section v-else class="border-b border-border bg-muted/40">
             <div
-                class="mx-auto flex max-w-7xl flex-col items-start gap-5 px-4 py-20 md:py-24"
+                class="mx-auto flex max-w-[1600px] flex-col items-start gap-5 px-4 py-20 md:py-24"
             >
                 <h1
                     class="max-w-3xl font-display text-4xl leading-[1.1] font-bold tracking-tight md:text-5xl"
@@ -132,7 +132,7 @@ const perks = [
         <!-- Perks / value props -->
         <section class="border-b border-border bg-background">
             <div
-                class="mx-auto grid max-w-7xl gap-x-8 gap-y-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4"
+                class="mx-auto grid max-w-[1600px] gap-x-8 gap-y-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4"
             >
                 <div
                     v-for="p in perks"
@@ -159,7 +159,7 @@ const perks = [
         </section>
 
         <!-- Categorías -->
-        <section v-if="categories.length" class="mx-auto max-w-7xl px-4 py-14">
+        <section v-if="categories.length" class="mx-auto max-w-[1600px] px-4 py-14">
             <div class="mb-6 flex items-end justify-between gap-3">
                 <h2
                     class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
@@ -207,7 +207,7 @@ const perks = [
             v-if="featured.length"
             class="border-t border-border bg-muted/40"
         >
-            <div class="mx-auto max-w-7xl px-4 py-14">
+            <div class="mx-auto max-w-[1600px] px-4 py-14">
                 <div class="mb-6 flex items-end justify-between gap-3">
                     <h2
                         class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
@@ -223,7 +223,7 @@ const perks = [
                     </Link>
                 </div>
                 <div
-                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
+                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                 >
                     <ProductCard
                         v-for="p in featured"
@@ -235,7 +235,7 @@ const perks = [
         </section>
 
         <!-- Nuevos -->
-        <section v-if="newest.length" class="mx-auto max-w-7xl px-4 py-14">
+        <section v-if="newest.length" class="mx-auto max-w-[1600px] px-4 py-14">
             <div class="mb-6 flex items-end justify-between gap-3">
                 <h2
                     class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
@@ -250,7 +250,7 @@ const perks = [
                     <ArrowRight class="size-3.5" />
                 </Link>
             </div>
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 <ProductCard v-for="p in newest" :key="p.id" :product="p" />
             </div>
         </section>

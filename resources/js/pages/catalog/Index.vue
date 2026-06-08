@@ -66,7 +66,7 @@ const setView = (v: 'grid' | 'list') => {
 
     <!-- Encabezado del catálogo -->
     <section class="border-b border-border bg-muted/40">
-        <div class="mx-auto max-w-7xl px-4 py-8 md:py-10">
+        <div class="mx-auto max-w-[1600px] px-4 py-8 md:py-10">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1
@@ -116,8 +116,8 @@ const setView = (v: 'grid' | 'list') => {
         </div>
     </section>
 
-    <div class="mx-auto max-w-7xl px-4 py-8">
-        <div class="grid gap-6 lg:grid-cols-[280px_1fr]">
+    <div class="mx-auto max-w-[1600px] px-4 py-8">
+        <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div
                 class="scrollbar-thin lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto"
             >
@@ -132,7 +132,7 @@ const setView = (v: 'grid' | 'list') => {
                 <template v-if="products.data.length">
                     <div
                         v-if="view === 'grid'"
-                        class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4"
+                        class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                     >
                         <ProductCard
                             v-for="p in products.data"

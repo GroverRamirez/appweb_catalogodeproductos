@@ -118,7 +118,9 @@ const setView = (v: 'grid' | 'list') => {
 
     <div class="mx-auto max-w-7xl px-4 py-8">
         <div class="grid gap-6 lg:grid-cols-[280px_1fr]">
-            <div class="lg:sticky lg:top-24 lg:self-start">
+            <div
+                class="scrollbar-thin lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto"
+            >
                 <Filters
                     :categories="categories"
                     :brands="brands"

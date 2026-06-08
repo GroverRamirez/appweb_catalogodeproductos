@@ -98,7 +98,7 @@ useReveal();
     </Head>
 
     <div
-        class="storefront flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground"
+        class="storefront flex min-h-screen flex-col overflow-x-clip bg-background text-foreground"
     >
         <!-- Topbar de contacto -->
         <div

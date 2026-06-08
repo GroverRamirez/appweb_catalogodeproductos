@@ -147,6 +147,7 @@ useReveal();
             <div
                 class="mx-auto flex h-16 max-w-[1600px] items-center gap-3 px-4 md:gap-6"
             >
+                <div class="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
                 <Link href="/" class="flex shrink-0 items-center gap-2.5">
                     <img
                         v-if="store.logo_url"
@@ -192,10 +193,11 @@ useReveal();
                         {{ t('catalog') }}
                     </Link>
                 </nav>
+                </div>
 
                 <form
                     @submit.prevent="doSearch"
-                    class="relative ml-auto hidden max-w-sm flex-1 md:block"
+                    class="relative hidden max-w-xl flex-1 md:block"
                 >
                     <Search
                         class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
@@ -203,11 +205,11 @@ useReveal();
                     <Input
                         v-model="q"
                         :placeholder="t('search_placeholder')"
-                        class="h-10 rounded-md border-input bg-background pl-10 focus-visible:border-ring"
+                        class="h-10 w-full rounded-md border-input bg-background pl-10 focus-visible:border-ring"
                     />
                 </form>
 
-                <div class="ml-auto flex items-center gap-1 md:ml-2 md:gap-2">
+                <div class="flex flex-1 items-center justify-end gap-1 md:gap-2">
                     <Button
                         variant="ghost"
                         size="icon"

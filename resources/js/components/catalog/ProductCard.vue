@@ -73,7 +73,7 @@ const onAdd = (e: MouseEvent) => {
     <div class="group relative">
         <Link
             :href="`/catalogo/${product.slug}`"
-            class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40"
+            class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-200 ease-out hover:-translate-y-1 hover:border-transparent hover:shadow-[0_12px_28px_-8px_rgba(15,23,42,0.18)]"
         >
             <!-- Imagen -->
             <div class="relative aspect-square overflow-hidden bg-muted">

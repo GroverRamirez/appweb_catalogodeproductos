@@ -9,11 +9,11 @@
 
 @theme inline {
     --font-sans:
-        Plus Jakarta Sans, Instrument Sans, ui-sans-serif, system-ui, sans-serif,
+        Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
     --font-display:
-        Plus Jakarta Sans, Instrument Sans, ui-sans-serif, system-ui, sans-serif;
+        Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -82,115 +82,121 @@
     body,
     html {
         --font-sans:
-            'Plus Jakarta Sans', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+            Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
             'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
             'Noto Color Emoji';
     }
 }
 
-/* === Paleta esmeralda + ámbar ===
-   Primary  : esmeralda profundo
-   Accent2  : ámbar cálido
-   Tints    : esmeralda claros para fondos
-*/
+/* ===========================================================================
+   Paleta — comercio clásico
+   Base neutra (blanco / grises fríos) + un único acento azul confiable.
+   Sin degradados, sin neón: superficies planas, bordes definidos.
+   =========================================================================== */
 :root {
-    --background: hsl(155 24% 96%);
-    --foreground: hsl(160 34% 8%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(160 34% 8%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(160 34% 8%);
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(222 33% 14%);
 
-    --primary: hsl(159 78% 24%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(222 33% 14%);
+
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222 33% 14%);
+
+    /* Azul comercio: confiable, sobrio, sin saturación neón */
+    --primary: hsl(218 79% 42%);
     --primary-foreground: hsl(0 0% 100%);
 
-    --secondary: hsl(155 20% 90%);
-    --secondary-foreground: hsl(160 34% 12%);
+    --secondary: hsl(220 16% 95%);
+    --secondary-foreground: hsl(222 30% 20%);
 
-    --muted: hsl(155 18% 92%);
-    --muted-foreground: hsl(160 12% 34%);
+    --muted: hsl(220 16% 96%);
+    --muted-foreground: hsl(220 9% 43%);
 
-    --accent: hsl(158 34% 88%);
-    --accent-foreground: hsl(160 34% 10%);
+    --accent: hsl(218 60% 96%);
+    --accent-foreground: hsl(218 79% 32%);
 
-    --brand: hsl(159 78% 24%);
+    /* Marca = el mismo azul; sin segundo color de degradado */
+    --brand: hsl(218 79% 42%);
     --brand-foreground: hsl(0 0% 100%);
-    --accent2: hsl(38 92% 49%);           /* ámbar */
-    --accent2-foreground: hsl(30 60% 12%);
+    --accent2: hsl(222 30% 18%); /* tinta para detalles serios */
+    --accent2-foreground: hsl(0 0% 100%);
 
-    --destructive: hsl(0 72% 46%);
-    --destructive-foreground: hsl(0 0% 99%);
+    --destructive: hsl(0 70% 45%);
+    --destructive-foreground: hsl(0 0% 100%);
 
-    --border: hsl(158 18% 82%);
-    --input: hsl(158 16% 76%);
-    --ring: hsl(159 78% 28%);
+    --border: hsl(220 15% 90%);
+    --input: hsl(220 15% 86%);
+    --ring: hsl(218 79% 42%);
 
-    --chart-1: hsl(160 84% 35%);
-    --chart-2: hsl(38 95% 55%);
-    --chart-3: hsl(190 70% 45%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(0 75% 60%);
+    --chart-1: hsl(218 79% 46%);
+    --chart-2: hsl(199 70% 45%);
+    --chart-3: hsl(160 50% 40%);
+    --chart-4: hsl(38 80% 50%);
+    --chart-5: hsl(0 65% 55%);
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    --sidebar-background: hsl(155 24% 94%);
-    --sidebar-foreground: hsl(160 32% 14%);
-    --sidebar-primary: hsl(159 78% 24%);
+    --sidebar-background: hsl(222 33% 13%);
+    --sidebar-foreground: hsl(220 14% 80%);
+    --sidebar-primary: hsl(218 79% 55%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(158 34% 86%);
-    --sidebar-accent-foreground: hsl(160 34% 10%);
-    --sidebar-border: hsl(158 18% 78%);
-    --sidebar-ring: hsl(159 78% 28%);
-    --sidebar: hsl(155 24% 94%);
+    --sidebar-accent: hsl(222 24% 20%);
+    --sidebar-accent-foreground: hsl(0 0% 100%);
+    --sidebar-border: hsl(222 24% 20%);
+    --sidebar-ring: hsl(218 79% 55%);
+    --sidebar: hsl(222 33% 13%);
 }
 
 .dark {
-    --background: hsl(160 30% 5%);
-    --foreground: hsl(150 20% 96%);
-    --card: hsl(160 30% 8%);
-    --card-foreground: hsl(150 20% 96%);
-    --popover: hsl(160 30% 8%);
-    --popover-foreground: hsl(150 20% 96%);
+    --background: hsl(222 28% 9%);
+    --foreground: hsl(220 16% 92%);
 
-    --primary: hsl(155 70% 55%);          /* esmeralda brillante para dark */
-    --primary-foreground: hsl(160 60% 8%);
+    --card: hsl(222 26% 12%);
+    --card-foreground: hsl(220 16% 92%);
 
-    --secondary: hsl(160 20% 14%);
-    --secondary-foreground: hsl(150 20% 96%);
+    --popover: hsl(222 26% 12%);
+    --popover-foreground: hsl(220 16% 92%);
 
-    --muted: hsl(160 16% 14%);
-    --muted-foreground: hsl(150 10% 65%);
+    --primary: hsl(214 90% 60%);
+    --primary-foreground: hsl(222 40% 10%);
 
-    --accent: hsl(160 30% 14%);
-    --accent-foreground: hsl(150 20% 96%);
+    --secondary: hsl(222 20% 18%);
+    --secondary-foreground: hsl(220 16% 92%);
 
-    --brand: hsl(155 70% 55%);
-    --brand-foreground: hsl(160 60% 8%);
-    --accent2: hsl(38 95% 60%);
-    --accent2-foreground: hsl(30 60% 8%);
+    --muted: hsl(222 18% 17%);
+    --muted-foreground: hsl(220 12% 64%);
 
-    --destructive: hsl(0 75% 56%);
-    --destructive-foreground: hsl(0 0% 99%);
+    --accent: hsl(222 22% 18%);
+    --accent-foreground: hsl(220 16% 92%);
 
-    --border: hsl(160 20% 16%);
-    --input: hsl(160 20% 16%);
-    --ring: hsl(155 70% 55%);
+    --brand: hsl(214 90% 60%);
+    --brand-foreground: hsl(222 40% 10%);
+    --accent2: hsl(220 16% 92%);
+    --accent2-foreground: hsl(222 40% 10%);
 
-    --chart-1: hsl(155 70% 55%);
-    --chart-2: hsl(38 95% 60%);
-    --chart-3: hsl(190 70% 55%);
-    --chart-4: hsl(280 65% 65%);
-    --chart-5: hsl(0 75% 65%);
+    --destructive: hsl(0 70% 55%);
+    --destructive-foreground: hsl(0 0% 100%);
 
-    --sidebar-background: hsl(160 30% 7%);
-    --sidebar-foreground: hsl(150 20% 90%);
-    --sidebar-primary: hsl(155 70% 55%);
-    --sidebar-primary-foreground: hsl(160 60% 8%);
-    --sidebar-accent: hsl(160 25% 14%);
-    --sidebar-accent-foreground: hsl(150 20% 90%);
-    --sidebar-border: hsl(160 25% 14%);
-    --sidebar-ring: hsl(155 70% 55%);
-    --sidebar: hsl(160 30% 8%);
+    --border: hsl(222 18% 20%);
+    --input: hsl(222 18% 22%);
+    --ring: hsl(214 90% 60%);
+
+    --chart-1: hsl(214 90% 60%);
+    --chart-2: hsl(199 70% 55%);
+    --chart-3: hsl(160 50% 50%);
+    --chart-4: hsl(38 80% 58%);
+    --chart-5: hsl(0 65% 62%);
+
+    --sidebar-background: hsl(222 30% 10%);
+    --sidebar-foreground: hsl(220 14% 78%);
+    --sidebar-primary: hsl(214 90% 60%);
+    --sidebar-primary-foreground: hsl(222 40% 10%);
+    --sidebar-accent: hsl(222 22% 16%);
+    --sidebar-accent-foreground: hsl(220 16% 92%);
+    --sidebar-border: hsl(222 22% 16%);
+    --sidebar-ring: hsl(214 90% 60%);
+    --sidebar: hsl(222 30% 10%);
 }
 
 @layer base {
@@ -199,145 +205,103 @@
     }
     body {
         @apply bg-background text-foreground;
-        font-feature-settings: 'ss01', 'cv11';
     }
-    h1, h2, h3, h4 {
-        letter-spacing: -0.02em;
+    h1,
+    h2,
+    h3,
+    h4 {
+        letter-spacing: -0.015em;
         font-family: var(--font-display);
     }
 }
 
-/* ============ Utilidades de marca / catálogo ============ */
+/* ===========================================================================
+   Compatibilidad: las utilidades antiguas de "marca" quedan APLANADAS.
+   Antes producían degradados / glow / glassmorphism (aspecto IA);
+   ahora resuelven a superficies planas y sombras sobrias, así los
+   componentes existentes se ven limpios sin reescribir cada archivo.
+   =========================================================================== */
 @layer utilities {
     .gradient-brand {
-        background-image: linear-gradient(
-            135deg,
-            hsl(159 78% 24%) 0%,
-            hsl(164 70% 30%) 56%,
-            hsl(38 92% 49%) 100%
-        );
+        background-color: var(--brand);
+        color: var(--brand-foreground);
     }
 
     .gradient-brand-soft {
-        background-image: linear-gradient(
-            135deg,
-            hsl(159 78% 24% / 0.10) 0%,
-            hsl(164 70% 30% / 0.06) 50%,
-            hsl(38 92% 49% / 0.10) 100%
-        );
+        background-color: var(--accent);
     }
-
     .dark .gradient-brand-soft {
-        background-image: linear-gradient(
-            135deg,
-            hsl(155 70% 55% / 0.10) 0%,
-            hsl(160 60% 40% / 0.05) 50%,
-            hsl(38 95% 55% / 0.10) 100%
-        );
+        background-color: var(--accent);
     }
 
+    /* Antes texto con degradado recortado; ahora color sólido de marca */
     .gradient-text {
-        background: linear-gradient(135deg, hsl(159 78% 24%), hsl(38 92% 43%));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+        color: var(--brand);
+        -webkit-background-clip: initial;
+        background-clip: initial;
+        background-image: none;
     }
-
     .dark .gradient-text {
-        background: linear-gradient(135deg, hsl(155 70% 55%), hsl(38 95% 60%));
-        -webkit-background-clip: text;
-        background-clip: text;
-        color: transparent;
+        color: var(--brand);
     }
 
-    /* Glow suave para CTAs principales */
+    /* Sombra de elevación discreta (sin glow de color) */
     .glow-brand {
         box-shadow:
-            0 12px 30px -14px hsl(159 78% 24% / 0.55),
-            0 3px 10px -4px hsl(159 78% 24% / 0.35);
+            0 1px 2px hsl(222 33% 14% / 0.08),
+            0 8px 24px -12px hsl(222 33% 14% / 0.18);
     }
 
     .admin-card {
-        background: hsl(0 0% 100%);
-        border-color: hsl(158 18% 80%);
+        background: var(--card);
+        border-color: var(--border);
         box-shadow:
-            0 1px 2px hsl(160 30% 8% / 0.06),
-            0 12px 30px -24px hsl(160 30% 8% / 0.28);
+            0 1px 2px hsl(222 33% 14% / 0.05),
+            0 10px 24px -20px hsl(222 33% 14% / 0.2);
     }
-
     .dark .admin-card {
         background: var(--card);
         border-color: var(--border);
-        box-shadow: 0 1px 2px hsl(0 0% 0% / 0.25);
+        box-shadow: 0 1px 2px hsl(0 0% 0% / 0.3);
     }
 
     .admin-table-header {
-        background: hsl(155 20% 91%);
-        color: hsl(160 16% 28%);
+        background: var(--muted);
+        color: var(--muted-foreground);
     }
-
     .dark .admin-table-header {
-        background: hsl(160 20% 12%);
+        background: hsl(222 20% 15%);
         color: var(--muted-foreground);
     }
 
-    /* Patrón decorativo de puntos */
+    /* Antes patrón de puntos decorativo; ahora sin patrón */
     .pattern-dots {
-        background-image: radial-gradient(
-            currentColor 1px,
-            transparent 1px
-        );
-        background-size: 24px 24px;
+        background-image: none;
     }
 
-    /* Glass effect */
+    /* Antes glassmorphism con blur; ahora superficie sólida con borde */
     .glass {
-        background-color: hsl(0 0% 100% / 0.7);
-        backdrop-filter: saturate(180%) blur(14px);
-        -webkit-backdrop-filter: saturate(180%) blur(14px);
+        background-color: var(--background);
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
     .dark .glass {
-        background-color: hsl(160 30% 7% / 0.7);
+        background-color: var(--background);
     }
 
-    /* Scrollbar fino */
     .scrollbar-thin {
         scrollbar-width: thin;
     }
 }
 
-/* ============ Animaciones ============ */
-@keyframes shimmer {
-    0% {
-        background-position: -1200px 0;
-    }
-    100% {
-        background-position: 1200px 0;
-    }
-}
-
-@keyframes float {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-@keyframes pulse-soft {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
-}
-
+/* ===========================================================================
+   Animaciones — solo transiciones discretas. Se eliminan float/pulse/shimmer
+   decorativos (look IA); se conserva un reveal sobrio al entrar en viewport.
+   =========================================================================== */
 @keyframes fade-up {
     from {
         opacity: 0;
-        transform: translateY(16px);
+        transform: translateY(10px);
     }
     to {
         opacity: 1;
@@ -354,67 +318,56 @@
     }
 }
 
-@keyframes gradient-shift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
-}
-
 @layer utilities {
+    /* Antes animaciones llamativas; ahora neutralizadas (no-op) */
     .animate-shimmer {
-        background: linear-gradient(
-            90deg,
-            transparent,
-            hsl(0 0% 100% / 0.4),
-            transparent
-        );
-        background-size: 1200px 100%;
-        animation: shimmer 2s infinite;
+        animation: none;
     }
-
     .animate-float {
-        animation: float 4s ease-in-out infinite;
+        animation: none;
     }
-
     .animate-pulse-soft {
-        animation: pulse-soft 2.5s ease-in-out infinite;
+        animation: none;
+    }
+    .gradient-animated {
+        background-size: auto;
+        animation: none;
     }
 
     .animate-fade-up {
-        animation: fade-up 0.7s ease-out both;
+        animation: fade-up 0.5s ease-out both;
     }
 
     .animate-fade-in {
-        animation: fade-in 0.5s ease-out both;
+        animation: fade-in 0.4s ease-out both;
     }
 
-    .gradient-animated {
-        background-size: 200% 200%;
-        animation: gradient-shift 8s ease infinite;
-    }
-
-    /* Reveal al entrar en viewport (usa IntersectionObserver del composable) */
     .reveal {
         opacity: 0;
-        transform: translateY(20px);
-        transition: opacity 0.7s ease, transform 0.7s ease;
+        transform: translateY(12px);
+        transition:
+            opacity 0.5s ease,
+            transform 0.5s ease;
     }
     .reveal.in {
         opacity: 1;
         transform: translateY(0);
     }
 
-    /* Stagger por delay */
-    .reveal-d1 { transition-delay: 0.05s; }
-    .reveal-d2 { transition-delay: 0.12s; }
-    .reveal-d3 { transition-delay: 0.20s; }
-    .reveal-d4 { transition-delay: 0.30s; }
+    .reveal-d1 {
+        transition-delay: 0.04s;
+    }
+    .reveal-d2 {
+        transition-delay: 0.08s;
+    }
+    .reveal-d3 {
+        transition-delay: 0.14s;
+    }
+    .reveal-d4 {
+        transition-delay: 0.2s;
+    }
 }
 
-/* Scroll suave nativo */
 html {
     scroll-behavior: smooth;
 }

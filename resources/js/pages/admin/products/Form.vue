@@ -81,18 +81,18 @@ const onFiles = (e: Event) => {
     const files = (e.target as HTMLInputElement).files;
 
     if (files) {
-form.images = Array.from(files);
-}
+        form.images = Array.from(files);
+    }
 };
 
 const toggleRemove = (id: number) => {
     const idx = form.remove_image_ids.indexOf(id);
 
     if (idx >= 0) {
-form.remove_image_ids.splice(idx, 1);
-} else {
-form.remove_image_ids.push(id);
-}
+        form.remove_image_ids.splice(idx, 1);
+    } else {
+        form.remove_image_ids.push(id);
+    }
 };
 
 const isMarkedRemoved = (id: number) => form.remove_image_ids.includes(id);
@@ -128,7 +128,9 @@ const submit = () => {
         <form class="grid gap-4 lg:grid-cols-3" @submit.prevent="submit">
             <div class="space-y-4 lg:col-span-2">
                 <Card>
-                    <CardHeader><CardTitle>Datos básicos</CardTitle></CardHeader>
+                    <CardHeader
+                        ><CardTitle>Datos básicos</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-4">
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
@@ -161,13 +163,17 @@ const submit = () => {
                         <div>
                             <Label for="slug"
                                 >Slug
-                                <span class="text-muted-foreground">(opcional)</span></Label
+                                <span class="text-muted-foreground"
+                                    >(opcional)</span
+                                ></Label
                             >
                             <Input id="slug" v-model="form.slug" />
                         </div>
 
                         <div>
-                            <Label for="short_description">Descripción corta</Label>
+                            <Label for="short_description"
+                                >Descripción corta</Label
+                            >
                             <Input
                                 id="short_description"
                                 v-model="form.short_description"
@@ -175,7 +181,9 @@ const submit = () => {
                         </div>
 
                         <div>
-                            <Label for="description">Descripción completa</Label>
+                            <Label for="description"
+                                >Descripción completa</Label
+                            >
                             <textarea
                                 id="description"
                                 v-model="form.description"
@@ -187,7 +195,9 @@ const submit = () => {
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>Características</CardTitle></CardHeader>
+                    <CardHeader
+                        ><CardTitle>Características</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-2">
                         <div
                             v-for="(attr, i) in form.attributes"
@@ -235,7 +245,9 @@ const submit = () => {
                                 v-for="img in product.images"
                                 :key="img.id"
                                 class="group relative aspect-square overflow-hidden rounded-md border"
-                                :class="{ 'opacity-30': isMarkedRemoved(img.id) }"
+                                :class="{
+                                    'opacity-30': isMarkedRemoved(img.id),
+                                }"
                             >
                                 <img
                                     :src="imageUrl(img.path)"
@@ -244,7 +256,7 @@ const submit = () => {
                                 />
                                 <button
                                     type="button"
-                                    class="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-destructive shadow opacity-0 group-hover:opacity-100"
+                                    class="absolute top-1 right-1 rounded-full bg-white/90 p-1 text-destructive opacity-0 shadow group-hover:opacity-100"
                                     @click="toggleRemove(img.id)"
                                 >
                                     <Trash2 class="size-3" />
@@ -266,8 +278,8 @@ const submit = () => {
                             class="block w-full text-sm"
                         />
                         <p class="text-xs text-muted-foreground">
-                            Hasta 8 imágenes, máx 4 MB cada una. La primera se marca
-                            como principal automáticamente.
+                            Hasta 8 imágenes, máx 4 MB cada una. La primera se
+                            marca como principal automáticamente.
                         </p>
                     </CardContent>
                 </Card>
@@ -275,7 +287,9 @@ const submit = () => {
 
             <div class="space-y-4">
                 <Card>
-                    <CardHeader><CardTitle>Precio y stock</CardTitle></CardHeader>
+                    <CardHeader
+                        ><CardTitle>Precio y stock</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-3">
                         <div>
                             <Label for="price">Precio</Label>
@@ -333,7 +347,9 @@ const submit = () => {
                 </Card>
 
                 <Card>
-                    <CardHeader><CardTitle>Clasificación</CardTitle></CardHeader>
+                    <CardHeader
+                        ><CardTitle>Clasificación</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-3">
                         <div>
                             <Label for="category_id">Categoría</Label>
@@ -370,7 +386,10 @@ const submit = () => {
                             </select>
                         </div>
                         <div class="flex items-center gap-2">
-                            <Checkbox id="is_featured" v-model="form.is_featured" />
+                            <Checkbox
+                                id="is_featured"
+                                v-model="form.is_featured"
+                            />
                             <Label for="is_featured">Destacado</Label>
                         </div>
                         <div class="flex items-center gap-2">

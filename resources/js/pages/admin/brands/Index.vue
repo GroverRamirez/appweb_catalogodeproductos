@@ -42,8 +42,8 @@ const status = ref(props.filters.status ?? '');
 let timer: ReturnType<typeof setTimeout> | null = null;
 watch([q, status], () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
         router.get(
@@ -56,8 +56,8 @@ clearTimeout(timer);
 
 const destroy = (b: Brand) => {
     if (!confirm(`¿Eliminar la marca "${b.name}"?`)) {
-return;
-}
+        return;
+    }
 
     router.delete(`/admin/brands/${b.id}`, { preserveScroll: true });
 };
@@ -74,7 +74,7 @@ return;
             description="Marcas asociadas a los productos."
         >
             <template #actions>
-                <Button as-child class="rounded-full gradient-brand glow-brand border-transparent text-white">
+                <Button as-child class="rounded-md">
                     <Link href="/admin/brands/create">
                         <Plus class="size-4" /> Nueva marca
                     </Link>
@@ -85,7 +85,7 @@ return;
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative max-w-sm flex-1">
                 <Search
-                    class="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    class="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input v-model="q" placeholder="Buscar..." class="pl-8" />
             </div>
@@ -102,20 +102,26 @@ return;
         <div class="overflow-x-auto rounded-md border">
             <table class="w-full text-sm">
                 <thead
-                    class="bg-muted/50 text-left text-xs uppercase text-muted-foreground"
+                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
                 >
                     <tr>
                         <th class="px-3 py-2">Nombre</th>
                         <th class="px-3 py-2">Sitio</th>
-                        <th class="px-3 py-2 w-24">Estado</th>
-                        <th class="px-3 py-2 w-32"></th>
+                        <th class="w-24 px-3 py-2">Estado</th>
+                        <th class="w-32 px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    <tr v-for="b in brands.data" :key="b.id" class="hover:bg-muted/30">
+                    <tr
+                        v-for="b in brands.data"
+                        :key="b.id"
+                        class="hover:bg-muted/30"
+                    >
                         <td class="px-3 py-2">
                             <div class="font-medium">{{ b.name }}</div>
-                            <div class="text-xs text-muted-foreground">{{ b.slug }}</div>
+                            <div class="text-xs text-muted-foreground">
+                                {{ b.slug }}
+                            </div>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
                             <a
@@ -128,7 +134,9 @@ return;
                             <span v-else>—</span>
                         </td>
                         <td class="px-3 py-2">
-                            <Badge :variant="b.is_active ? 'default' : 'secondary'">
+                            <Badge
+                                :variant="b.is_active ? 'default' : 'secondary'"
+                            >
                                 {{ b.is_active ? 'Activa' : 'Inactiva' }}
                             </Badge>
                         </td>
@@ -138,13 +146,20 @@ return;
                                     <Pencil class="size-4" />
                                 </Link>
                             </Button>
-                            <Button variant="ghost" size="icon-sm" @click="destroy(b)">
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                @click="destroy(b)"
+                            >
                                 <Trash2 class="size-4 text-destructive" />
                             </Button>
                         </td>
                     </tr>
                     <tr v-if="!brands.data.length">
-                        <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                        <td
+                            colspan="4"
+                            class="px-3 py-6 text-center text-muted-foreground"
+                        >
                             Sin resultados.
                         </td>
                     </tr>

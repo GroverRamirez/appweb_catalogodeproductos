@@ -5,8 +5,8 @@ import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PublicLayout from '@/layouts/PublicLayout.vue';
-import { formatPrice  } from '@/lib/catalog';
-import type {StoreSettings} from '@/lib/catalog';
+import { formatPrice } from '@/lib/catalog';
+import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({ layout: PublicLayout });
 
@@ -41,15 +41,23 @@ const store = computed(() => page.props.store as StoreSettings);
                 <CheckCircle2 class="mb-2 size-12 text-emerald-500" />
                 <CardTitle class="text-2xl">¡Pedido recibido!</CardTitle>
                 <p class="text-sm text-muted-foreground">
-                    Tu solicitud #{{ inquiry?.id ?? '...' }} fue registrada. Te contactaremos pronto.
+                    Tu solicitud #{{ inquiry?.id ?? '...' }} fue registrada. Te
+                    contactaremos pronto.
                 </p>
             </CardHeader>
             <CardContent class="space-y-4">
                 <div v-if="inquiry" class="rounded-md border bg-muted/40 p-4">
                     <p class="mb-2 text-sm font-medium">Resumen</p>
                     <ul class="space-y-1 text-sm">
-                        <li v-for="i in inquiry.items" :key="i.id" class="flex justify-between">
-                            <span>{{ i.quantity }}x {{ i.product_name_snapshot }}</span>
+                        <li
+                            v-for="i in inquiry.items"
+                            :key="i.id"
+                            class="flex justify-between"
+                        >
+                            <span
+                                >{{ i.quantity }}x
+                                {{ i.product_name_snapshot }}</span
+                            >
                             <span class="font-medium">
                                 {{
                                     formatPrice(
@@ -66,7 +74,12 @@ const store = computed(() => page.props.store as StoreSettings);
                     >
                         <span>Total estimado</span>
                         <span>
-                            {{ formatPrice(inquiry.total_estimated, store.currency_symbol) }}
+                            {{
+                                formatPrice(
+                                    inquiry.total_estimated,
+                                    store.currency_symbol,
+                                )
+                            }}
                         </span>
                     </div>
                 </div>

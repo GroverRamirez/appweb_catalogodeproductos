@@ -40,10 +40,10 @@ const form = useForm({
 
 const submit = () => {
     if (isEdit) {
-form.patch(`/admin/brands/${props.brand!.id}`);
-} else {
-form.post('/admin/brands');
-}
+        form.patch(`/admin/brands/${props.brand!.id}`);
+    } else {
+        form.post('/admin/brands');
+    }
 };
 </script>
 
@@ -66,17 +66,25 @@ form.post('/admin/brands');
                     <div>
                         <Label for="name">Nombre</Label>
                         <Input id="name" v-model="form.name" required />
-                        <p v-if="form.errors.name" class="mt-1 text-xs text-destructive">
+                        <p
+                            v-if="form.errors.name"
+                            class="mt-1 text-xs text-destructive"
+                        >
                             {{ form.errors.name }}
                         </p>
                     </div>
                     <div>
                         <Label for="slug"
                             >Slug
-                            <span class="text-muted-foreground">(opcional)</span></Label
+                            <span class="text-muted-foreground"
+                                >(opcional)</span
+                            ></Label
                         >
                         <Input id="slug" v-model="form.slug" />
-                        <p v-if="form.errors.slug" class="mt-1 text-xs text-destructive">
+                        <p
+                            v-if="form.errors.slug"
+                            class="mt-1 text-xs text-destructive"
+                        >
                             {{ form.errors.slug }}
                         </p>
                     </div>
@@ -88,7 +96,10 @@ form.post('/admin/brands');
                             v-model="form.website"
                             placeholder="https://..."
                         />
-                        <p v-if="form.errors.website" class="mt-1 text-xs text-destructive">
+                        <p
+                            v-if="form.errors.website"
+                            class="mt-1 text-xs text-destructive"
+                        >
                             {{ form.errors.website }}
                         </p>
                     </div>

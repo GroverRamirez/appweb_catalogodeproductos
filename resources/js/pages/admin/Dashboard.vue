@@ -8,7 +8,6 @@ import {
     MessageSquare,
     Package,
     PackageX,
-    Sparkles,
     Tag,
     Tags,
 } from 'lucide-vue-next';
@@ -79,40 +78,33 @@ const statusColor = (s: string) => {
 
     <div class="space-y-8 p-4 md:p-8">
         <!-- Hero del panel -->
-        <div class="admin-card relative overflow-hidden rounded-xl border p-6 md:p-8">
-            <div class="absolute inset-0 gradient-brand-soft"></div>
-            <div
-                aria-hidden="true"
-                class="pointer-events-none absolute -right-8 -top-8 size-44 rounded-full bg-primary/15 blur-3xl"
-            ></div>
-            <div
-                aria-hidden="true"
-                class="pointer-events-none absolute -bottom-8 -left-8 size-32 rounded-full bg-accent2/18 blur-3xl"
-            ></div>
-            <div class="relative flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <p class="mb-1 inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-brand">
-                        <Sparkles class="size-3" /> Panel administrativo
-                    </p>
-                    <h1 class="font-display text-3xl font-bold md:text-4xl">
-                        <span class="gradient-text">Bienvenido</span> de vuelta
-                    </h1>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Resumen del catálogo, stock y consultas en tiempo real.
-                    </p>
-                </div>
-                <div class="flex flex-wrap gap-2">
-                    <Button as-child class="rounded-full px-4">
-                        <Link href="/admin/products/create">
-                            <Package class="size-4" /> Nuevo producto
-                        </Link>
-                    </Button>
-                    <Button as-child variant="outline" class="rounded-full px-4">
-                        <Link href="/admin/inquiries">
-                            <MessageSquare class="size-4" /> Ver consultas
-                        </Link>
-                    </Button>
-                </div>
+        <div
+            class="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6"
+        >
+            <div>
+                <p
+                    class="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+                >
+                    Panel administrativo
+                </p>
+                <h1 class="font-display text-2xl font-bold md:text-3xl">
+                    Bienvenido de vuelta
+                </h1>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Resumen del catálogo, stock y consultas en tiempo real.
+                </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <Button as-child class="rounded-md px-4">
+                    <Link href="/admin/products/create">
+                        <Package class="size-4" /> Nuevo producto
+                    </Link>
+                </Button>
+                <Button as-child variant="outline" class="rounded-md px-4">
+                    <Link href="/admin/inquiries">
+                        <MessageSquare class="size-4" /> Ver consultas
+                    </Link>
+                </Button>
             </div>
         </div>
 
@@ -149,11 +141,7 @@ const statusColor = (s: string) => {
                 :value="stats.categories_total"
                 :icon="Tags"
             />
-            <StatCard
-                label="Marcas"
-                :value="stats.brands_total"
-                :icon="Tag"
-            />
+            <StatCard label="Marcas" :value="stats.brands_total" :icon="Tag" />
             <StatCard
                 label="Visitas (7 días)"
                 :value="viewsLast7Days.reduce((a, b) => a + b.total, 0)"
@@ -172,7 +160,9 @@ const statusColor = (s: string) => {
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader class="border-b bg-muted/70">
                     <CardTitle class="flex items-center gap-2 font-display">
-                        <span class="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                        <span
+                            class="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm"
+                        >
                             <Eye class="size-4" />
                         </span>
                         Más consultados
@@ -198,10 +188,14 @@ const statusColor = (s: string) => {
                                     </p>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <span class="font-mono font-semibold text-primary">
+                                    <span
+                                        class="font-mono font-semibold text-primary"
+                                    >
                                         {{ p.views_count }}
                                     </span>
-                                    <span class="text-xs text-muted-foreground"> vistas</span>
+                                    <span class="text-xs text-muted-foreground">
+                                        vistas</span
+                                    >
                                 </td>
                             </tr>
                         </tbody>
@@ -215,7 +209,9 @@ const statusColor = (s: string) => {
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader class="border-b bg-muted/70">
                     <CardTitle class="flex items-center gap-2 font-display">
-                        <span class="grid size-9 place-items-center rounded-lg bg-amber-600 text-white shadow-sm">
+                        <span
+                            class="grid size-9 place-items-center rounded-lg bg-amber-600 text-white shadow-sm"
+                        >
                             <AlertTriangle class="size-4" />
                         </span>
                         Stock bajo
@@ -246,9 +242,7 @@ const statusColor = (s: string) => {
                                 <td class="px-4 py-3 text-right">
                                     <Badge
                                         :variant="
-                                            p.stock! <= 0
-                                                ? 'danger'
-                                                : 'warn'
+                                            p.stock! <= 0 ? 'danger' : 'warn'
                                         "
                                     >
                                         {{ p.stock }} / mín {{ p.min_stock }}
@@ -263,10 +257,16 @@ const statusColor = (s: string) => {
                 </CardContent>
             </Card>
 
-            <Card class="admin-card overflow-hidden rounded-xl border lg:col-span-2">
-                <CardHeader class="flex flex-row items-center justify-between space-y-0 border-b bg-muted/70">
+            <Card
+                class="admin-card overflow-hidden rounded-xl border lg:col-span-2"
+            >
+                <CardHeader
+                    class="flex flex-row items-center justify-between space-y-0 border-b bg-muted/70"
+                >
                     <CardTitle class="flex items-center gap-2 font-display">
-                        <span class="grid size-9 place-items-center rounded-lg bg-emerald-700 text-white shadow-sm">
+                        <span
+                            class="grid size-9 place-items-center rounded-lg bg-emerald-700 text-white shadow-sm"
+                        >
                             <MessageSquare class="size-4" />
                         </span>
                         Últimas consultas
@@ -276,15 +276,16 @@ const statusColor = (s: string) => {
                         class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                     >
                         Ver todas
-                        <ArrowRight class="size-3 transition-transform group-hover:translate-x-1" />
+                        <ArrowRight
+                            class="size-3 transition-transform group-hover:translate-x-1"
+                        />
                     </Link>
                 </CardHeader>
                 <CardContent class="p-0">
-                    <table
-                        v-if="recentInquiries.length"
-                        class="w-full text-sm"
-                    >
-                        <thead class="admin-table-header text-left text-[11px] uppercase tracking-wider">
+                    <table v-if="recentInquiries.length" class="w-full text-sm">
+                        <thead
+                            class="admin-table-header text-left text-[11px] tracking-wider uppercase"
+                        >
                             <tr>
                                 <th class="px-4 py-2">Cliente</th>
                                 <th class="px-4 py-2">Teléfono</th>
@@ -299,11 +300,19 @@ const statusColor = (s: string) => {
                                 :key="i.id"
                                 class="transition hover:bg-accent/45"
                             >
-                                <td class="px-4 py-3 font-medium">{{ i.customer_name }}</td>
-                                <td class="px-4 py-3">{{ i.customer_phone }}</td>
-                                <td class="px-4 py-3 text-xs">{{ i.source }}</td>
+                                <td class="px-4 py-3 font-medium">
+                                    {{ i.customer_name }}
+                                </td>
                                 <td class="px-4 py-3">
-                                    <Badge :variant="statusColor(i.status) as any">
+                                    {{ i.customer_phone }}
+                                </td>
+                                <td class="px-4 py-3 text-xs">
+                                    {{ i.source }}
+                                </td>
+                                <td class="px-4 py-3">
+                                    <Badge
+                                        :variant="statusColor(i.status) as any"
+                                    >
                                         {{ i.status }}
                                     </Badge>
                                 </td>

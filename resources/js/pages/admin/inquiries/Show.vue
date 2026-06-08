@@ -62,7 +62,9 @@ const whatsappLink = (phone: string) =>
     <div class="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
-                <Link href="/admin/inquiries"><ArrowLeft class="size-4" /></Link>
+                <Link href="/admin/inquiries"
+                    ><ArrowLeft class="size-4"
+                /></Link>
             </Button>
             <h1 class="text-2xl font-semibold">Consulta #{{ inquiry.id }}</h1>
             <Badge class="ml-2">{{ inquiry.status }}</Badge>
@@ -74,11 +76,15 @@ const whatsappLink = (phone: string) =>
                 <CardContent class="space-y-2 text-sm">
                     <p>
                         <span class="text-muted-foreground">Nombre: </span>
-                        <span class="font-medium">{{ inquiry.customer_name }}</span>
+                        <span class="font-medium">{{
+                            inquiry.customer_name
+                        }}</span>
                     </p>
                     <p class="flex items-center gap-2">
                         <span class="text-muted-foreground">Teléfono: </span>
-                        <span class="font-medium">{{ inquiry.customer_phone }}</span>
+                        <span class="font-medium">{{
+                            inquiry.customer_phone
+                        }}</span>
                         <Button size="sm" variant="outline" as-child>
                             <a
                                 :href="whatsappLink(inquiry.customer_phone)"
@@ -98,7 +104,9 @@ const whatsappLink = (phone: string) =>
                     </p>
                     <div v-if="inquiry.message" class="mt-3">
                         <p class="text-xs text-muted-foreground">Mensaje:</p>
-                        <p class="mt-1 whitespace-pre-line rounded-md bg-muted p-3">
+                        <p
+                            class="mt-1 rounded-md bg-muted p-3 whitespace-pre-line"
+                        >
                             {{ inquiry.message }}
                         </p>
                     </div>
@@ -116,7 +124,11 @@ const whatsappLink = (phone: string) =>
                                 v-model="form.status"
                                 class="h-9 w-full rounded-md border bg-background px-3 text-sm"
                             >
-                                <option v-for="s in statuses" :key="s" :value="s">
+                                <option
+                                    v-for="s in statuses"
+                                    :key="s"
+                                    :value="s"
+                                >
                                     {{ s }}
                                 </option>
                             </select>
@@ -130,7 +142,11 @@ const whatsappLink = (phone: string) =>
                                 class="w-full rounded-md border bg-background px-3 py-2 text-sm"
                             ></textarea>
                         </div>
-                        <Button type="submit" :disabled="form.processing" class="w-full">
+                        <Button
+                            type="submit"
+                            :disabled="form.processing"
+                            class="w-full"
+                        >
                             Guardar
                         </Button>
                     </form>
@@ -139,11 +155,13 @@ const whatsappLink = (phone: string) =>
         </div>
 
         <Card>
-            <CardHeader><CardTitle>Productos solicitados</CardTitle></CardHeader>
+            <CardHeader
+                ><CardTitle>Productos solicitados</CardTitle></CardHeader
+            >
             <CardContent>
                 <table v-if="inquiry.items.length" class="w-full text-sm">
                     <thead
-                        class="text-left text-xs uppercase text-muted-foreground"
+                        class="text-left text-xs text-muted-foreground uppercase"
                     >
                         <tr>
                             <th class="py-2">Producto</th>
@@ -155,7 +173,9 @@ const whatsappLink = (phone: string) =>
                     <tbody class="divide-y">
                         <tr v-for="it in inquiry.items" :key="it.id">
                             <td class="py-2">
-                                <div class="font-medium">{{ it.product_name_snapshot }}</div>
+                                <div class="font-medium">
+                                    {{ it.product_name_snapshot }}
+                                </div>
                                 <div class="text-xs text-muted-foreground">
                                     {{ it.product_code_snapshot }}
                                 </div>
@@ -163,7 +183,11 @@ const whatsappLink = (phone: string) =>
                             <td class="py-2 text-right">{{ it.quantity }}</td>
                             <td class="py-2 text-right">{{ it.unit_price }}</td>
                             <td class="py-2 text-right">
-                                {{ (Number(it.unit_price) * it.quantity).toFixed(2) }}
+                                {{
+                                    (
+                                        Number(it.unit_price) * it.quantity
+                                    ).toFixed(2)
+                                }}
                             </td>
                         </tr>
                     </tbody>

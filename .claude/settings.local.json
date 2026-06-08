@@ -6,7 +6,8 @@
       "PowerShell(cd C:\\\\laragon\\\\www\\\\appweb_catalogodeproductos; $env:PAO_DISABLE=\"1\"; php artisan test 2>&1 | Select-Object -Last 40)",
       "PowerShell(cd C:\\\\laragon\\\\www\\\\appweb_catalogodeproductos; $env:PAO_DISABLE=\"1\"; php artisan test --without-tty 2>&1 | Tee-Object test_clean.txt | Select-String -Pattern \"Tests:|FAILED|⨯ \" | Select-Object -Last 25; \"EXIT=$LASTEXITCODE\")",
       "Bash(sed -i 's|.*Category::create.*|$p = App\\\\\\\\Models\\\\\\\\Product::factory\\(\\)->create\\(['\\\\''activo'\\\\''=>true]\\);|; /Brand::create/d; /Product::create/d' /tmp/repro3.php)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

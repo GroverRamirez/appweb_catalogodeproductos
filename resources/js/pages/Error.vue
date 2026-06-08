@@ -71,13 +71,14 @@ const content = computed((): ErrorContent => {
             return {
                 code: String(status),
                 title: 'Algo salió mal',
-                description: 'Ocurrió un error inesperado. Vuelve al inicio e intenta de nuevo.',
+                description:
+                    'Ocurrió un error inesperado. Vuelve al inicio e intenta de nuevo.',
             };
     }
 });
 
 const storeName = computed(() => store.value?.name ?? '');
-const logoUrl   = computed(() => store.value?.logo_url ?? null);
+const logoUrl = computed(() => store.value?.logo_url ?? null);
 
 const goHome = () => router.visit('/catalogo');
 const reload = () => window.location.reload();
@@ -125,16 +126,26 @@ const goBack = () => window.history.back();
         />
 
         <!-- Contenido principal -->
-        <div style="position: relative; z-index: 1; max-width: 480px; width: 100%;">
-
+        <div
+            style="
+                position: relative;
+                z-index: 1;
+                max-width: 480px;
+                width: 100%;
+            "
+        >
             <!-- Logo de la tienda (si está disponible) -->
-            <div style="margin-bottom: 2rem;">
+            <div style="margin-bottom: 2rem">
                 <a href="/catalogo" aria-label="Ir al catálogo">
                     <img
                         v-if="logoUrl"
                         :src="logoUrl"
                         :alt="storeName"
-                        style="height: 2.5rem; margin: 0 auto; object-fit: contain;"
+                        style="
+                            height: 2.5rem;
+                            margin: 0 auto;
+                            object-fit: contain;
+                        "
                     />
                     <span
                         v-else-if="storeName"
@@ -246,10 +257,10 @@ const goBack = () => window.history.back();
                         color: #fff;
                         transition: background 0.15s;
                     "
-                    onmouseenter="this.style.background='hsl(155,55%,35%)'"
-                    onmouseleave="this.style.background='hsl(155,55%,40%)'"
+                    onmouseenter="this.style.background = 'hsl(155,55%,35%)'"
+                    onmouseleave="this.style.background = 'hsl(155,55%,40%)'"
                 >
-                    <RefreshCcw style="width: 1rem; height: 1rem;" />
+                    <RefreshCcw style="width: 1rem; height: 1rem" />
                     Recargar página
                 </button>
 
@@ -266,15 +277,19 @@ const goBack = () => window.history.back();
                         font-weight: 600;
                         border-radius: 0.5rem;
                         cursor: pointer;
-                        transition: background 0.15s, color 0.15s;
+                        transition:
+                            background 0.15s,
+                            color 0.15s;
                         background: transparent;
                         border: 1.5px solid var(--border, hsl(155 20% 80%));
                         color: var(--foreground);
                     "
-                    onmouseenter="this.style.background='var(--muted, hsl(155 15% 92%))'"
-                    onmouseleave="this.style.background='transparent'"
+                    onmouseenter="
+                        this.style.background = 'var(--muted, hsl(155 15% 92%))'
+                    "
+                    onmouseleave="this.style.background = 'transparent'"
                 >
-                    <Home style="width: 1rem; height: 1rem;" />
+                    <Home style="width: 1rem; height: 1rem" />
                     Ir al catálogo
                 </button>
 
@@ -297,10 +312,12 @@ const goBack = () => window.history.back();
                         color: var(--foreground);
                         transition: background 0.15s;
                     "
-                    onmouseenter="this.style.background='var(--muted, hsl(155 15% 92%))'"
-                    onmouseleave="this.style.background='transparent'"
+                    onmouseenter="
+                        this.style.background = 'var(--muted, hsl(155 15% 92%))'
+                    "
+                    onmouseleave="this.style.background = 'transparent'"
                 >
-                    <ArrowLeft style="width: 1rem; height: 1rem;" />
+                    <ArrowLeft style="width: 1rem; height: 1rem" />
                     Volver
                 </button>
             </div>

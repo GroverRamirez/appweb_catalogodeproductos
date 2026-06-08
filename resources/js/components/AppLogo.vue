@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
-import { Sparkles } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const page = usePage();
@@ -12,7 +11,7 @@ const logoUrl = computed(() => (page.props.store as any)?.logo_url ?? null);
 
 <template>
     <div
-        class="gradient-brand glow-brand flex aspect-square size-9 items-center justify-center rounded-xl text-white shadow-md"
+        class="flex aspect-square size-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
     >
         <img
             v-if="logoUrl"
@@ -20,16 +19,16 @@ const logoUrl = computed(() => (page.props.store as any)?.logo_url ?? null);
             :alt="storeName"
             class="h-6 w-6 object-contain"
         />
-        <Sparkles v-else class="size-4.5" />
+        <span v-else>{{ storeName.charAt(0).toUpperCase() }}</span>
     </div>
     <div class="ml-1 grid flex-1 text-left text-sm">
         <span
-            class="mb-0 truncate font-display font-bold leading-tight text-sidebar-foreground"
+            class="mb-0 truncate font-display leading-tight font-semibold text-sidebar-foreground"
         >
             {{ storeName }}
         </span>
         <span
-            class="truncate text-[10px] font-semibold uppercase tracking-wider text-sidebar-foreground/65"
+            class="truncate text-[10px] font-medium tracking-wider text-sidebar-foreground/60 uppercase"
         >
             Panel admin
         </span>

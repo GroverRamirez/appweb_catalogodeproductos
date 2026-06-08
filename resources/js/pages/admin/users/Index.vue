@@ -79,10 +79,7 @@ const roleVariant = (r: string) =>
             :description="`${users.total} usuarios registrados.`"
         >
             <template #actions>
-                <Button
-                    as-child
-                    class="gradient-brand glow-brand rounded-full border-transparent text-white"
-                >
+                <Button as-child class="rounded-md">
                     <Link href="/admin/users/create">
                         <Plus class="size-4" /> Nuevo usuario
                     </Link>

@@ -43,8 +43,8 @@ const status = ref(props.filters.status ?? '');
 let timer: ReturnType<typeof setTimeout> | null = null;
 watch([q, status], () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
         router.get(
@@ -57,8 +57,8 @@ clearTimeout(timer);
 
 const destroy = (c: Category) => {
     if (!confirm(`¿Eliminar la categoría "${c.name}"?`)) {
-return;
-}
+        return;
+    }
 
     router.delete(`/admin/categories/${c.id}`, { preserveScroll: true });
 };
@@ -75,7 +75,7 @@ return;
             description="Organiza el catálogo por categorías y subcategorías."
         >
             <template #actions>
-                <Button as-child class="rounded-full gradient-brand glow-brand border-transparent text-white">
+                <Button as-child class="rounded-md">
                     <Link href="/admin/categories/create">
                         <Plus class="size-4" /> Nueva categoría
                     </Link>
@@ -86,7 +86,7 @@ return;
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative max-w-sm flex-1">
                 <Search
-                    class="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    class="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input v-model="q" placeholder="Buscar..." class="pl-8" />
             </div>
@@ -103,14 +103,14 @@ return;
         <div class="overflow-x-auto rounded-md border">
             <table class="w-full text-sm">
                 <thead
-                    class="bg-muted/50 text-left text-xs uppercase text-muted-foreground"
+                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
                 >
                     <tr>
                         <th class="px-3 py-2">Nombre</th>
                         <th class="px-3 py-2">Padre</th>
-                        <th class="px-3 py-2 w-20">Orden</th>
-                        <th class="px-3 py-2 w-24">Estado</th>
-                        <th class="px-3 py-2 w-32"></th>
+                        <th class="w-20 px-3 py-2">Orden</th>
+                        <th class="w-24 px-3 py-2">Estado</th>
+                        <th class="w-32 px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
@@ -130,7 +130,9 @@ return;
                         </td>
                         <td class="px-3 py-2">{{ c.sort_order }}</td>
                         <td class="px-3 py-2">
-                            <Badge :variant="c.is_active ? 'default' : 'secondary'">
+                            <Badge
+                                :variant="c.is_active ? 'default' : 'secondary'"
+                            >
                                 {{ c.is_active ? 'Activa' : 'Inactiva' }}
                             </Badge>
                         </td>

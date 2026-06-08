@@ -33,11 +33,15 @@ const local = reactive({ ...props.filters });
 let timer: ReturnType<typeof setTimeout> | null = null;
 const debouncedApply = () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
-        router.get('/catalogo', { ...local }, { preserveState: true, replace: true });
+        router.get(
+            '/catalogo',
+            { ...local },
+            { preserveState: true, replace: true },
+        );
     }, 400);
 };
 
@@ -56,7 +60,9 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
         class="space-y-6 rounded-2xl border border-border/60 bg-card p-5 text-sm shadow-sm"
     >
         <div class="flex items-center justify-between border-b pb-3">
-            <h3 class="inline-flex items-center gap-2 font-display font-semibold">
+            <h3
+                class="inline-flex items-center gap-2 font-display font-semibold"
+            >
                 <Filter class="size-4 text-brand" />
                 Filtros
             </h3>
@@ -72,7 +78,9 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
         </div>
 
         <div>
-            <Label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+                class="mb-2 block text-[11px] font-bold tracking-wider text-muted-foreground uppercase"
+            >
                 Categoría
             </Label>
             <select
@@ -80,18 +88,16 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
                 class="h-10 w-full rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Todas</option>
-                <option
-                    v-for="c in rootCategories"
-                    :key="c.id"
-                    :value="c.slug"
-                >
+                <option v-for="c in rootCategories" :key="c.id" :value="c.slug">
                     {{ c.name }}
                 </option>
             </select>
         </div>
 
         <div>
-            <Label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+                class="mb-2 block text-[11px] font-bold tracking-wider text-muted-foreground uppercase"
+            >
                 Marca
             </Label>
             <select
@@ -106,7 +112,9 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
         </div>
 
         <div>
-            <Label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+                class="mb-2 block text-[11px] font-bold tracking-wider text-muted-foreground uppercase"
+            >
                 Precio
             </Label>
             <div class="flex gap-2">
@@ -138,13 +146,13 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
                 false-value=""
                 class="accent-brand"
             />
-            <span class="text-sm font-medium">
-                Solo en stock
-            </span>
+            <span class="text-sm font-medium"> Solo en stock </span>
         </label>
 
         <div>
-            <Label class="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <Label
+                class="mb-2 block text-[11px] font-bold tracking-wider text-muted-foreground uppercase"
+            >
                 Ordenar por
             </Label>
             <select

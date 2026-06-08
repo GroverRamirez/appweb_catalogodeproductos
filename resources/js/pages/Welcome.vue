@@ -63,12 +63,8 @@ const handleLogout = () => {
             </nav>
         </header>
 
-        <main
-            class="flex w-full max-w-3xl flex-col items-center text-center"
-        >
-            <h1 class="mb-3 text-3xl font-semibold lg:text-5xl">
-                Mi Catálogo
-            </h1>
+        <main class="flex w-full max-w-3xl flex-col items-center text-center">
+            <h1 class="mb-3 text-3xl font-semibold lg:text-5xl">Mi Catálogo</h1>
             <p class="mb-8 max-w-xl text-[#706f6c] dark:text-[#A1A09A]">
                 Aplicación web de catálogo de productos. La base de datos está
                 lista (Laravel 13 + Inertia + Vue 3 + MySQL + Spatie

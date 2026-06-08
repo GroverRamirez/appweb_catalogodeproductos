@@ -57,7 +57,9 @@ const submit = () => {
     <div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
-                <Link href="/admin/categories"><ArrowLeft class="size-4" /></Link>
+                <Link href="/admin/categories"
+                    ><ArrowLeft class="size-4"
+                /></Link>
             </Button>
             <h1 class="text-2xl font-semibold">
                 {{ isEdit ? 'Editar categoría' : 'Nueva categoría' }}

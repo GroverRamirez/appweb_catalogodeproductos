@@ -59,10 +59,7 @@ const destroy = (b: Banner) => {
             :description="`Aparecen en el carrusel del home. ${banners.total} total.`"
         >
             <template #actions>
-                <Button
-                    as-child
-                    class="gradient-brand glow-brand rounded-full border-transparent text-white"
-                >
+                <Button as-child class="rounded-md">
                     <Link href="/admin/banners/create">
                         <Plus class="size-4" /> Nuevo banner
                     </Link>

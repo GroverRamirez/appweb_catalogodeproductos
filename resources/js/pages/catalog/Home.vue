@@ -5,9 +5,7 @@ import {
     MessageCircle,
     Package,
     ShieldCheck,
-    Sparkles,
     Truck,
-    Zap,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import SeoHead from '@/components/catalog/SeoHead.vue';
@@ -92,40 +90,21 @@ const perks = [
         <!-- Carrusel de banners (si existen) -->
         <HeroCarousel v-if="banners.length" :banners="banners" />
 
-        <!-- Hero fallback espectacular cuando no hay banners -->
-        <section v-else class="relative overflow-hidden border-b">
-            <div class="gradient-brand-soft absolute inset-0"></div>
+        <!-- Hero fallback cuando no hay banners -->
+        <section v-else class="border-b border-border bg-muted/40">
             <div
-                aria-hidden="true"
-                class="pattern-dots pointer-events-none absolute inset-0 text-brand/10"
-            ></div>
-            <div
-                class="relative mx-auto flex max-w-7xl flex-col items-center gap-7 px-4 py-20 text-center md:py-28"
+                class="mx-auto flex max-w-7xl flex-col items-start gap-5 px-4 py-20 md:py-24"
             >
-                <span
-                    class="reveal inline-flex items-center gap-2 rounded-full border border-brand/30 bg-background/80 px-4 py-1.5 text-xs font-semibold text-brand shadow-sm backdrop-blur"
-                >
-                    <Sparkles class="animate-pulse-soft size-3.5" />
-                    {{ t('featured_products') }}
-                </span>
                 <h1
-                    class="reveal reveal-d1 max-w-4xl font-display text-4xl leading-[1.05] font-extrabold tracking-tight md:text-6xl lg:text-7xl"
+                    class="max-w-3xl font-display text-4xl leading-[1.1] font-bold tracking-tight md:text-5xl"
                 >
-                    <span class="gradient-text">{{ store.name }}</span>
+                    {{ store.name }}
                 </h1>
-                <p
-                    class="reveal reveal-d2 max-w-2xl text-base text-muted-foreground md:text-lg"
-                >
+                <p class="max-w-2xl text-base text-muted-foreground md:text-lg">
                     {{ store.tagline }}
                 </p>
-                <div
-                    class="reveal reveal-d3 flex flex-wrap justify-center gap-3"
-                >
-                    <Button
-                        as-child
-                        size="lg"
-                        class="gradient-brand glow-brand rounded-full border-transparent text-white hover:opacity-95"
-                    >
+                <div class="mt-1 flex flex-wrap gap-3">
+                    <Button as-child size="lg" class="rounded-md">
                         <Link href="/catalogo">
                             {{ t('view_catalog') }}
                             <ArrowRight class="size-4" />
@@ -136,7 +115,7 @@ const perks = [
                         as-child
                         variant="outline"
                         size="lg"
-                        class="rounded-full border-brand/30 hover:bg-brand/5"
+                        class="rounded-md"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
@@ -151,27 +130,26 @@ const perks = [
         </section>
 
         <!-- Perks / value props -->
-        <section class="border-y border-border/70 bg-white dark:bg-card/70">
+        <section class="border-b border-border bg-background">
             <div
-                class="mx-auto grid max-w-7xl gap-4 px-4 py-8 sm:grid-cols-2 lg:grid-cols-4"
+                class="mx-auto grid max-w-7xl gap-x-8 gap-y-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4"
             >
                 <div
-                    v-for="(p, i) in perks"
+                    v-for="p in perks"
                     :key="p.title"
-                    :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                    class="flex items-start gap-4 rounded-2xl border border-border/80 bg-background/70 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:shadow-md dark:bg-background/60 dark:hover:bg-card"
+                    class="flex items-start gap-3"
                 >
                     <span
-                        class="grid size-12 shrink-0 place-items-center rounded-xl bg-brand text-white shadow-sm shadow-brand/20"
+                        class="grid size-10 shrink-0 place-items-center rounded-md bg-accent text-primary"
                     >
                         <component :is="p.icon" class="size-5" />
                     </span>
                     <div>
-                        <h3 class="text-sm font-bold text-foreground">
+                        <h3 class="text-sm font-semibold text-foreground">
                             {{ p.title }}
                         </h3>
                         <p
-                            class="mt-1 text-xs leading-relaxed text-muted-foreground"
+                            class="mt-0.5 text-xs leading-relaxed text-muted-foreground"
                         >
                             {{ p.text }}
                         </p>
@@ -181,188 +159,119 @@ const perks = [
         </section>
 
         <!-- Categorías -->
-        <section
-            v-if="categories.length"
-            class="mx-auto max-w-7xl px-4 py-14 md:py-16"
-        >
-            <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
-                <div class="reveal">
-                    <p
-                        class="mb-2 text-xs font-extrabold tracking-widest text-brand uppercase"
-                    >
-                        Explora
-                    </p>
-                    <h2
-                        class="font-display text-3xl font-extrabold text-foreground md:text-4xl"
-                    >
-                        {{ t('categories') }}
-                    </h2>
-                </div>
+        <section v-if="categories.length" class="mx-auto max-w-7xl px-4 py-14">
+            <div class="mb-6 flex items-end justify-between gap-3">
+                <h2
+                    class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                >
+                    {{ t('categories') }}
+                </h2>
                 <Link
                     href="/catalogo"
-                    class="group inline-flex items-center gap-1 rounded-full border border-brand/20 bg-white px-4 py-2 text-sm font-bold text-brand shadow-sm transition hover:border-brand/40 hover:bg-brand/5 dark:bg-card"
+                    class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
                     {{ t('see_all') }}
-                    <ArrowRight
-                        class="size-3 transition-transform group-hover:translate-x-1"
-                    />
+                    <ArrowRight class="size-3.5" />
                 </Link>
             </div>
-            <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 <Link
-                    v-for="(c, i) in categories"
+                    v-for="c in categories"
                     :key="c.id"
                     :href="`/catalogo?category=${c.slug}`"
-                    :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                    class="group relative flex min-h-36 flex-col items-center justify-center overflow-hidden rounded-2xl border border-border/80 bg-white p-5 text-center shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-brand/45 hover:shadow-lg hover:shadow-brand/10 dark:bg-card"
+                    class="group flex min-h-32 flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-5 text-center transition-colors hover:border-primary/40 hover:bg-accent/40"
                 >
+                    <img
+                        v-if="imageUrl(c.image)"
+                        :src="imageUrl(c.image)!"
+                        :alt="c.name"
+                        class="size-12 rounded-md border border-border object-cover"
+                    />
                     <div
-                        class="gradient-brand-soft absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                    ></div>
-                    <div class="relative z-10 flex flex-col items-center">
-                        <img
-                            v-if="imageUrl(c.image)"
-                            :src="imageUrl(c.image)!"
-                            :alt="c.name"
-                            class="mb-3 size-14 rounded-xl border border-border/60 object-cover shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
-                        />
-                        <div
-                            v-else
-                            class="gradient-brand mb-3 grid size-14 place-items-center rounded-xl text-xl font-extrabold text-white shadow-md transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
-                        >
-                            {{ c.name.charAt(0) }}
-                        </div>
-                        <span
-                            class="font-display text-sm leading-tight font-bold text-foreground"
-                        >
-                            {{ c.name }}
-                        </span>
+                        v-else
+                        class="grid size-12 place-items-center rounded-md bg-accent text-lg font-bold text-primary"
+                    >
+                        {{ c.name.charAt(0) }}
                     </div>
-                    <div
-                        class="gradient-brand absolute bottom-0 left-1/2 h-[2px] w-0 -translate-x-1/2 transition-all duration-500 group-hover:w-3/4"
-                    ></div>
+                    <span
+                        class="text-sm leading-tight font-medium text-foreground"
+                    >
+                        {{ c.name }}
+                    </span>
                 </Link>
             </div>
         </section>
 
-        <!-- Destacados con fondo decorativo -->
+        <!-- Destacados -->
         <section
             v-if="featured.length"
-            class="relative overflow-hidden border-y border-border/70 bg-[linear-gradient(135deg,hsl(155_26%_92%)_0%,hsl(0_0%_100%)_46%,hsl(42_74%_93%)_100%)] dark:bg-[linear-gradient(135deg,hsl(160_30%_7%)_0%,hsl(160_30%_5%)_58%,hsl(160_24%_10%)_100%)]"
+            class="border-t border-border bg-muted/40"
         >
-            <div
-                aria-hidden="true"
-                class="pattern-dots absolute inset-0 text-brand/8 dark:text-brand/5"
-            ></div>
-            <div class="relative mx-auto max-w-7xl px-4 py-16 md:py-20">
-                <div
-                    class="mb-8 flex flex-wrap items-end justify-between gap-3"
-                >
-                    <div class="reveal">
-                        <p
-                            class="mb-2 inline-flex items-center gap-1 text-xs font-extrabold tracking-widest text-brand uppercase"
-                        >
-                            <Sparkles class="size-3" /> Lo mejor
-                        </p>
-                        <h2
-                            class="font-display text-3xl font-extrabold text-foreground md:text-4xl"
-                        >
-                            {{ t('featured_products') }}
-                        </h2>
-                    </div>
+            <div class="mx-auto max-w-7xl px-4 py-14">
+                <div class="mb-6 flex items-end justify-between gap-3">
+                    <h2
+                        class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                    >
+                        {{ t('featured_products') }}
+                    </h2>
                     <Link
                         href="/catalogo?sort=newest"
-                        class="group inline-flex items-center gap-1 rounded-full border border-brand/20 bg-white px-4 py-2 text-sm font-bold text-brand shadow-sm transition hover:border-brand/40 hover:bg-brand/5 dark:bg-card"
+                        class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                     >
                         {{ t('see_more') }}
-                        <ArrowRight
-                            class="size-3 transition-transform group-hover:translate-x-1"
-                        />
+                        <ArrowRight class="size-3.5" />
                     </Link>
                 </div>
                 <div
-                    class="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-6"
+                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
                 >
-                    <div
-                        v-for="(p, i) in featured"
+                    <ProductCard
+                        v-for="p in featured"
                         :key="p.id"
-                        :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                    >
-                        <ProductCard :product="p" />
-                    </div>
+                        :product="p"
+                    />
                 </div>
             </div>
         </section>
 
         <!-- Nuevos -->
-        <section
-            v-if="newest.length"
-            class="mx-auto max-w-7xl px-4 py-16 md:py-20"
-        >
-            <div class="mb-8 flex flex-wrap items-end justify-between gap-3">
-                <div class="reveal">
-                    <p
-                        class="mb-2 inline-flex items-center gap-1 text-xs font-extrabold tracking-widest text-brand uppercase"
-                    >
-                        <Zap class="size-3" /> Acabaditos de llegar
-                    </p>
-                    <h2
-                        class="font-display text-3xl font-extrabold text-foreground md:text-4xl"
-                    >
-                        {{ t('newest') }}
-                    </h2>
-                </div>
+        <section v-if="newest.length" class="mx-auto max-w-7xl px-4 py-14">
+            <div class="mb-6 flex items-end justify-between gap-3">
+                <h2
+                    class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                >
+                    {{ t('newest') }}
+                </h2>
                 <Link
                     href="/catalogo?sort=newest"
-                    class="group inline-flex items-center gap-1 rounded-full border border-brand/20 bg-white px-4 py-2 text-sm font-bold text-brand shadow-sm transition hover:border-brand/40 hover:bg-brand/5 dark:bg-card"
+                    class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
                     {{ t('see_more') }}
-                    <ArrowRight
-                        class="size-3 transition-transform group-hover:translate-x-1"
-                    />
+                    <ArrowRight class="size-3.5" />
                 </Link>
             </div>
-            <div
-                class="grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:gap-6"
-            >
-                <div
-                    v-for="(p, i) in newest"
-                    :key="p.id"
-                    :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                >
-                    <ProductCard :product="p" />
-                </div>
+            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                <ProductCard v-for="p in newest" :key="p.id" :product="p" />
             </div>
         </section>
 
         <!-- CTA final -->
         <section
-            class="relative overflow-hidden border-y border-emerald-900/40 bg-[linear-gradient(135deg,hsl(160_44%_10%)_0%,hsl(160_40%_13%)_56%,hsl(159_78%_20%)_100%)] text-white"
+            class="border-t border-border bg-[hsl(222_33%_13%)] text-white"
         >
             <div
-                aria-hidden="true"
-                class="pattern-dots absolute inset-0 text-white/8"
-            ></div>
-            <div
-                class="relative mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 py-20 text-center md:py-24"
+                class="mx-auto flex max-w-5xl flex-col items-center gap-5 px-4 py-16 text-center"
             >
                 <h2
-                    class="reveal max-w-3xl font-display text-3xl leading-tight font-extrabold md:text-5xl"
+                    class="max-w-2xl font-display text-2xl leading-tight font-bold md:text-3xl"
                 >
                     ¿Listo para encontrar lo que buscas?
                 </h2>
-                <p class="reveal reveal-d1 max-w-xl text-white/72">
-                    Más de mil productos seleccionados. Explora nuestro catálogo
-                    o escríbenos por WhatsApp.
+                <p class="max-w-xl text-white/60">
+                    Explora nuestro catálogo o escríbenos por WhatsApp.
                 </p>
-                <div
-                    class="reveal reveal-d2 flex flex-wrap justify-center gap-3"
-                >
-                    <Button
-                        as-child
-                        size="lg"
-                        class="gradient-brand glow-brand rounded-full border-transparent text-white"
-                    >
+                <div class="flex flex-wrap justify-center gap-3">
+                    <Button as-child size="lg" class="rounded-md">
                         <Link href="/catalogo">
                             {{ t('view_catalog') }}
                             <ArrowRight class="size-4" />
@@ -373,7 +282,7 @@ const perks = [
                         as-child
                         variant="outline"
                         size="lg"
-                        class="rounded-full border-background/30 bg-background/10 text-background hover:bg-background/20"
+                        class="rounded-md border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"

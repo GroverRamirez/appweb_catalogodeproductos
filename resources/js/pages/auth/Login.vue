@@ -32,7 +32,7 @@ defineProps<{
 
         <div
             v-if="status"
-            class="mb-5 rounded-[8px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-sm font-medium text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300"
+            class="mb-5 rounded-md border border-border bg-accent px-4 py-3 text-center text-sm font-medium text-accent-foreground"
         >
             {{ status }}
         </div>
@@ -92,11 +92,7 @@ defineProps<{
 
                 <div class="flex items-center justify-between rounded-[8px]">
                     <Label for="remember" class="flex items-center gap-3">
-                        <Checkbox
-                            id="remember"
-                            name="remember"
-                            :tabindex="3"
-                        />
+                        <Checkbox id="remember" name="remember" :tabindex="3" />
                         <span>Recordarme</span>
                     </Label>
                 </div>

@@ -1,15 +1,36 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { AlertTriangle, Minus, Plus, ShoppingCart, Trash2, X } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    Minus,
+    Plus,
+    ShoppingCart,
+    Trash2,
+    X,
+} from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { useCart } from '@/composables/useCart';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 
-const { items, count, subtotal, drawerOpen, setQuantity, remove, clear, validate, removedByValidation } =
-    useCart();
+const {
+    items,
+    count,
+    subtotal,
+    drawerOpen,
+    setQuantity,
+    remove,
+    clear,
+    validate,
+    removedByValidation,
+} = useCart();
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
@@ -44,9 +65,16 @@ watch(drawerOpen, (open) => {
                     v-if="removedByValidation.length > 0"
                     class="flex items-start gap-2 border-b bg-amber-50 px-4 py-2 text-xs text-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
                 >
-                    <AlertTriangle class="mt-0.5 size-3.5 shrink-0 text-amber-500" />
+                    <AlertTriangle
+                        class="mt-0.5 size-3.5 shrink-0 text-amber-500"
+                    />
                     <p>
-                        <strong>{{ removedByValidation.length }} producto(s)</strong>
+                        <strong
+                            >{{
+                                removedByValidation.length
+                            }}
+                            producto(s)</strong
+                        >
                         eliminados del carrito por no estar disponibles.
                     </p>
                 </div>
@@ -94,12 +122,19 @@ watch(drawerOpen, (open) => {
                             <div
                                 class="mt-auto flex items-center justify-between gap-2"
                             >
-                                <div class="inline-flex items-center rounded-md border">
+                                <div
+                                    class="inline-flex items-center rounded-md border"
+                                >
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon-sm"
-                                        @click="setQuantity(item.product_id, item.quantity - 1)"
+                                        @click="
+                                            setQuantity(
+                                                item.product_id,
+                                                item.quantity - 1,
+                                            )
+                                        "
                                     >
                                         <Minus class="size-3" />
                                     </Button>
@@ -110,7 +145,12 @@ watch(drawerOpen, (open) => {
                                         type="button"
                                         variant="ghost"
                                         size="icon-sm"
-                                        @click="setQuantity(item.product_id, item.quantity + 1)"
+                                        @click="
+                                            setQuantity(
+                                                item.product_id,
+                                                item.quantity + 1,
+                                            )
+                                        "
                                     >
                                         <Plus class="size-3" />
                                     </Button>

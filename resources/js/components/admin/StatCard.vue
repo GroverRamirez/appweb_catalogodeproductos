@@ -34,7 +34,7 @@ const cardBorder: Record<string, string> = {
         <!-- Glow decorativo en hover -->
         <div
             aria-hidden="true"
-            class="pointer-events-none absolute -right-12 -top-12 size-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+            class="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
             :class="{
                 'bg-primary/20': !tone || tone === 'default',
                 'bg-amber-500/24': tone === 'warn',
@@ -45,11 +45,13 @@ const cardBorder: Record<string, string> = {
 
         <div class="relative flex items-start justify-between">
             <div>
-                <p class="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <p
+                    class="text-xs font-bold tracking-wider text-muted-foreground uppercase"
+                >
                     {{ label }}
                 </p>
                 <p
-                    class="mt-2 font-display text-3xl font-extrabold leading-tight tracking-tight text-foreground md:text-4xl"
+                    class="mt-2 font-display text-3xl leading-tight font-extrabold tracking-tight text-foreground md:text-4xl"
                 >
                     {{ value }}
                 </p>

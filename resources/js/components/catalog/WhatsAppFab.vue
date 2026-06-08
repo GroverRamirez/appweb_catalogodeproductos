@@ -6,8 +6,8 @@ import type { StoreSettings } from '@/lib/catalog';
 const page = usePage<{ store: StoreSettings }>();
 const store = computed(() => page.props.store);
 
-const waNumber = computed(() =>
-    store.value?.whatsapp?.replace(/[^0-9]/g, '') ?? '',
+const waNumber = computed(
+    () => store.value?.whatsapp?.replace(/[^0-9]/g, '') ?? '',
 );
 
 const waUrl = computed(() => {

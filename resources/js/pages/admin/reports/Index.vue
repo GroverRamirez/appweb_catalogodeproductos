@@ -16,8 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { formatPrice  } from '@/lib/catalog';
-import type {StoreSettings} from '@/lib/catalog';
+import { formatPrice } from '@/lib/catalog';
+import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({
     layout: () => ({
@@ -69,11 +69,15 @@ const filters = reactive({ from: props.range.from, to: props.range.to });
 let timer: ReturnType<typeof setTimeout> | null = null;
 watch(filters, () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
-        router.get('/admin/reportes', { ...filters }, { preserveState: true, replace: true });
+        router.get(
+            '/admin/reportes',
+            { ...filters },
+            { preserveState: true, replace: true },
+        );
     }, 400);
 });
 
@@ -97,21 +101,21 @@ const maxRevenue = computed(() =>
         >
             <template #actions>
                 <div class="flex flex-wrap items-end gap-3">
-                <div>
-                    <Label for="from" class="text-xs">Desde</Label>
-                    <Input id="from" type="date" v-model="filters.from" />
-                </div>
-                <div>
-                    <Label for="to" class="text-xs">Hasta</Label>
-                    <Input id="to" type="date" v-model="filters.to" />
-                </div>
-                <Button variant="outline" as-child class="rounded-full">
-                    <a
-                        :href="`/admin/reportes/export.csv?from=${filters.from}&to=${filters.to}`"
-                    >
-                        <Download class="size-4" /> CSV
-                    </a>
-                </Button>
+                    <div>
+                        <Label for="from" class="text-xs">Desde</Label>
+                        <Input id="from" type="date" v-model="filters.from" />
+                    </div>
+                    <div>
+                        <Label for="to" class="text-xs">Hasta</Label>
+                        <Input id="to" type="date" v-model="filters.to" />
+                    </div>
+                    <Button variant="outline" as-child class="rounded-full">
+                        <a
+                            :href="`/admin/reportes/export.csv?from=${filters.from}&to=${filters.to}`"
+                        >
+                            <Download class="size-4" /> CSV
+                        </a>
+                    </Button>
                 </div>
             </template>
         </PageHeader>
@@ -147,17 +151,18 @@ const maxRevenue = computed(() =>
                 tone="warn"
                 :icon="MessageSquare"
             />
-            <StatCard
-                label="Cerradas"
-                :value="kpis.closed"
-                :icon="Calendar"
-            />
+            <StatCard label="Cerradas" :value="kpis.closed" :icon="Calendar" />
         </div>
 
         <Card>
-            <CardHeader><CardTitle>Consultas e ingresos por día</CardTitle></CardHeader>
+            <CardHeader
+                ><CardTitle>Consultas e ingresos por día</CardTitle></CardHeader
+            >
             <CardContent>
-                <div v-if="!series.length" class="text-center text-sm text-muted-foreground">
+                <div
+                    v-if="!series.length"
+                    class="text-center text-sm text-muted-foreground"
+                >
                     Sin datos en el rango seleccionado.
                 </div>
                 <div v-else class="space-y-1">
@@ -172,16 +177,24 @@ const maxRevenue = computed(() =>
                         <div class="flex items-center gap-2">
                             <div
                                 class="h-4 rounded bg-sky-400"
-                                :style="{ width: `${(row.total / maxInquiries) * 100}%` }"
+                                :style="{
+                                    width: `${(row.total / maxInquiries) * 100}%`,
+                                }"
                             ></div>
-                            <span class="text-sky-700 dark:text-sky-300">{{ row.total }}</span>
+                            <span class="text-sky-700 dark:text-sky-300">{{
+                                row.total
+                            }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <div
                                 class="h-4 rounded bg-emerald-400"
-                                :style="{ width: `${(row.revenue / maxRevenue) * 100}%` }"
+                                :style="{
+                                    width: `${(row.revenue / maxRevenue) * 100}%`,
+                                }"
                             ></div>
-                            <span class="text-emerald-700 dark:text-emerald-300">
+                            <span
+                                class="text-emerald-700 dark:text-emerald-300"
+                            >
                                 {{ cur(row.revenue) }}
                             </span>
                         </div>
@@ -191,10 +204,12 @@ const maxRevenue = computed(() =>
                     class="mt-4 flex flex-wrap gap-4 border-t pt-3 text-xs text-muted-foreground"
                 >
                     <span class="inline-flex items-center gap-1">
-                        <span class="size-3 rounded bg-sky-400"></span> Consultas
+                        <span class="size-3 rounded bg-sky-400"></span>
+                        Consultas
                     </span>
                     <span class="inline-flex items-center gap-1">
-                        <span class="size-3 rounded bg-emerald-400"></span> Ingresos
+                        <span class="size-3 rounded bg-emerald-400"></span>
+                        Ingresos
                     </span>
                 </div>
             </CardContent>
@@ -202,10 +217,16 @@ const maxRevenue = computed(() =>
 
         <div class="grid gap-6 lg:grid-cols-2">
             <Card>
-                <CardHeader><CardTitle>Productos más solicitados</CardTitle></CardHeader>
+                <CardHeader
+                    ><CardTitle
+                        >Productos más solicitados</CardTitle
+                    ></CardHeader
+                >
                 <CardContent>
                     <table v-if="topProducts.length" class="w-full text-sm">
-                        <thead class="text-left text-xs uppercase text-muted-foreground">
+                        <thead
+                            class="text-left text-xs text-muted-foreground uppercase"
+                        >
                             <tr>
                                 <th class="py-2">Producto</th>
                                 <th class="py-2 text-right">Cantidad</th>
@@ -216,10 +237,14 @@ const maxRevenue = computed(() =>
                             <tr v-for="p in topProducts" :key="p.product_id">
                                 <td class="py-2">
                                     <div class="font-medium">{{ p.name }}</div>
-                                    <div class="text-xs text-muted-foreground">{{ p.code }}</div>
+                                    <div class="text-xs text-muted-foreground">
+                                        {{ p.code }}
+                                    </div>
                                 </td>
                                 <td class="py-2 text-right">{{ p.qty }}</td>
-                                <td class="py-2 text-right">{{ cur(Number(p.revenue)) }}</td>
+                                <td class="py-2 text-right">
+                                    {{ cur(Number(p.revenue)) }}
+                                </td>
                             </tr>
                         </tbody>
                     </table>
@@ -230,10 +255,14 @@ const maxRevenue = computed(() =>
             </Card>
 
             <Card>
-                <CardHeader><CardTitle>Productos más vistos</CardTitle></CardHeader>
+                <CardHeader
+                    ><CardTitle>Productos más vistos</CardTitle></CardHeader
+                >
                 <CardContent>
                     <table v-if="topViewed.length" class="w-full text-sm">
-                        <thead class="text-left text-xs uppercase text-muted-foreground">
+                        <thead
+                            class="text-left text-xs text-muted-foreground uppercase"
+                        >
                             <tr>
                                 <th class="py-2">Producto</th>
                                 <th class="py-2 text-right">Vistas</th>
@@ -243,7 +272,9 @@ const maxRevenue = computed(() =>
                             <tr v-for="p in topViewed" :key="p.product_id">
                                 <td class="py-2">
                                     <div class="font-medium">{{ p.name }}</div>
-                                    <div class="text-xs text-muted-foreground">{{ p.code }}</div>
+                                    <div class="text-xs text-muted-foreground">
+                                        {{ p.code }}
+                                    </div>
                                 </td>
                                 <td class="py-2 text-right">
                                     <Eye class="mr-1 inline size-3" />

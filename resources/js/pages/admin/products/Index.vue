@@ -1,6 +1,18 @@
 <script setup lang="ts">
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { AlertTriangle, CheckCircle2, FileUp, Package, Pencil, Plus, Search, Star, Trash2, X, XCircle } from 'lucide-vue-next';
+import {
+    AlertTriangle,
+    CheckCircle2,
+    FileUp,
+    Package,
+    Pencil,
+    Plus,
+    Search,
+    Star,
+    Trash2,
+    X,
+    XCircle,
+} from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -67,8 +79,8 @@ const lowStock = ref(!!props.filters.low_stock);
 let timer: ReturnType<typeof setTimeout> | null = null;
 watch([q, category, brand, status, lowStock], () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
         router.get(
@@ -87,8 +99,8 @@ clearTimeout(timer);
 
 const destroy = (p: Product) => {
     if (!confirm(`¿Eliminar "${p.name}"?`)) {
-return;
-}
+        return;
+    }
 
     router.delete(`/admin/products/${p.id}`, { preserveScroll: true });
 };
@@ -97,16 +109,16 @@ const imageUrl = (p: Product) => {
     const img = p.main_image?.path;
 
     if (!img) {
-return null;
-}
+        return null;
+    }
 
     return img.startsWith('http') ? img : `/storage/${img}`;
 };
 
 // ── CSV Import ────────────────────────────────────────────────────────────
-const importOpen   = ref(false);
-const importFile   = ref<File | null>(null);
-const importing    = ref(false);
+const importOpen = ref(false);
+const importFile = ref<File | null>(null);
+const importing = ref(false);
 const importResult = ref<{
     imported: number;
     updated: number;
@@ -120,9 +132,9 @@ const CSV_TEMPLATE = [
 
 function downloadTemplate() {
     const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv;charset=utf-8;' });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href     = url;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
     a.download = 'plantilla_productos.csv';
     a.click();
     URL.revokeObjectURL(url);
@@ -140,7 +152,11 @@ async function runImport() {
 
     const fd = new FormData();
     fd.append('file', importFile.value);
-    fd.append('_token', (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content ?? '');
+    fd.append(
+        '_token',
+        (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)
+            ?.content ?? '',
+    );
 
     try {
         const res = await fetch('/admin/products/import', {
@@ -149,7 +165,17 @@ async function runImport() {
         });
         const json = await res.json();
         if (!res.ok) {
-            importResult.value = { imported: 0, updated: 0, errors: [{ row: 0, code: '', errors: [json.message ?? 'Error desconocido'] }] };
+            importResult.value = {
+                imported: 0,
+                updated: 0,
+                errors: [
+                    {
+                        row: 0,
+                        code: '',
+                        errors: [json.message ?? 'Error desconocido'],
+                    },
+                ],
+            };
         } else {
             importResult.value = json;
             // Refresh product table if something was imported/updated
@@ -158,7 +184,17 @@ async function runImport() {
             }
         }
     } catch (err) {
-        importResult.value = { imported: 0, updated: 0, errors: [{ row: 0, code: '', errors: ['Error de red al subir el archivo.'] }] };
+        importResult.value = {
+            imported: 0,
+            updated: 0,
+            errors: [
+                {
+                    row: 0,
+                    code: '',
+                    errors: ['Error de red al subir el archivo.'],
+                },
+            ],
+        };
     } finally {
         importing.value = false;
     }
@@ -183,7 +219,7 @@ async function runImport() {
                 >
                     <FileUp class="size-4" /> Importar CSV
                 </Button>
-                <Button as-child class="rounded-full gradient-brand glow-brand border-transparent text-white">
+                <Button as-child class="rounded-md">
                     <Link href="/admin/products/create">
                         <Plus class="size-4" /> Nuevo producto
                     </Link>
@@ -194,7 +230,7 @@ async function runImport() {
         <div class="grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-5">
             <div class="relative md:col-span-2">
                 <Search
-                    class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input
                     v-model="q"
@@ -230,114 +266,136 @@ async function runImport() {
             </select>
 
             <label class="col-span-full flex items-center gap-2 text-sm">
-                <input type="checkbox" v-model="lowStock" class="accent-brand" />
+                <input
+                    type="checkbox"
+                    v-model="lowStock"
+                    class="accent-brand"
+                />
                 Solo stock bajo
             </label>
         </div>
 
         <div class="overflow-hidden rounded-2xl border bg-card shadow-sm">
             <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead
-                    class="bg-muted/40 text-left text-[11px] uppercase tracking-wider text-muted-foreground"
-                >
-                    <tr>
-                        <th class="px-3 py-2 w-12"></th>
-                        <th class="px-3 py-2">Producto</th>
-                        <th class="px-3 py-2">Categoría</th>
-                        <th class="px-3 py-2">Marca</th>
-                        <th class="px-3 py-2 text-right">Precio</th>
-                        <th class="px-3 py-2 text-right">Stock</th>
-                        <th class="px-3 py-2">Estado</th>
-                        <th class="px-3 py-2"></th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y">
-                    <tr
-                        v-for="p in products.data"
-                        :key="p.id"
-                        class="transition hover:bg-brand/5"
+                <table class="w-full text-sm">
+                    <thead
+                        class="bg-muted/40 text-left text-[11px] tracking-wider text-muted-foreground uppercase"
                     >
-                        <td class="px-3 py-2">
-                            <img
-                                v-if="imageUrl(p)"
-                                :src="imageUrl(p)!"
-                                :alt="p.name"
-                                class="size-11 rounded-lg object-cover shadow-sm ring-1 ring-border/60"
-                            />
-                            <div
-                                v-else
-                                class="size-11 rounded-lg bg-muted"
-                            ></div>
-                        </td>
-                        <td class="px-3 py-2">
-                            <div class="flex items-center gap-1 font-medium">
-                                {{ p.name }}
-                                <Star v-if="p.is_featured" class="size-3 text-amber-500" />
-                            </div>
-                            <div class="text-xs text-muted-foreground">{{ p.code }}</div>
-                        </td>
-                        <td class="px-3 py-2 text-muted-foreground">
-                            {{ p.category?.name ?? '—' }}
-                        </td>
-                        <td class="px-3 py-2 text-muted-foreground">
-                            {{ p.brand?.name ?? '—' }}
-                        </td>
-                        <td class="px-3 py-2 text-right">
-                            <span v-if="p.sale_price" class="font-semibold">
-                                {{ p.sale_price }}
-                            </span>
-                            <span
-                                v-else
-                                class="font-semibold"
-                                >{{ p.price }}</span
+                        <tr>
+                            <th class="w-12 px-3 py-2"></th>
+                            <th class="px-3 py-2">Producto</th>
+                            <th class="px-3 py-2">Categoría</th>
+                            <th class="px-3 py-2">Marca</th>
+                            <th class="px-3 py-2 text-right">Precio</th>
+                            <th class="px-3 py-2 text-right">Stock</th>
+                            <th class="px-3 py-2">Estado</th>
+                            <th class="px-3 py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <tr
+                            v-for="p in products.data"
+                            :key="p.id"
+                            class="transition hover:bg-brand/5"
+                        >
+                            <td class="px-3 py-2">
+                                <img
+                                    v-if="imageUrl(p)"
+                                    :src="imageUrl(p)!"
+                                    :alt="p.name"
+                                    class="size-11 rounded-lg object-cover shadow-sm ring-1 ring-border/60"
+                                />
+                                <div
+                                    v-else
+                                    class="size-11 rounded-lg bg-muted"
+                                ></div>
+                            </td>
+                            <td class="px-3 py-2">
+                                <div
+                                    class="flex items-center gap-1 font-medium"
+                                >
+                                    {{ p.name }}
+                                    <Star
+                                        v-if="p.is_featured"
+                                        class="size-3 text-amber-500"
+                                    />
+                                </div>
+                                <div class="text-xs text-muted-foreground">
+                                    {{ p.code }}
+                                </div>
+                            </td>
+                            <td class="px-3 py-2 text-muted-foreground">
+                                {{ p.category?.name ?? '—' }}
+                            </td>
+                            <td class="px-3 py-2 text-muted-foreground">
+                                {{ p.brand?.name ?? '—' }}
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                <span v-if="p.sale_price" class="font-semibold">
+                                    {{ p.sale_price }}
+                                </span>
+                                <span v-else class="font-semibold">{{
+                                    p.price
+                                }}</span>
+                                <div
+                                    v-if="p.sale_price"
+                                    class="text-xs text-muted-foreground line-through"
+                                >
+                                    {{ p.price }}
+                                </div>
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                <span
+                                    :class="
+                                        p.stock <= 0
+                                            ? 'font-semibold text-destructive'
+                                            : p.stock <= p.min_stock
+                                              ? 'text-amber-600'
+                                              : ''
+                                    "
+                                    >{{ p.stock }}</span
+                                >
+                                <AlertTriangle
+                                    v-if="p.stock > 0 && p.stock <= p.min_stock"
+                                    class="ml-1 inline size-3 text-amber-600"
+                                />
+                            </td>
+                            <td class="px-3 py-2">
+                                <Badge
+                                    :variant="
+                                        p.is_active ? 'default' : 'secondary'
+                                    "
+                                >
+                                    {{ p.is_active ? 'Activo' : 'Inactivo' }}
+                                </Badge>
+                            </td>
+                            <td class="px-3 py-2 text-right">
+                                <Button variant="ghost" size="icon-sm" as-child>
+                                    <Link
+                                        :href="`/admin/products/${p.id}/edit`"
+                                    >
+                                        <Pencil class="size-4" />
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    @click="destroy(p)"
+                                >
+                                    <Trash2 class="size-4 text-destructive" />
+                                </Button>
+                            </td>
+                        </tr>
+                        <tr v-if="!products.data.length">
+                            <td
+                                colspan="8"
+                                class="px-3 py-10 text-center text-muted-foreground"
                             >
-                            <div
-                                v-if="p.sale_price"
-                                class="text-xs text-muted-foreground line-through"
-                            >
-                                {{ p.price }}
-                            </div>
-                        </td>
-                        <td class="px-3 py-2 text-right">
-                            <span
-                                :class="
-                                    p.stock <= 0
-                                        ? 'text-destructive font-semibold'
-                                        : p.stock <= p.min_stock
-                                          ? 'text-amber-600'
-                                          : ''
-                                "
-                                >{{ p.stock }}</span
-                            >
-                            <AlertTriangle
-                                v-if="p.stock > 0 && p.stock <= p.min_stock"
-                                class="ml-1 inline size-3 text-amber-600"
-                            />
-                        </td>
-                        <td class="px-3 py-2">
-                            <Badge :variant="p.is_active ? 'default' : 'secondary'">
-                                {{ p.is_active ? 'Activo' : 'Inactivo' }}
-                            </Badge>
-                        </td>
-                        <td class="px-3 py-2 text-right">
-                            <Button variant="ghost" size="icon-sm" as-child>
-                                <Link :href="`/admin/products/${p.id}/edit`">
-                                    <Pencil class="size-4" />
-                                </Link>
-                            </Button>
-                            <Button variant="ghost" size="icon-sm" @click="destroy(p)">
-                                <Trash2 class="size-4 text-destructive" />
-                            </Button>
-                        </td>
-                    </tr>
-                    <tr v-if="!products.data.length">
-                        <td colspan="8" class="px-3 py-10 text-center text-muted-foreground">
-                            Sin resultados.
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+                                Sin resultados.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -353,10 +411,12 @@ async function runImport() {
             <DialogContent class="max-w-lg">
                 <DialogHeader>
                     <DialogTitle class="flex items-center gap-2">
-                        <FileUp class="size-5 text-brand" /> Importar productos desde CSV
+                        <FileUp class="size-5 text-brand" /> Importar productos
+                        desde CSV
                     </DialogTitle>
                     <DialogDescription>
-                        Sube un archivo CSV con los productos. Filas con código existente se actualizarán.
+                        Sube un archivo CSV con los productos. Filas con código
+                        existente se actualizarán.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -367,8 +427,12 @@ async function runImport() {
                         class="flex w-full items-center justify-between rounded-xl border border-dashed border-brand/40 bg-brand/5 px-4 py-3 text-sm text-brand transition hover:bg-brand/10"
                         @click="downloadTemplate"
                     >
-                        <span class="font-medium">📄 Descargar plantilla CSV</span>
-                        <span class="text-xs text-muted-foreground">codigo, nombre, precio…</span>
+                        <span class="font-medium"
+                            >📄 Descargar plantilla CSV</span
+                        >
+                        <span class="text-xs text-muted-foreground"
+                            >codigo, nombre, precio…</span
+                        >
                     </button>
 
                     <!-- File input -->
@@ -380,25 +444,49 @@ async function runImport() {
                             class="block w-full cursor-pointer rounded-lg border bg-background px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-brand"
                             @change="onFileChange"
                         />
-                        <p class="text-xs text-muted-foreground">Máximo 5 MB. Columnas: codigo, nombre, precio, precio_oferta, stock, categoria, marca, activo</p>
+                        <p class="text-xs text-muted-foreground">
+                            Máximo 5 MB. Columnas: codigo, nombre, precio,
+                            precio_oferta, stock, categoria, marca, activo
+                        </p>
                     </div>
 
                     <!-- Result -->
-                    <div v-if="importResult" class="rounded-xl border p-4 text-sm space-y-2">
+                    <div
+                        v-if="importResult"
+                        class="space-y-2 rounded-xl border p-4 text-sm"
+                    >
                         <div class="flex gap-4 font-semibold">
                             <span class="flex items-center gap-1 text-brand">
-                                <CheckCircle2 class="size-4" /> {{ importResult.imported }} nuevos
+                                <CheckCircle2 class="size-4" />
+                                {{ importResult.imported }} nuevos
                             </span>
-                            <span class="flex items-center gap-1 text-amber-600">
-                                <CheckCircle2 class="size-4" /> {{ importResult.updated }} actualizados
+                            <span
+                                class="flex items-center gap-1 text-amber-600"
+                            >
+                                <CheckCircle2 class="size-4" />
+                                {{ importResult.updated }} actualizados
                             </span>
-                            <span v-if="importResult.errors.length" class="flex items-center gap-1 text-destructive">
-                                <XCircle class="size-4" /> {{ importResult.errors.length }} errores
+                            <span
+                                v-if="importResult.errors.length"
+                                class="flex items-center gap-1 text-destructive"
+                            >
+                                <XCircle class="size-4" />
+                                {{ importResult.errors.length }} errores
                             </span>
                         </div>
-                        <ul v-if="importResult.errors.length" class="max-h-40 overflow-y-auto space-y-1 text-xs text-destructive">
-                            <li v-for="e in importResult.errors" :key="e.row" class="rounded bg-destructive/5 px-2 py-1">
-                                <span class="font-semibold">Fila {{ e.row }}{{ e.code ? ` (${e.code})` : '' }}:</span>
+                        <ul
+                            v-if="importResult.errors.length"
+                            class="max-h-40 space-y-1 overflow-y-auto text-xs text-destructive"
+                        >
+                            <li
+                                v-for="e in importResult.errors"
+                                :key="e.row"
+                                class="rounded bg-destructive/5 px-2 py-1"
+                            >
+                                <span class="font-semibold"
+                                    >Fila {{ e.row
+                                    }}{{ e.code ? ` (${e.code})` : '' }}:</span
+                                >
                                 {{ e.errors.join(' · ') }}
                             </li>
                         </ul>
@@ -406,10 +494,12 @@ async function runImport() {
 
                     <!-- Actions -->
                     <div class="flex justify-end gap-2">
-                        <Button variant="ghost" @click="importOpen = false">Cancelar</Button>
+                        <Button variant="ghost" @click="importOpen = false"
+                            >Cancelar</Button
+                        >
                         <Button
                             :disabled="!importFile || importing"
-                            class="gradient-brand border-transparent text-white"
+                            class="rounded-md"
                             @click="runImport"
                         >
                             <span v-if="importing">Importando…</span>
@@ -419,6 +509,5 @@ async function runImport() {
                 </div>
             </DialogContent>
         </Dialog>
-
     </div>
 </template>

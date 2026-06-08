@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Eye, Heart, ShoppingCart, Sparkles, Zap } from 'lucide-vue-next';
+import { Eye, ImageOff, ShoppingCart } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/composables/useCart';
@@ -73,166 +73,125 @@ const onAdd = (e: MouseEvent) => {
     <div class="group relative">
         <Link
             :href="`/catalogo/${product.slug}`"
-            class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/80 bg-white shadow-[0_1px_2px_hsl(160_30%_8%/0.06),0_14px_36px_-30px_hsl(160_30%_8%/0.35)] transition-all duration-500 ease-out hover:-translate-y-1 hover:border-brand/45 hover:shadow-[0_22px_60px_-24px_hsl(160_30%_8%/0.35)] dark:bg-card"
+            class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-colors hover:border-primary/40"
         >
-            <!-- Imagen con overlay -->
-            <div
-                class="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-muted via-white to-secondary dark:via-muted"
-            >
+            <!-- Imagen -->
+            <div class="relative aspect-square overflow-hidden bg-muted">
                 <img
                     v-if="image"
                     :src="image"
                     :alt="product.name"
-                    class="h-full w-full object-cover transition-all duration-[800ms] ease-out group-hover:scale-110"
+                    class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
                 />
                 <div
                     v-else
-                    class="flex h-full w-full items-center justify-center text-xs text-muted-foreground"
+                    class="flex h-full w-full items-center justify-center text-muted-foreground"
                 >
-                    <Sparkles class="size-8 opacity-30" />
+                    <ImageOff class="size-8 opacity-40" />
                 </div>
 
-                <!-- Shine effect en hover -->
+                <!-- Badges -->
                 <div
-                    class="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-1000 group-hover:translate-x-full"
-                ></div>
-
-                <!-- Badges flotantes superiores -->
-                <div
-                    class="absolute top-3 left-3 flex flex-col items-start gap-1.5"
-                >
-                    <span
-                        v-if="product.is_featured"
-                        class="inline-flex items-center gap-1 rounded-full bg-amber-500/95 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase shadow-lg backdrop-blur"
-                    >
-                        <Sparkles class="size-3" /> Top
-                    </span>
-                    <span
-                        v-if="isNew"
-                        class="inline-flex items-center gap-1 rounded-full bg-brand/95 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase shadow-lg backdrop-blur"
-                    >
-                        <Zap class="size-3" /> Nuevo
-                    </span>
-                </div>
-
-                <div
-                    class="absolute top-3 right-3 flex flex-col items-end gap-1.5"
+                    class="absolute top-2 left-2 flex flex-col items-start gap-1"
                 >
                     <span
                         v-if="showSale"
-                        class="rounded-full bg-rose-500/95 px-2.5 py-1 text-[11px] font-extrabold text-white shadow-lg backdrop-blur"
+                        class="rounded bg-destructive px-1.5 py-0.5 text-[11px] font-semibold text-destructive-foreground"
                     >
                         −{{ discountPct }}%
                     </span>
+                    <span
+                        v-else-if="isNew"
+                        class="rounded bg-[hsl(222_33%_18%)] px-1.5 py-0.5 text-[11px] font-medium text-white"
+                    >
+                        Nuevo
+                    </span>
                 </div>
 
-                <!-- Stock badge inferior -->
+                <!-- Stock -->
                 <div
                     v-if="store.show_stock && (outOfStock || lowStock)"
-                    class="absolute bottom-3 left-3"
+                    class="absolute top-2 right-2"
                 >
                     <span
                         v-if="outOfStock"
-                        class="rounded-full bg-foreground/85 px-2.5 py-1 text-[10px] font-bold tracking-wider text-background uppercase backdrop-blur"
+                        class="rounded bg-foreground/80 px-1.5 py-0.5 text-[11px] font-medium text-background"
                     >
                         Sin stock
                     </span>
                     <span
                         v-else-if="lowStock"
-                        class="rounded-full bg-amber-500/95 px-2.5 py-1 text-[10px] font-bold tracking-wider text-white uppercase shadow backdrop-blur"
+                        class="rounded border border-border bg-background px-1.5 py-0.5 text-[11px] font-medium text-foreground"
                     >
-                        ¡Últimas {{ product.stock }}!
+                        Últimas {{ product.stock }}
                     </span>
                 </div>
 
-                <!-- Overlay con CTAs en hover -->
+                <!-- CTAs en hover -->
                 <div
-                    class="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-emerald-950/78 via-emerald-950/18 to-transparent p-3 opacity-0 transition-all duration-300 group-hover:opacity-100"
+                    class="absolute inset-x-2 bottom-2 flex gap-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
                 >
-                    <div
-                        class="flex w-full translate-y-3 gap-2 transition-transform duration-300 group-hover:translate-y-0"
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        class="h-8 flex-1 rounded-md border border-border bg-background text-foreground hover:bg-muted"
+                        @click="openQuick"
                     >
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            class="flex-1 rounded-full bg-white/90 text-foreground shadow-md backdrop-blur hover:bg-white"
-                            @click="openQuick"
-                        >
-                            <Eye class="size-4" />
-                            <span class="hidden lg:inline">Vista</span>
-                        </Button>
-                        <Button
-                            v-if="!outOfStock"
-                            type="button"
-                            size="sm"
-                            class="gradient-brand flex-1 rounded-full text-white shadow-md hover:opacity-90"
-                            @click="onAdd"
-                        >
-                            <ShoppingCart class="size-4" />
-                            <span class="hidden lg:inline">Agregar</span>
-                        </Button>
-                    </div>
+                        <Eye class="size-4" />
+                        <span class="hidden lg:inline">Vista</span>
+                    </Button>
+                    <Button
+                        v-if="!outOfStock"
+                        type="button"
+                        size="sm"
+                        class="h-8 flex-1 rounded-md"
+                        @click="onAdd"
+                    >
+                        <ShoppingCart class="size-4" />
+                        <span class="hidden lg:inline">Agregar</span>
+                    </Button>
                 </div>
             </div>
 
             <!-- Contenido -->
-            <div class="flex flex-1 flex-col gap-1.5 p-4">
+            <div class="flex flex-1 flex-col gap-1 p-3">
                 <p
                     v-if="product.category"
-                    class="text-[11px] font-extrabold tracking-wider text-brand uppercase"
+                    class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
                 >
                     {{ product.category.name }}
                 </p>
                 <h3
-                    class="line-clamp-2 font-display text-base leading-snug font-bold text-foreground"
+                    class="line-clamp-2 text-sm leading-snug font-medium text-foreground"
                 >
                     {{ product.name }}
                 </h3>
-                <p v-if="product.brand" class="text-sm text-muted-foreground">
+                <p v-if="product.brand" class="text-xs text-muted-foreground">
                     {{ product.brand.name }}
                 </p>
 
                 <div
                     v-if="store.show_prices"
-                    class="mt-auto flex items-end justify-between gap-2 pt-3"
+                    class="mt-auto flex items-baseline gap-2 pt-2"
                 >
-                    <div>
-                        <span
-                            class="font-display text-xl font-extrabold text-foreground"
-                        >
-                            {{
-                                formatPrice(
-                                    product.sale_price ?? product.price,
-                                    store.currency_symbol,
-                                )
-                            }}
-                        </span>
-                        <span
-                            v-if="showSale"
-                            class="ml-1 text-xs font-medium text-muted-foreground line-through"
-                        >
-                            {{
-                                formatPrice(
-                                    product.price,
-                                    store.currency_symbol,
-                                )
-                            }}
-                        </span>
-                    </div>
+                    <span class="text-base font-semibold text-foreground">
+                        {{
+                            formatPrice(
+                                product.sale_price ?? product.price,
+                                store.currency_symbol,
+                            )
+                        }}
+                    </span>
                     <span
-                        class="grid size-9 place-items-center rounded-full bg-brand/10 text-brand opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                        v-if="showSale"
+                        class="text-xs text-muted-foreground line-through"
                     >
-                        <Heart class="size-4" />
+                        {{ formatPrice(product.price, store.currency_symbol) }}
                     </span>
                 </div>
             </div>
-
-            <!-- Decoración línea inferior animada -->
-            <div
-                class="gradient-brand absolute bottom-0 left-1/2 h-[3px] w-0 -translate-x-1/2 transition-all duration-500 group-hover:w-full"
-            ></div>
         </Link>
 
         <QuickViewModal

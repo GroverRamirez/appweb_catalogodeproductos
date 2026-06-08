@@ -25,7 +25,15 @@ import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({ layout: PublicLayout });
 
-const { items, subtotal, setQuantity, remove, clear, validate, removedByValidation } = useCart();
+const {
+    items,
+    subtotal,
+    setQuantity,
+    remove,
+    clear,
+    validate,
+    removedByValidation,
+} = useCart();
 
 // ── Validación al montar ──────────────────────────────────────────────────────
 const validationBanner = ref(false);

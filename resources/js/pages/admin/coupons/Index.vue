@@ -46,18 +46,22 @@ const q = ref(props.filters.q ?? '');
 let timer: ReturnType<typeof setTimeout> | null = null;
 watch(q, () => {
     if (timer) {
-clearTimeout(timer);
-}
+        clearTimeout(timer);
+    }
 
     timer = setTimeout(() => {
-        router.get('/admin/coupons', { q: q.value }, { preserveState: true, replace: true });
+        router.get(
+            '/admin/coupons',
+            { q: q.value },
+            { preserveState: true, replace: true },
+        );
     }, 300);
 });
 
 const destroy = (c: Coupon) => {
     if (!confirm(`¿Eliminar el cupón "${c.code}"?`)) {
-return;
-}
+        return;
+    }
 
     router.delete(`/admin/coupons/${c.id}`, { preserveScroll: true });
 };
@@ -77,7 +81,7 @@ const valueText = (c: Coupon) =>
             description="Códigos de descuento aplicables en el checkout."
         >
             <template #actions>
-                <Button as-child class="rounded-full gradient-brand glow-brand border-transparent text-white">
+                <Button as-child class="rounded-md">
                     <Link href="/admin/coupons/create">
                         <Plus class="size-4" /> Nuevo cupón
                     </Link>
@@ -86,35 +90,56 @@ const valueText = (c: Coupon) =>
         </PageHeader>
 
         <div class="relative max-w-sm">
-            <Search class="absolute left-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input v-model="q" placeholder="Buscar por código..." class="pl-8" />
+            <Search
+                class="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+                v-model="q"
+                placeholder="Buscar por código..."
+                class="pl-8"
+            />
         </div>
 
         <div class="overflow-x-auto rounded-md border">
             <table class="w-full text-sm">
-                <thead class="bg-muted/50 text-left text-xs uppercase text-muted-foreground">
+                <thead
+                    class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
+                >
                     <tr>
                         <th class="px-3 py-2">Código</th>
                         <th class="px-3 py-2">Tipo / valor</th>
                         <th class="px-3 py-2">Mín. subtotal</th>
                         <th class="px-3 py-2">Usos</th>
                         <th class="px-3 py-2">Vigencia</th>
-                        <th class="px-3 py-2 w-24">Estado</th>
-                        <th class="px-3 py-2 w-32"></th>
+                        <th class="w-24 px-3 py-2">Estado</th>
+                        <th class="w-32 px-3 py-2"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y">
-                    <tr v-for="c in coupons.data" :key="c.id" class="hover:bg-muted/30">
+                    <tr
+                        v-for="c in coupons.data"
+                        :key="c.id"
+                        class="hover:bg-muted/30"
+                    >
                         <td class="px-3 py-2">
-                            <div class="font-mono font-semibold">{{ c.code }}</div>
-                            <div v-if="c.description" class="text-xs text-muted-foreground">
+                            <div class="font-mono font-semibold">
+                                {{ c.code }}
+                            </div>
+                            <div
+                                v-if="c.description"
+                                class="text-xs text-muted-foreground"
+                            >
                                 {{ c.description }}
                             </div>
                         </td>
                         <td class="px-3 py-2">
                             <Badge variant="outline">{{ valueText(c) }}</Badge>
                             <span class="ml-1 text-xs text-muted-foreground">
-                                {{ c.type === 'percent' ? '(porcentaje)' : '(fijo)' }}
+                                {{
+                                    c.type === 'percent'
+                                        ? '(porcentaje)'
+                                        : '(fijo)'
+                                }}
                             </span>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
@@ -124,12 +149,20 @@ const valueText = (c: Coupon) =>
                             {{ c.used_count }} / {{ c.max_uses ?? '∞' }}
                         </td>
                         <td class="px-3 py-2 text-xs text-muted-foreground">
-                            <div v-if="c.starts_at">Desde: {{ c.starts_at.substring(0, 10) }}</div>
-                            <div v-if="c.ends_at">Hasta: {{ c.ends_at.substring(0, 10) }}</div>
-                            <span v-if="!c.starts_at && !c.ends_at">Siempre</span>
+                            <div v-if="c.starts_at">
+                                Desde: {{ c.starts_at.substring(0, 10) }}
+                            </div>
+                            <div v-if="c.ends_at">
+                                Hasta: {{ c.ends_at.substring(0, 10) }}
+                            </div>
+                            <span v-if="!c.starts_at && !c.ends_at"
+                                >Siempre</span
+                            >
                         </td>
                         <td class="px-3 py-2">
-                            <Badge :variant="c.is_active ? 'default' : 'secondary'">
+                            <Badge
+                                :variant="c.is_active ? 'default' : 'secondary'"
+                            >
                                 {{ c.is_active ? 'Activo' : 'Inactivo' }}
                             </Badge>
                         </td>
@@ -139,13 +172,20 @@ const valueText = (c: Coupon) =>
                                     <Pencil class="size-4" />
                                 </Link>
                             </Button>
-                            <Button variant="ghost" size="icon-sm" @click="destroy(c)">
+                            <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                @click="destroy(c)"
+                            >
                                 <Trash2 class="size-4 text-destructive" />
                             </Button>
                         </td>
                     </tr>
                     <tr v-if="!coupons.data.length">
-                        <td colspan="7" class="px-3 py-6 text-center text-muted-foreground">
+                        <td
+                            colspan="7"
+                            class="px-3 py-6 text-center text-muted-foreground"
+                        >
                             Aún no hay cupones. ¡Crea el primero!
                         </td>
                     </tr>
@@ -153,6 +193,11 @@ const valueText = (c: Coupon) =>
             </table>
         </div>
 
-        <Pagination :links="coupons.links" :from="coupons.from" :to="coupons.to" :total="coupons.total" />
+        <Pagination
+            :links="coupons.links"
+            :from="coupons.from"
+            :to="coupons.to"
+            :total="coupons.total"
+        />
     </div>
 </template>

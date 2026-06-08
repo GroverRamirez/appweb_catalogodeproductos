@@ -11,7 +11,6 @@ import {
     Phone,
     Search,
     ShoppingCart,
-    Sparkles,
 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
@@ -93,24 +92,18 @@ useReveal();
         />
         <link
             rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
         />
         <link v-if="store.favicon_url" rel="icon" :href="store.favicon_url" />
     </Head>
 
     <div
-        class="relative min-h-screen overflow-x-hidden bg-background text-foreground"
+        class="storefront flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground"
     >
-        <!-- Decorativos de fondo (glow esmeralda + ámbar) -->
-        <div
-            aria-hidden="true"
-            class="pointer-events-none fixed inset-0 -z-10 bg-[linear-gradient(180deg,hsl(155_24%_97%)_0%,hsl(155_24%_94%)_42%,hsl(0_0%_100%)_100%)] dark:bg-[linear-gradient(180deg,hsl(160_30%_5%)_0%,hsl(160_30%_7%)_55%,hsl(160_30%_5%)_100%)]"
-        ></div>
-
         <!-- Topbar de contacto -->
         <div
             v-if="store.whatsapp || store.email"
-            class="hidden border-b border-emerald-900/20 bg-emerald-950 text-[12px] text-white md:block"
+            class="hidden bg-[hsl(222_33%_13%)] text-[12px] text-white/80 md:block"
         >
             <div
                 class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-1.5"
@@ -134,14 +127,14 @@ useReveal();
                         v-if="store.whatsapp"
                         :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
                         target="_blank"
-                        class="inline-flex items-center gap-1 transition hover:text-accent2"
+                        class="inline-flex items-center gap-1 transition hover:text-white"
                     >
                         <Phone class="size-3" /> {{ store.whatsapp }}
                     </a>
                     <a
                         v-if="store.email"
                         :href="`mailto:${store.email}`"
-                        class="inline-flex items-center gap-1 transition hover:text-accent2"
+                        class="inline-flex items-center gap-1 transition hover:text-white"
                     >
                         <Mail class="size-3" /> {{ store.email }}
                     </a>
@@ -149,28 +142,23 @@ useReveal();
             </div>
         </div>
 
-        <!-- Header sticky glassy -->
-        <header
-            class="sticky top-0 z-30 border-b border-border/80 bg-white/92 shadow-[0_1px_0_hsl(160_30%_8%/0.04),0_12px_30px_-28px_hsl(160_30%_8%/0.35)] backdrop-blur-xl transition-all dark:bg-background/88"
-        >
+        <!-- Header -->
+        <header class="sticky top-0 z-30 border-b border-border bg-background">
             <div
-                class="mx-auto flex h-18 max-w-7xl items-center gap-3 px-4 py-3 md:gap-4"
+                class="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 md:gap-6"
             >
-                <Link
-                    href="/"
-                    class="group flex shrink-0 items-center gap-2 transition"
-                >
+                <Link href="/" class="flex shrink-0 items-center gap-2.5">
                     <img
                         v-if="store.logo_url"
                         :src="store.logo_url"
                         :alt="store.name"
-                        class="h-9 w-auto max-w-[160px] object-contain transition group-hover:scale-[1.02]"
+                        class="h-9 w-auto max-w-[160px] object-contain"
                     />
                     <template v-else>
                         <span
-                            class="gradient-brand glow-brand grid h-9 w-9 place-items-center rounded-lg text-white shadow-md"
+                            class="grid size-9 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
                         >
-                            <Sparkles class="size-4" />
+                            {{ (store.name || 'M').charAt(0).toUpperCase() }}
                         </span>
                         <span
                             class="font-display text-lg font-bold tracking-tight"
@@ -183,22 +171,22 @@ useReveal();
                 <nav class="ml-2 hidden gap-1 md:flex">
                     <Link
                         href="/"
-                        class="rounded-full px-4 py-2 text-sm font-semibold transition"
+                        class="rounded-md px-3 py-2 text-sm font-medium transition"
                         :class="
                             currentPath === '/'
-                                ? 'bg-brand text-white shadow-sm shadow-brand/20'
-                                : 'text-foreground/75 hover:bg-brand/10 hover:text-brand'
+                                ? 'text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
                         "
                     >
                         {{ t('home') }}
                     </Link>
                     <Link
                         href="/catalogo"
-                        class="rounded-full px-4 py-2 text-sm font-semibold transition"
+                        class="rounded-md px-3 py-2 text-sm font-medium transition"
                         :class="
                             currentPath.startsWith('/catalogo')
-                                ? 'bg-brand text-white shadow-sm shadow-brand/20'
-                                : 'text-foreground/75 hover:bg-brand/10 hover:text-brand'
+                                ? 'text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
                         "
                     >
                         {{ t('catalog') }}
@@ -215,7 +203,7 @@ useReveal();
                     <Input
                         v-model="q"
                         :placeholder="t('search_placeholder')"
-                        class="h-11 rounded-full border-border/80 bg-white pl-10 shadow-inner shadow-black/[0.02] placeholder:text-muted-foreground/80 focus-visible:border-brand focus-visible:bg-white dark:bg-card"
+                        class="h-10 rounded-md border-input bg-background pl-10 focus-visible:border-ring"
                     />
                 </form>
 
@@ -223,14 +211,14 @@ useReveal();
                     <Button
                         variant="ghost"
                         size="icon"
-                        class="relative rounded-full hover:bg-brand/10 hover:text-brand"
+                        class="relative rounded-md hover:bg-muted"
                         @click="openCart"
                         aria-label="Carrito"
                     >
                         <ShoppingCart class="size-5" />
                         <span
                             v-if="cartCount > 0"
-                            class="animate-pulse-soft absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent2 px-1 text-[10px] leading-none font-bold text-accent2-foreground shadow-md"
+                            class="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground"
                         >
                             {{ cartCount }}
                         </span>
@@ -241,7 +229,7 @@ useReveal();
                             <Button
                                 variant="ghost"
                                 size="sm"
-                                class="gap-1 rounded-full hover:bg-brand/10 hover:text-brand"
+                                class="gap-1 rounded-md hover:bg-muted"
                             >
                                 <Globe class="size-4" />
                                 <span class="uppercase">{{ locale }}</span>
@@ -263,7 +251,7 @@ useReveal();
                             variant="outline"
                             size="sm"
                             as-child
-                            class="rounded-full border-border bg-white font-semibold shadow-sm hover:border-brand/40 hover:bg-brand/5 dark:bg-card"
+                            class="rounded-md font-medium"
                         >
                             <Link href="/admin">
                                 <LayoutDashboard class="size-4" />
@@ -275,7 +263,7 @@ useReveal();
                         <Button
                             variant="ghost"
                             size="sm"
-                            class="rounded-full hover:bg-brand/10 hover:text-brand"
+                            class="rounded-md hover:bg-muted"
                             @click="handleLogout"
                         >
                             <LogOut class="size-4" />
@@ -289,7 +277,7 @@ useReveal();
                         variant="default"
                         size="sm"
                         as-child
-                        class="gradient-brand glow-brand hidden rounded-full border-transparent text-white hover:opacity-90 sm:inline-flex"
+                        class="hidden rounded-md sm:inline-flex"
                     >
                         <Link :href="login()">
                             <LogIn class="size-4" />
@@ -302,7 +290,7 @@ useReveal();
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="rounded-full md:hidden"
+                                class="rounded-md md:hidden"
                             >
                                 <Menu class="size-5" />
                             </Button>
@@ -327,13 +315,13 @@ useReveal();
                             <nav class="flex flex-col gap-1">
                                 <Link
                                     href="/"
-                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-brand/10 hover:text-brand"
+                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                                 >
                                     {{ t('home') }}
                                 </Link>
                                 <Link
                                     href="/catalogo"
-                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-brand/10 hover:text-brand"
+                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
                                 >
                                     {{ t('catalog') }}
                                 </Link>
@@ -355,110 +343,120 @@ useReveal();
                 class="sticky top-20 z-20 mx-auto max-w-7xl px-4 pt-3"
             >
                 <div
-                    class="rounded-xl border border-brand/30 bg-brand/10 px-4 py-3 text-sm font-medium text-brand shadow-lg backdrop-blur"
+                    class="rounded-md border border-primary/30 bg-accent px-4 py-3 text-sm font-medium text-accent-foreground"
                 >
-                    ✨ {{ flash.success }}
+                    {{ flash.success }}
                 </div>
             </div>
         </transition>
 
-        <main>
+        <main class="flex-1">
             <slot />
         </main>
 
         <CartDrawer />
         <WhatsAppFab />
 
-        <footer class="mt-0">
+        <footer class="mt-16 bg-[hsl(222_33%_13%)] text-white">
             <div
-                class="bg-[linear-gradient(135deg,hsl(160_44%_13%)_0%,hsl(159_78%_24%)_72%,hsl(38_92%_42%)_100%)] text-white"
+                class="mx-auto grid max-w-7xl gap-10 px-4 py-14 text-sm md:grid-cols-4"
             >
-                <div
-                    class="mx-auto grid max-w-7xl gap-10 px-4 py-14 text-sm md:grid-cols-4"
-                >
-                    <div class="md:col-span-2">
-                        <h4 class="mb-2 font-display text-2xl font-bold">
-                            {{ store.name }}
-                        </h4>
-                        <p class="max-w-md text-white/80">
-                            {{ store.tagline }}
-                        </p>
-                    </div>
-                    <div>
-                        <h4
-                            class="mb-3 text-xs font-bold tracking-wider text-white/70 uppercase"
-                        >
-                            {{ t('contact') }}
-                        </h4>
-                        <ul class="space-y-2 text-white/90">
-                            <li
-                                v-if="store.whatsapp"
-                                class="flex items-center gap-2"
-                            >
-                                <Phone class="size-4 text-accent2" />
-                                {{ store.whatsapp }}
-                            </li>
-                            <li
-                                v-if="store.email"
-                                class="flex items-center gap-2"
-                            >
-                                <Mail class="size-4 text-accent2" />
-                                {{ store.email }}
-                            </li>
-                            <li
-                                v-if="store.address"
-                                class="flex items-start gap-2"
-                            >
-                                <MapPin class="mt-0.5 size-4 text-accent2" />
-                                <span>{{ store.address }}</span>
-                            </li>
-                            <li
-                                v-if="store.hours"
-                                class="flex items-center gap-2 opacity-80"
-                            >
-                                {{ t('hours') }}: {{ store.hours }}
-                            </li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4
-                            class="mb-3 text-xs font-bold tracking-wider text-white/70 uppercase"
-                        >
-                            {{ t('navigation') }}
-                        </h4>
-                        <ul class="space-y-2 text-white/90">
-                            <li>
-                                <Link
-                                    href="/"
-                                    class="transition hover:text-accent2"
-                                >
-                                    {{ t('home') }}
-                                </Link>
-                            </li>
-                            <li>
-                                <Link
-                                    href="/catalogo"
-                                    class="transition hover:text-accent2"
-                                >
-                                    {{ t('catalog') }}
-                                </Link>
-                            </li>
-                        </ul>
-                    </div>
+                <div class="md:col-span-2">
+                    <h4 class="mb-2 font-display text-xl font-bold">
+                        {{ store.name }}
+                    </h4>
+                    <p class="max-w-md text-white/60">
+                        {{ store.tagline }}
+                    </p>
                 </div>
-                <div
-                    class="border-t border-white/15 py-3 text-center text-xs text-white/70"
-                >
-                    © {{ new Date().getFullYear() }} {{ store.name }}.
-                    {{ t('rights_reserved') }}
+                <div>
+                    <h4
+                        class="mb-3 text-xs font-semibold tracking-wider text-white/50 uppercase"
+                    >
+                        {{ t('contact') }}
+                    </h4>
+                    <ul class="space-y-2 text-white/75">
+                        <li
+                            v-if="store.whatsapp"
+                            class="flex items-center gap-2"
+                        >
+                            <Phone class="size-4 text-white/40" />
+                            {{ store.whatsapp }}
+                        </li>
+                        <li v-if="store.email" class="flex items-center gap-2">
+                            <Mail class="size-4 text-white/40" />
+                            {{ store.email }}
+                        </li>
+                        <li v-if="store.address" class="flex items-start gap-2">
+                            <MapPin class="mt-0.5 size-4 text-white/40" />
+                            <span>{{ store.address }}</span>
+                        </li>
+                        <li
+                            v-if="store.hours"
+                            class="flex items-center gap-2 text-white/50"
+                        >
+                            {{ t('hours') }}: {{ store.hours }}
+                        </li>
+                    </ul>
                 </div>
+                <div>
+                    <h4
+                        class="mb-3 text-xs font-semibold tracking-wider text-white/50 uppercase"
+                    >
+                        {{ t('navigation') }}
+                    </h4>
+                    <ul class="space-y-2 text-white/75">
+                        <li>
+                            <Link href="/" class="transition hover:text-white">
+                                {{ t('home') }}
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/catalogo"
+                                class="transition hover:text-white"
+                            >
+                                {{ t('catalog') }}
+                            </Link>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div
+                class="border-t border-white/10 py-3 text-center text-xs text-white/40"
+            >
+                © {{ new Date().getFullYear() }} {{ store.name }}.
+                {{ t('rights_reserved') }}
             </div>
         </footer>
     </div>
 </template>
 
-<style scoped>
-.h-18 {
-    height: 4.5rem;
+<style>
+/* La tienda pública es siempre clara, aunque el usuario tenga el panel en modo
+   oscuro o el sistema en dark. Redefinimos los tokens claros en el contenedor;
+   por herencia de variables CSS, todo el subárbol del storefront los usa. */
+.storefront {
+    --background: hsl(0 0% 100%);
+    --foreground: hsl(222 33% 14%);
+    --card: hsl(0 0% 100%);
+    --card-foreground: hsl(222 33% 14%);
+    --popover: hsl(0 0% 100%);
+    --popover-foreground: hsl(222 33% 14%);
+    --primary: hsl(218 79% 42%);
+    --primary-foreground: hsl(0 0% 100%);
+    --secondary: hsl(220 16% 95%);
+    --secondary-foreground: hsl(222 30% 20%);
+    --muted: hsl(220 16% 96%);
+    --muted-foreground: hsl(220 9% 43%);
+    --accent: hsl(218 60% 96%);
+    --accent-foreground: hsl(218 79% 32%);
+    --brand: hsl(218 79% 42%);
+    --brand-foreground: hsl(0 0% 100%);
+    --destructive: hsl(0 70% 45%);
+    --destructive-foreground: hsl(0 0% 100%);
+    --border: hsl(220 15% 90%);
+    --input: hsl(220 15% 86%);
+    --ring: hsl(218 79% 42%);
 }
 </style>

@@ -33,8 +33,8 @@ const grouped = computed(() => {
 
     for (const s of props.settings) {
         if (!groups[s.group]) {
-groups[s.group] = [];
-}
+            groups[s.group] = [];
+        }
 
         groups[s.group].push(s);
     }
@@ -84,12 +84,12 @@ const markDelete = (key: string) => {
 
 const currentImage = (s: Setting): string | null => {
     if (previews.value[s.key]) {
-return previews.value[s.key]!;
-}
+        return previews.value[s.key]!;
+    }
 
     if (valueAt(s.key).delete) {
-return null;
-}
+        return null;
+    }
 
     return s.url ?? null;
 };
@@ -177,7 +177,10 @@ const groupTitle = (g: string) => {
                             </div>
                         </div>
 
-                        <div v-else-if="s.type === 'boolean'" class="flex items-center gap-2">
+                        <div
+                            v-else-if="s.type === 'boolean'"
+                            class="flex items-center gap-2"
+                        >
                             <Checkbox
                                 :id="s.key"
                                 v-model="valueAt(s.key).value as any"
@@ -202,7 +205,9 @@ const groupTitle = (g: string) => {
                             v-model="valueAt(s.key).value as any"
                         />
 
-                        <p class="mt-1 text-xs text-muted-foreground">{{ s.key }}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {{ s.key }}
+                        </p>
                     </div>
                 </CardContent>
             </Card>

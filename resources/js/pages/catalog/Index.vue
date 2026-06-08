@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LayoutGrid, List, Sparkles } from 'lucide-vue-next';
+import { LayoutGrid, List, SearchX } from 'lucide-vue-next';
 import { ref } from 'vue';
 import SeoHead from '@/components/catalog/SeoHead.vue';
 import Filters from '@/components/catalog/Filters.vue';
@@ -64,29 +64,23 @@ const setView = (v: 'grid' | 'list') => {
         :noindex="seo.noindex"
     />
 
-    <!-- Sub-hero del catálogo -->
-    <section class="relative overflow-hidden border-b">
-        <div class="gradient-brand-soft absolute inset-0"></div>
-        <div class="relative mx-auto max-w-7xl px-4 py-10 md:py-14">
-            <p
-                class="mb-2 inline-flex items-center gap-1 text-xs font-bold tracking-widest text-brand uppercase"
-            >
-                <Sparkles class="size-3" /> Explora nuestro catálogo
-            </p>
+    <!-- Encabezado del catálogo -->
+    <section class="border-b border-border bg-muted/40">
+        <div class="mx-auto max-w-7xl px-4 py-8 md:py-10">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
                     <h1
-                        class="font-display text-3xl font-bold tracking-tight md:text-4xl"
+                        class="font-display text-2xl font-bold tracking-tight md:text-3xl"
                     >
                         Catálogo
                     </h1>
                     <p class="mt-1 text-sm text-muted-foreground">
-                        <span class="font-semibold text-foreground">{{
+                        <span class="font-medium text-foreground">{{
                             products.total
                         }}</span>
                         productos disponibles
                         <span v-if="filters.q">
-                            para "<span class="font-semibold text-brand">{{
+                            para "<span class="font-medium text-foreground">{{
                                 filters.q
                             }}</span
                             >"
@@ -95,17 +89,13 @@ const setView = (v: 'grid' | 'list') => {
                 </div>
 
                 <div
-                    class="inline-flex rounded-full border bg-card p-1 shadow-sm"
+                    class="inline-flex rounded-md border border-border bg-card p-0.5"
                 >
                     <Button
                         type="button"
                         size="sm"
                         :variant="view === 'grid' ? 'default' : 'ghost'"
-                        :class="[
-                            'rounded-full px-3',
-                            view === 'grid' &&
-                                'gradient-brand border-transparent text-white',
-                        ]"
+                        class="rounded px-3"
                         @click="setView('grid')"
                         aria-label="Vista de cuadrícula"
                     >
@@ -115,11 +105,7 @@ const setView = (v: 'grid' | 'list') => {
                         type="button"
                         size="sm"
                         :variant="view === 'list' ? 'default' : 'ghost'"
-                        :class="[
-                            'rounded-full px-3',
-                            view === 'list' &&
-                                'gradient-brand border-transparent text-white',
-                        ]"
+                        class="rounded px-3"
                         @click="setView('list')"
                         aria-label="Vista de lista"
                     >
@@ -144,36 +130,32 @@ const setView = (v: 'grid' | 'list') => {
                 <template v-if="products.data.length">
                     <div
                         v-if="view === 'grid'"
-                        class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                        class="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4"
                     >
-                        <div
-                            v-for="(p, i) in products.data"
+                        <ProductCard
+                            v-for="p in products.data"
                             :key="p.id"
-                            :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                        >
-                            <ProductCard :product="p" />
-                        </div>
+                            :product="p"
+                        />
                     </div>
                     <div v-else class="flex flex-col gap-3">
-                        <div
-                            v-for="(p, i) in products.data"
+                        <ProductRow
+                            v-for="p in products.data"
                             :key="p.id"
-                            :class="['reveal', `reveal-d${(i % 4) + 1}`]"
-                        >
-                            <ProductRow :product="p" />
-                        </div>
+                            :product="p"
+                        />
                     </div>
                 </template>
                 <div
                     v-else
-                    class="rounded-2xl border-2 border-dashed bg-card/50 p-16 text-center"
+                    class="rounded-lg border border-dashed border-border bg-muted/30 p-16 text-center"
                 >
                     <div
-                        class="mx-auto mb-3 grid size-14 place-items-center rounded-full bg-brand/10 text-brand"
+                        class="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-accent text-primary"
                     >
-                        <Sparkles class="size-6" />
+                        <SearchX class="size-6" />
                     </div>
-                    <p class="font-semibold">
+                    <p class="font-medium text-foreground">
                         No encontramos productos con esos filtros.
                     </p>
                     <p class="mt-1 text-sm text-muted-foreground">

@@ -40,6 +40,12 @@ class ProductSeeder extends Seeder
                 'categoria_id' => $leafCategoryIds->random(),
             ])->getAttributes();
 
+            // Garantizar al menos 12 productos destacados para llenar las filas
+            // de la sección "Destacados" del home (2 filas de 5 + margen).
+            if ($i < 12) {
+                $data['destacado'] = true;
+            }
+
             if ($product) {
                 $data['slug'] = Product::uniqueSlug($data['nombre'], $product->id);
                 $product->forceFill($data)->save();

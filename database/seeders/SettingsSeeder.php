@@ -21,7 +21,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'currency_symbol', 'value' => 'S/', 'type' => 'string', 'group' => 'general', 'label' => 'Símbolo de moneda'],
             ['key' => 'show_prices', 'value' => '1', 'type' => 'boolean', 'group' => 'catalogo', 'label' => 'Mostrar precios en el catálogo público'],
             ['key' => 'show_stock', 'value' => '1', 'type' => 'boolean', 'group' => 'catalogo', 'label' => 'Mostrar disponibilidad'],
-            ['key' => 'products_per_page', 'value' => '12', 'type' => 'number', 'group' => 'catalogo', 'label' => 'Productos por página'],
+            ['key' => 'products_per_page', 'value' => '15', 'type' => 'number', 'group' => 'catalogo', 'label' => 'Productos por página'],
             ['key' => 'logo_path', 'value' => '', 'type' => 'image', 'group' => 'general', 'label' => 'Logo de la tienda (PNG/SVG con fondo transparente)'],
             ['key' => 'favicon_path', 'value' => '', 'type' => 'image', 'group' => 'general', 'label' => 'Favicon (ico/png cuadrado)'],
         ];

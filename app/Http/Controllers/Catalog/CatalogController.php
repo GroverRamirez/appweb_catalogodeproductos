@@ -67,7 +67,7 @@ class CatalogController extends Controller
                     ->active()
                     ->featured()
                     ->with(['mainImage', 'category:id,nombre', 'brand:id,nombre'])
-                    ->take(8)
+                    ->take(10)
                     ->get()
             ),
 
@@ -76,7 +76,7 @@ class CatalogController extends Controller
                     ->active()
                     ->with(['mainImage', 'category:id,nombre'])
                     ->latest()
-                    ->take(8)
+                    ->take(10)
                     ->get()
             ),
 
@@ -93,7 +93,7 @@ class CatalogController extends Controller
 
     public function index(Request $request): Response
     {
-        $perPage = (int) (Setting::get('products_per_page', 12)) ?: 12;
+        $perPage = (int) (Setting::get('products_per_page', 15)) ?: 15;
         $storeName = Setting::get('store_name', config('app.name'));
 
         $products = Product::query()

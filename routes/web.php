@@ -20,6 +20,9 @@ Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalo
 
 // Carrito + checkout
 Route::inertia('/carrito', 'catalog/Cart')->name('cart.index');
+
+// Favoritos (la lista vive en el localStorage del navegador)
+Route::inertia('/favoritos', 'catalog/Wishlist')->name('wishlist.index');
 Route::get('/carrito/gracias/{inquiry:public_token}', function (Inquiry $inquiry) {
     $inquiry->load('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario');
 

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
+    Heart,
     LayoutDashboard,
     LogIn,
     LogOut,
@@ -16,10 +17,17 @@ import CartDrawer from '@/components/catalog/CartDrawer.vue';
 import WhatsAppFab from '@/components/catalog/WhatsAppFab.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetTitle,
+    SheetTrigger,
+} from '@/components/ui/sheet';
 import { useCart } from '@/composables/useCart';
 import { useReveal } from '@/composables/useReveal';
 import { useTranslations } from '@/composables/useTranslations';
+import { useWishlist } from '@/composables/useWishlist';
 import type { StoreSettings } from '@/lib/catalog';
 import { login, logout } from '@/routes';
 
@@ -87,7 +95,12 @@ const handleLogout = () => {
 };
 
 const { count: cartCount, drawerOpen } = useCart();
+const { count: wishlistCount } = useWishlist();
 const openCart = () => (drawerOpen.value = true);
+
+// El contador del carrito sale de localStorage (solo cliente): renderizar el
+// badge recién al montar evita el mismatch de hidratación con el SSR.
+const mounted = ref(false);
 
 const { t } = useTranslations();
 
@@ -101,6 +114,7 @@ const updateSecondaryNav = () => {
 };
 
 onMounted(() => {
+    mounted.value = true;
     updateSecondaryNav();
     window.addEventListener('scroll', updateSecondaryNav, { passive: true });
 });
@@ -256,13 +270,30 @@ useReveal();
                     <Button
                         variant="ghost"
                         size="icon"
+                        as-child
+                        class="relative rounded-md hover:bg-muted"
+                        aria-label="Favoritos"
+                    >
+                        <Link href="/favoritos">
+                            <Heart class="size-5" />
+                            <span
+                                v-if="mounted && wishlistCount > 0"
+                                class="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground"
+                            >
+                                {{ wishlistCount }}
+                            </span>
+                        </Link>
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
                         class="relative rounded-md hover:bg-muted"
                         @click="openCart"
                         aria-label="Carrito"
                     >
                         <ShoppingCart class="size-5" />
                         <span
-                            v-if="cartCount > 0"
+                            v-if="mounted && cartCount > 0"
                             class="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground"
                         >
                             {{ cartCount }}
@@ -320,9 +351,14 @@ useReveal();
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" class="w-72 p-6">
-                            <h3 class="mb-4 font-display text-lg font-bold">
+                            <SheetTitle
+                                class="mb-4 font-display text-lg font-bold"
+                            >
                                 {{ store.name }}
-                            </h3>
+                            </SheetTitle>
+                            <SheetDescription class="sr-only">
+                                Menú de navegación y buscador de la tienda
+                            </SheetDescription>
                             <form
                                 @submit.prevent="doSearch"
                                 class="relative mb-4"

@@ -2,6 +2,7 @@
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import {
     Check,
+    Heart,
     MessageCircle,
     Minus,
     Phone,
@@ -9,7 +10,7 @@ import {
     Send,
     ShoppingCart,
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import SeoHead from '@/components/catalog/SeoHead.vue';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useCart } from '@/composables/useCart';
+import { useWishlist } from '@/composables/useWishlist';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { buildWhatsAppLink, formatPrice, imageUrl } from '@/lib/catalog';
 import type { CatalogProduct, StoreSettings } from '@/lib/catalog';
@@ -115,6 +117,26 @@ const submitForm = () => {
             );
             quantity.value = 1;
         },
+    });
+};
+
+// El estado del corazón depende de localStorage: renderizarlo solo tras el
+// montaje para no romper la hidratación SSR.
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
+
+const { has: inWishlist, toggle: toggleWishlist } = useWishlist();
+const isFavorite = computed(() => mounted.value && inWishlist(props.product.id));
+const toggleCurrentFavorite = () => {
+    const mainImg =
+        props.product.images.find((i) => i.is_main) ?? props.product.images[0];
+    toggleWishlist({
+        product_id: props.product.id,
+        slug: props.product.slug,
+        name: props.product.name,
+        code: props.product.code,
+        price: currentPrice.value,
+        image: mainImg ? imageUrl(mainImg.path) : null,
     });
 };
 
@@ -318,16 +340,41 @@ const sendWhatsApp = () => {
                             </span>
                         </div>
 
-                        <Button
-                            v-if="inStock"
-                            type="button"
-                            size="lg"
-                            class="w-full"
-                            @click="addCurrentToCart"
-                        >
-                            <ShoppingCart class="size-4" />
-                            Agregar al carrito
-                        </Button>
+                        <div class="flex gap-2">
+                            <Button
+                                v-if="inStock"
+                                type="button"
+                                size="lg"
+                                class="flex-1"
+                                @click="addCurrentToCart"
+                            >
+                                <ShoppingCart class="size-4" />
+                                Agregar al carrito
+                            </Button>
+                            <Button
+                                type="button"
+                                size="lg"
+                                variant="outline"
+                                :class="inStock ? '' : 'w-full'"
+                                :aria-label="
+                                    isFavorite
+                                        ? 'Quitar de favoritos'
+                                        : 'Agregar a favoritos'
+                                "
+                                :aria-pressed="isFavorite"
+                                @click="toggleCurrentFavorite"
+                            >
+                                <Heart
+                                    class="size-4"
+                                    :class="
+                                        isFavorite
+                                            ? 'fill-destructive text-destructive'
+                                            : ''
+                                    "
+                                />
+                                <span v-if="!inStock">Guardar en favoritos</span>
+                            </Button>
+                        </div>
 
                         <Button
                             v-if="store.whatsapp"

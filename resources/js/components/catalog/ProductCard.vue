@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Eye, ImageOff, ShoppingCart } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { Eye, Heart, ImageOff, ShoppingCart } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/composables/useCart';
+import { useWishlist } from '@/composables/useWishlist';
 import { formatPrice, productMainImage } from '@/lib/catalog';
 import type { CatalogProduct, StoreSettings } from '@/lib/catalog';
 import QuickViewModal from './QuickViewModal.vue';
@@ -80,6 +81,26 @@ const onAdd = (e: MouseEvent) => {
         image: image.value,
     });
 };
+
+// El estado del corazón depende de localStorage: renderizarlo solo tras el
+// montaje para no romper la hidratación SSR.
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
+
+const { has: inWishlist, toggle: toggleWishlist } = useWishlist();
+const isFavorite = computed(() => mounted.value && inWishlist(props.product.id));
+const onToggleFavorite = (e: MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleWishlist({
+        product_id: props.product.id,
+        slug: props.product.slug,
+        name: props.product.name,
+        code: props.product.code,
+        price: Number(props.product.sale_price ?? props.product.price),
+        image: image.value,
+    });
+};
 </script>
 
 <template>
@@ -103,6 +124,28 @@ const onAdd = (e: MouseEvent) => {
                 >
                     <ImageOff class="size-8 opacity-40" />
                 </div>
+
+                <!-- Favorito -->
+                <button
+                    type="button"
+                    class="absolute top-2 right-2 z-10 rounded-full bg-background/80 p-1.5 shadow-sm backdrop-blur transition-colors hover:bg-background"
+                    :aria-label="
+                        isFavorite
+                            ? 'Quitar de favoritos'
+                            : 'Agregar a favoritos'
+                    "
+                    :aria-pressed="isFavorite"
+                    @click="onToggleFavorite"
+                >
+                    <Heart
+                        class="size-4 transition-colors"
+                        :class="
+                            isFavorite
+                                ? 'fill-destructive text-destructive'
+                                : 'text-muted-foreground'
+                        "
+                    />
+                </button>
 
                 <!-- Badges -->
                 <div

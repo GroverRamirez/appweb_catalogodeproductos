@@ -2,15 +2,20 @@
 
 namespace App\Providers;
 
+use App\Models\User;
+use App\Policies\RolePolicy;
+use App\Support\AdminGuard;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Inertia\ExceptionResponse;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class AppServiceProvider extends ServiceProvider
@@ -30,6 +35,22 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureInertiaErrors();
+        $this->configureAuthorization();
+    }
+
+    /**
+     * Configure authorization: el propietario pasa todas las verificaciones y se
+     * registra la policy del modelo de roles de Spatie.
+     */
+    protected function configureAuthorization(): void
+    {
+        Gate::before(function ($user, string $ability): ?bool {
+            return $user->hasRole(AdminGuard::OWNER_ROLE) ? true : null;
+        });
+
+        Gate::define('access-admin', fn (User $user): bool => AdminGuard::canAccessAdmin($user));
+
+        Gate::policy(Role::class, RolePolicy::class);
     }
 
     /**

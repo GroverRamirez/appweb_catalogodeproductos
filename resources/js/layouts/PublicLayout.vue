@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
-    Globe,
     LayoutDashboard,
     LogIn,
     LogOut,
@@ -12,16 +11,10 @@ import {
     Search,
     ShoppingCart,
 } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
 import WhatsAppFab from '@/components/catalog/WhatsAppFab.vue';
 import { Button } from '@/components/ui/button';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useCart } from '@/composables/useCart';
@@ -34,10 +27,47 @@ const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
 const user = computed(() => page.props.auth?.user);
 const currentPath = computed(() => page.url.split('?')[0]);
-const roles = computed(() => (page.props.auth?.roles ?? []) as string[]);
-const isStaff = computed(
-    () => roles.value.includes('admin') || roles.value.includes('vendedor'),
+const permissions = computed(
+    () => (page.props.auth?.permissions ?? []) as string[],
 );
+const isStaff = computed(() => permissions.value.length > 0);
+const whatsappHref = computed(() => {
+    const whatsapp = store.value.whatsapp?.replace(/[^0-9]/g, '');
+
+    return whatsapp ? `https://wa.me/${whatsapp}` : null;
+});
+const secondaryNavItems = computed(() => [
+    {
+        label: 'Categorías',
+        href: '/catalogo',
+        active: false,
+        withIcon: true,
+    },
+    {
+        label: 'Marcas',
+        href: '/catalogo',
+        active: false,
+        withIcon: false,
+    },
+    {
+        label: 'Novedades',
+        href: '/catalogo?sort=newest',
+        active: page.url.includes('sort=newest'),
+        withIcon: false,
+    },
+    {
+        label: 'Ofertas',
+        href: '/catalogo?sort=discount',
+        active: page.url.includes('sort=discount'),
+        withIcon: false,
+    },
+    {
+        label: 'Catálogo',
+        href: '/catalogo',
+        active: currentPath.value.startsWith('/catalogo'),
+        withIcon: false,
+    },
+]);
 const flash = computed(
     () => (page.props.flash ?? {}) as { success?: string; error?: string },
 );
@@ -59,12 +89,25 @@ const handleLogout = () => {
 const { count: cartCount, drawerOpen } = useCart();
 const openCart = () => (drawerOpen.value = true);
 
-const { t, locale } = useTranslations();
-const switchLocale = (l: 'es' | 'en') => {
-    if (l !== locale.value) {
-        window.location.href = `/locale/${l}`;
+const { t } = useTranslations();
+
+const showSecondaryNav = ref(true);
+const updateSecondaryNav = () => {
+    if (typeof window === 'undefined') {
+        return;
     }
+
+    showSecondaryNav.value = window.scrollY < 80;
 };
+
+onMounted(() => {
+    updateSecondaryNav();
+    window.addEventListener('scroll', updateSecondaryNav, { passive: true });
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('scroll', updateSecondaryNav);
+});
 
 const showFlash = ref(false);
 watch(
@@ -226,27 +269,6 @@ useReveal();
                         </span>
                     </Button>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger as-child>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                class="gap-1 rounded-md hover:bg-muted"
-                            >
-                                <Globe class="size-4" />
-                                <span class="uppercase">{{ locale }}</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem @click="switchLocale('es')">
-                                🇪🇸 Español
-                            </DropdownMenuItem>
-                            <DropdownMenuItem @click="switchLocale('en')">
-                                🇺🇸 English
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-
                     <template v-if="user">
                         <Button
                             v-if="isStaff"
@@ -332,6 +354,46 @@ useReveal();
                     </Sheet>
                 </div>
             </div>
+            <Transition
+                enter-active-class="transition-opacity duration-100 ease-out"
+                enter-from-class="opacity-0"
+                leave-active-class="transition-opacity duration-100 ease-in"
+                leave-to-class="opacity-0"
+            >
+                <nav
+                    v-show="showSecondaryNav"
+                    class="hidden bg-brand text-brand-foreground shadow-sm shadow-primary/10 md:block"
+                    aria-label="Navegación secundaria"
+                >
+                    <div
+                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-8 px-4 text-sm font-bold uppercase"
+                    >
+                        <Link
+                            v-for="item in secondaryNavItems"
+                            :key="item.label"
+                            :href="item.href"
+                            class="inline-flex h-full items-center gap-2 whitespace-nowrap border-b-2 border-transparent transition hover:border-brand-foreground hover:text-brand-foreground"
+                            :class="{
+                                'border-brand-foreground text-brand-foreground':
+                                    item.active,
+                                'text-brand-foreground/85': !item.active,
+                            }"
+                        >
+                            <Menu v-if="item.withIcon" class="size-4" />
+                            <span>{{ item.label }}</span>
+                        </Link>
+                        <a
+                            v-if="whatsappHref"
+                            :href="whatsappHref"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="inline-flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-brand-foreground/85 transition hover:border-brand-foreground hover:text-brand-foreground"
+                        >
+                            Contactos
+                        </a>
+                    </div>
+                </nav>
+            </Transition>
         </header>
 
         <transition

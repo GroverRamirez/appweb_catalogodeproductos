@@ -10,8 +10,8 @@ import {
     ShoppingCart,
 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import SeoHead from '@/components/catalog/SeoHead.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
+import SeoHead from '@/components/catalog/SeoHead.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

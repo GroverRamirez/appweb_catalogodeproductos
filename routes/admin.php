@@ -9,11 +9,12 @@ use App\Http\Controllers\Admin\ImportProductsController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'role:admin|vendedor'])
+Route::middleware(['auth', 'verified', 'two_factor', 'can:access-admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -75,9 +76,21 @@ Route::middleware(['auth', 'verified', 'role:admin|vendedor'])
             ->middleware('permission:inquiries.delete')
             ->name('inquiries.destroy');
 
+        Route::resource('roles', RoleController::class)
+            ->except(['show'])
+            ->middleware('role:propietario')
+            ->middlewareFor('index', 'permission:roles.view')
+            ->middlewareFor(['create', 'store'], 'permission:roles.create')
+            ->middlewareFor(['edit', 'update'], 'permission:roles.update')
+            ->middlewareFor('destroy', 'permission:roles.delete');
+
         Route::resource('users', UserController::class)
             ->except(['show'])
-            ->middleware('role:admin');
+            ->middleware('role:propietario')
+            ->middlewareFor('index', 'permission:users.view')
+            ->middlewareFor(['create', 'store'], 'permission:users.create')
+            ->middlewareFor(['edit', 'update'], 'permission:users.update')
+            ->middlewareFor('destroy', 'permission:users.delete');
 
         Route::get('reportes', [ReportController::class, 'index'])
             ->middleware('permission:reports.view')

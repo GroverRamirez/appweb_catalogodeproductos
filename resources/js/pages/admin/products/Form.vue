@@ -115,23 +115,23 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar producto' : 'Nuevo producto'" />
 
-    <div class="mx-auto max-w-5xl space-y-4 p-4 md:p-6">
+    <div class="mx-auto max-w-6xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/products"><ArrowLeft class="size-4" /></Link>
             </Button>
-            <h1 class="text-2xl font-semibold">
+            <h1 class="text-xl font-semibold">
                 {{ isEdit ? 'Editar producto' : 'Nuevo producto' }}
             </h1>
         </div>
 
-        <form class="grid gap-4 lg:grid-cols-3" @submit.prevent="submit">
-            <div class="space-y-4 lg:col-span-2">
-                <Card>
-                    <CardHeader
+        <form class="grid gap-3 lg:grid-cols-3" @submit.prevent="submit">
+            <div class="space-y-3 lg:col-span-2">
+                <Card class="gap-3 py-4">
+                    <CardHeader class="pb-0"
                         ><CardTitle>Datos básicos</CardTitle></CardHeader
                     >
-                    <CardContent class="space-y-4">
+                    <CardContent class="space-y-3">
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
                                 <Label for="code">Código (SKU)</Label>
@@ -160,24 +160,25 @@ const submit = () => {
                             </p>
                         </div>
 
-                        <div>
-                            <Label for="slug"
-                                >Slug
-                                <span class="text-muted-foreground"
-                                    >(opcional)</span
-                                ></Label
-                            >
-                            <Input id="slug" v-model="form.slug" />
-                        </div>
-
-                        <div>
-                            <Label for="short_description"
-                                >Descripción corta</Label
-                            >
-                            <Input
-                                id="short_description"
-                                v-model="form.short_description"
-                            />
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <Label for="slug"
+                                    >Slug
+                                    <span class="text-muted-foreground"
+                                        >(opcional)</span
+                                    ></Label
+                                >
+                                <Input id="slug" v-model="form.slug" />
+                            </div>
+                            <div>
+                                <Label for="short_description"
+                                    >Descripción corta</Label
+                                >
+                                <Input
+                                    id="short_description"
+                                    v-model="form.short_description"
+                                />
+                            </div>
                         </div>
 
                         <div>
@@ -187,15 +188,15 @@ const submit = () => {
                             <textarea
                                 id="description"
                                 v-model="form.description"
-                                rows="6"
+                                rows="3"
                                 class="w-full rounded-md border bg-background px-3 py-2 text-sm"
                             ></textarea>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader
+                <Card class="gap-3 py-4">
+                    <CardHeader class="pb-0"
                         ><CardTitle>Características</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-2">
@@ -234,8 +235,10 @@ const submit = () => {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader><CardTitle>Imágenes</CardTitle></CardHeader>
+                <Card class="gap-3 py-4">
+                    <CardHeader class="pb-0"
+                        ><CardTitle>Imágenes</CardTitle></CardHeader
+                    >
                     <CardContent class="space-y-3">
                         <div
                             v-if="product?.images?.length"
@@ -285,9 +288,9 @@ const submit = () => {
                 </Card>
             </div>
 
-            <div class="space-y-4">
-                <Card>
-                    <CardHeader
+            <div class="space-y-3">
+                <Card class="gap-3 py-4">
+                    <CardHeader class="pb-0"
                         ><CardTitle>Precio y stock</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-3">
@@ -302,25 +305,27 @@ const submit = () => {
                                 required
                             />
                         </div>
-                        <div>
-                            <Label for="sale_price">Precio oferta</Label>
-                            <Input
-                                id="sale_price"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                v-model="form.sale_price"
-                            />
-                        </div>
-                        <div>
-                            <Label for="cost">Costo (interno)</Label>
-                            <Input
-                                id="cost"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                v-model="form.cost"
-                            />
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <Label for="sale_price">Precio oferta</Label>
+                                <Input
+                                    id="sale_price"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    v-model="form.sale_price"
+                                />
+                            </div>
+                            <div>
+                                <Label for="cost">Costo (interno)</Label>
+                                <Input
+                                    id="cost"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    v-model="form.cost"
+                                />
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
@@ -346,8 +351,8 @@ const submit = () => {
                     </CardContent>
                 </Card>
 
-                <Card>
-                    <CardHeader
+                <Card class="gap-3 py-4">
+                    <CardHeader class="pb-0"
                         ><CardTitle>Clasificación</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-3">
@@ -385,16 +390,21 @@ const submit = () => {
                                 </option>
                             </select>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <Checkbox
-                                id="is_featured"
-                                v-model="form.is_featured"
-                            />
-                            <Label for="is_featured">Destacado</Label>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <Checkbox id="is_active" v-model="form.is_active" />
-                            <Label for="is_active">Activo</Label>
+                        <div class="flex items-center gap-6 pt-1">
+                            <div class="flex items-center gap-2">
+                                <Checkbox
+                                    id="is_featured"
+                                    v-model="form.is_featured"
+                                />
+                                <Label for="is_featured">Destacado</Label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <Checkbox
+                                    id="is_active"
+                                    v-model="form.is_active"
+                                />
+                                <Label for="is_active">Activo</Label>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>

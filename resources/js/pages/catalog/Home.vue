@@ -8,9 +8,9 @@ import {
     Truck,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
-import SeoHead from '@/components/catalog/SeoHead.vue';
 import HeroCarousel from '@/components/catalog/HeroCarousel.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
+import SeoHead from '@/components/catalog/SeoHead.vue';
 import { Button } from '@/components/ui/button';
 import { useTranslations } from '@/composables/useTranslations';
 import PublicLayout from '@/layouts/PublicLayout.vue';
@@ -113,9 +113,8 @@ const perks = [
                     <Button
                         v-if="store.whatsapp"
                         as-child
-                        variant="outline"
                         size="lg"
-                        class="rounded-md"
+                        class="rounded-md bg-[#25D366] text-white shadow-sm shadow-[#25D366]/25 hover:bg-[#128C7E] hover:text-white"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
@@ -280,9 +279,8 @@ const perks = [
                     <Button
                         v-if="store.whatsapp"
                         as-child
-                        variant="outline"
                         size="lg"
-                        class="rounded-md border-white/25 bg-transparent text-white hover:bg-white/10 hover:text-white"
+                        class="rounded-md bg-[#25D366] text-white shadow-sm shadow-[#25D366]/25 hover:bg-[#128C7E] hover:text-white"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"

@@ -13,6 +13,12 @@ it('adds baseline security headers to web responses', function () {
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 });
 
+it('omits the csrf meta tag for inertia token refresh compatibility', function () {
+    $this->get('/')
+        ->assertOk()
+        ->assertDontSee('name="csrf-token"', false);
+});
+
 it('adds strict transport security only for secure requests', function () {
     $this->get('https://localhost/')
         ->assertOk()

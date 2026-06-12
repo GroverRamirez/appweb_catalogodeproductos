@@ -22,6 +22,7 @@ import { useCart } from '@/composables/useCart';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
+import { xsrfToken } from '@/lib/xsrf';
 
 defineOptions({ layout: PublicLayout });
 
@@ -40,6 +41,7 @@ const validationBanner = ref(false);
 
 onMounted(async () => {
     const removed = await validate(/* force= */ true);
+
     if (removed > 0) {
         validationBanner.value = true;
     }
@@ -88,12 +90,10 @@ const applyCoupon = async () => {
             headers: {
                 'Content-Type': 'application/json',
                 Accept: 'application/json',
-                'X-CSRF-TOKEN':
-                    document.querySelector<HTMLMetaElement>(
-                        'meta[name="csrf-token"]',
-                    )?.content ?? '',
+                'X-XSRF-TOKEN': xsrfToken(),
                 'X-Requested-With': 'XMLHttpRequest',
             },
+            credentials: 'same-origin',
             body: JSON.stringify({
                 code: couponInput.value,
                 subtotal: subtotal.value,

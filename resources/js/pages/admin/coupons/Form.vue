@@ -56,18 +56,18 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar cupón' : 'Nuevo cupón'" />
 
-    <div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
+    <div class="mx-auto max-w-2xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/coupons"><ArrowLeft class="size-4" /></Link>
             </Button>
-            <h1 class="text-2xl font-semibold">
+            <h1 class="text-xl font-semibold">
                 {{ isEdit ? 'Editar cupón' : 'Nuevo cupón' }}
             </h1>
         </div>
 
-        <Card>
-            <CardContent class="pt-6">
+        <Card class="py-5">
+            <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
                     <div class="grid gap-4 sm:grid-cols-2">
                         <div>

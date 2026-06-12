@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue';
+import { xsrfToken } from '@/lib/xsrf';
 
 export type CartItem = {
     product_id: number;
@@ -25,17 +26,23 @@ type StoredCart = {
 };
 
 const loadFromStorage = (): CartItem[] => {
-    if (typeof window === 'undefined') return [];
+    if (typeof window === 'undefined') {
+        return [];
+    }
 
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [];
+
+        if (!raw) {
+            return [];
+        }
 
         const stored: StoredCart = JSON.parse(raw);
 
         // Expirado → limpiar y devolver vacío
         if (!stored.expiresAt || Date.now() > stored.expiresAt) {
             localStorage.removeItem(STORAGE_KEY);
+
             return [];
         }
 
@@ -46,11 +53,14 @@ const loadFromStorage = (): CartItem[] => {
 };
 
 const saveToStorage = (items: CartItem[]) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {
+        return;
+    }
 
     if (items.length === 0) {
         // Sin items no tiene sentido mantener la entrada
         localStorage.removeItem(STORAGE_KEY);
+
         return;
     }
 
@@ -91,9 +101,6 @@ if (typeof window !== 'undefined') {
 
 // ─── Helpers internos ─────────────────────────────────────────────────────────
 
-const getCsrf = (): string =>
-    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
-
 // ─── Composable ───────────────────────────────────────────────────────────────
 
 export function useCart() {
@@ -119,7 +126,10 @@ export function useCart() {
 
     const setQuantity = (productId: number, qty: number) => {
         const item = items.value.find((i) => i.product_id === productId);
-        if (!item) return;
+
+        if (!item) {
+            return;
+        }
 
         if (qty <= 0) {
             remove(productId);
@@ -144,10 +154,15 @@ export function useCart() {
      * @returns número de items removidos (0 si nada cambió o el carrito estaba vacío)
      */
     const validate = async (force = false): Promise<number> => {
-        if (!items.value.length) return 0;
+        if (!items.value.length) {
+            return 0;
+        }
 
         const now = Date.now();
-        if (!force && now - lastValidatedAt < VALIDATE_COOLDOWN_MS) return 0;
+
+        if (!force && now - lastValidatedAt < VALIDATE_COOLDOWN_MS) {
+            return 0;
+        }
 
         validating.value = true;
         removedByValidation.value = [];
@@ -160,13 +175,16 @@ export function useCart() {
                 headers: {
                     'Content-Type': 'application/json',
                     Accept: 'application/json',
-                    'X-CSRF-TOKEN': getCsrf(),
+                    'X-XSRF-TOKEN': xsrfToken(),
                     'X-Requested-With': 'XMLHttpRequest',
                 },
+                credentials: 'same-origin',
                 body: JSON.stringify({ ids }),
             });
 
-            if (!res.ok) return 0;
+            if (!res.ok) {
+                return 0;
+            }
 
             const { removed }: { removed: number[] } = await res.json();
 

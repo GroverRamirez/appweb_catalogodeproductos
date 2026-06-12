@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3';
 import {
     BarChart3,
     Home,
@@ -8,6 +8,7 @@ import {
     MessageSquare,
     Package,
     Settings as SettingsIcon,
+    ShieldCheck,
     ShoppingBag,
     Tag,
     Tags,
@@ -27,39 +28,81 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { usePermissions } from '@/composables/usePermissions';
 import { home } from '@/routes';
 import { index as catalogIndex } from '@/routes/catalog';
 import type { NavItem } from '@/types';
 
-const page = usePage();
+const { can } = usePermissions();
 
-const roles = computed(() => (page.props.auth?.roles ?? []) as string[]);
-const isAdmin = computed(() => roles.value.includes('admin'));
+type GatedNavItem = NavItem & { permission?: string };
 
 const mainNavItems = computed<NavItem[]>(() => {
-    const items: NavItem[] = [
+    const items: GatedNavItem[] = [
         { title: 'Panel', href: '/admin', icon: LayoutGrid },
-        { title: 'Productos', href: '/admin/products', icon: Package },
-        { title: 'Categorías', href: '/admin/categories', icon: Tags },
-        { title: 'Marcas', href: '/admin/brands', icon: Tag },
-        { title: 'Consultas', href: '/admin/inquiries', icon: MessageSquare },
-        { title: 'Reportes', href: '/admin/reportes', icon: BarChart3 },
+        {
+            title: 'Productos',
+            href: '/admin/products',
+            icon: Package,
+            permission: 'products.view',
+        },
+        {
+            title: 'Categorías',
+            href: '/admin/categories',
+            icon: Tags,
+            permission: 'categories.view',
+        },
+        {
+            title: 'Marcas',
+            href: '/admin/brands',
+            icon: Tag,
+            permission: 'brands.view',
+        },
+        {
+            title: 'Banners',
+            href: '/admin/banners',
+            icon: Image,
+            permission: 'banners.view',
+        },
+        {
+            title: 'Cupones',
+            href: '/admin/coupons',
+            icon: Ticket,
+            permission: 'coupons.view',
+        },
+        {
+            title: 'Consultas',
+            href: '/admin/inquiries',
+            icon: MessageSquare,
+            permission: 'inquiries.view',
+        },
+        {
+            title: 'Reportes',
+            href: '/admin/reportes',
+            icon: BarChart3,
+            permission: 'reports.view',
+        },
+        {
+            title: 'Usuarios',
+            href: '/admin/users',
+            icon: Users,
+            permission: 'users.view',
+        },
+        {
+            title: 'Roles',
+            href: '/admin/roles',
+            icon: ShieldCheck,
+            permission: 'roles.view',
+        },
+        {
+            title: 'Configuración',
+            href: '/admin/settings',
+            icon: SettingsIcon,
+            permission: 'settings.view',
+        },
     ];
 
-    if (isAdmin.value) {
-        items.push(
-            { title: 'Banners', href: '/admin/banners', icon: Image },
-            { title: 'Cupones', href: '/admin/coupons', icon: Ticket },
-            { title: 'Usuarios', href: '/admin/users', icon: Users },
-            {
-                title: 'Configuración',
-                href: '/admin/settings',
-                icon: SettingsIcon,
-            },
-        );
-    }
-
-    return items;
+    return items.filter((item) => !item.permission || can(item.permission));
 });
 
 const publicCatalogNavItems: NavItem[] = [

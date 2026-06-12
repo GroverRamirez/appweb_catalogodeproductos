@@ -30,6 +30,7 @@ const store = computed(() => page.props.store);
  */
 const ogTitle = computed(() => {
     const parts = [props.title, store.value?.name].filter(Boolean);
+
     return parts.join(' — ') || store.value?.name || '';
 });
 
@@ -37,8 +38,10 @@ const twitterCard = computed(() =>
     props.ogImage ? 'summary_large_image' : 'summary',
 );
 
+// Escapar "<" como < evita que un cierre de etiqueta script dentro de
+// los datos (p. ej. nombre de producto) rompa el bloque JSON-LD inyectado.
 const jsonLdString = computed(() =>
-    props.jsonLd ? JSON.stringify(props.jsonLd) : null,
+    props.jsonLd ? JSON.stringify(props.jsonLd).replace(/</g, '\\u003c') : null,
 );
 </script>
 
@@ -133,13 +136,14 @@ const jsonLdString = computed(() =>
         />
 
         <!-- Structured Data (JSON-LD) -->
-        <!-- eslint-disable-next-line vue/no-v-text-v-html-on-component -->
+        <!-- El JSON va como hijo de texto: Inertia <Head> serializa los props
+             como atributos HTML, así que :innerHTML dejaría el script vacío. -->
         <component
             v-if="jsonLdString"
-            is="script"
+            :is="'script'"
             type="application/ld+json"
-            :innerHTML="jsonLdString"
             head-key="json-ld"
-        />
+            >{{ jsonLdString }}</component
+        >
     </Head>
 </template>

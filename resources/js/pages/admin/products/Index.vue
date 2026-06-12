@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     CheckCircle2,
@@ -10,7 +10,6 @@ import {
     Search,
     Star,
     Trash2,
-    X,
     XCircle,
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -18,7 +17,6 @@ import PageHeader from '@/components/admin/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Dialog,
     DialogContent,
@@ -26,6 +24,8 @@ import {
     DialogTitle,
     DialogDescription,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { xsrfToken } from '@/lib/xsrf';
 
 defineOptions({
     layout: () => ({
@@ -146,24 +146,27 @@ function onFileChange(e: Event) {
 }
 
 async function runImport() {
-    if (!importFile.value) return;
+    if (!importFile.value) {
+        return;
+    }
+
     importing.value = true;
     importResult.value = null;
 
     const fd = new FormData();
     fd.append('file', importFile.value);
-    fd.append(
-        '_token',
-        (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)
-            ?.content ?? '',
-    );
 
     try {
         const res = await fetch('/admin/products/import', {
             method: 'POST',
+            headers: {
+                'X-XSRF-TOKEN': xsrfToken(),
+            },
+            credentials: 'same-origin',
             body: fd,
         });
         const json = await res.json();
+
         if (!res.ok) {
             importResult.value = {
                 imported: 0,
@@ -178,12 +181,13 @@ async function runImport() {
             };
         } else {
             importResult.value = json;
+
             // Refresh product table if something was imported/updated
             if (json.imported > 0 || json.updated > 0) {
                 router.reload({ only: ['products'] });
             }
         }
-    } catch (err) {
+    } catch {
         importResult.value = {
             imported: 0,
             updated: 0,

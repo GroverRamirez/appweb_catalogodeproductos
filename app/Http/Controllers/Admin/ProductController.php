@@ -128,10 +128,10 @@ class ProductController extends Controller
                 continue;
             }
             ProductAttribute::create([
-                'producto_id' => $product->id,
-                'clave' => $row['key'],
-                'valor' => $row['value'],
-                'orden' => $i,
+                'product_id' => $product->id,
+                'key' => $row['key'],
+                'value' => $row['value'],
+                'sort_order' => $i,
             ]);
         }
     }
@@ -149,12 +149,12 @@ class ProductController extends Controller
             ['path' => $path, 'thumb_path' => $thumbPath] = $this->images->product($file, $product->id);
 
             ProductImage::create([
-                'producto_id' => $product->id,
-                'ruta' => $path,
-                'ruta_thumb' => $thumbPath,
-                'texto_alternativo' => $product->name,
-                'orden' => $existingCount + $i,
-                'principal' => $existingCount === 0 && $i === 0,
+                'product_id' => $product->id,
+                'path' => $path,
+                'thumb_path' => $thumbPath,
+                'alt' => $product->name,
+                'sort_order' => $existingCount + $i,
+                'is_main' => $existingCount === 0 && $i === 0,
             ]);
         }
     }

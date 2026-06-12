@@ -1,41 +1,21 @@
 <?php
 
-use App\Models\User;
-use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Inertia\Testing\AssertableInertia as Assert;
+use Illuminate\Support\Facades\Route;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function () {
-    $this->seed(RoleSeeder::class);
+test('public registration is disabled', function () {
+    expect(Route::has('register'))->toBeFalse();
+    expect(Route::has('register.store'))->toBeFalse();
 });
 
-test('registration screen can be rendered', function () {
-    $response = $this->get(route('register'));
-
-    $response
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->component('auth/Register')
-            ->has('passwordRules')
-        );
-});
-
-test('new users can register', function () {
-    $response = $this->post(route('register.store'), [
+test('registration routes return 404', function () {
+    $this->get('/register')->assertNotFound();
+    $this->post('/register', [
         'name' => 'Test User',
         'email' => 'test@example.com',
         'password' => 'password',
         'password_confirmation' => 'password',
-    ]);
-
-    $this->assertAuthenticated();
-
-    $user = User::where('email', 'test@example.com')->first();
-
-    expect($user)->not->toBeNull()
-        ->and($user->hasRole('cliente'))->toBeTrue();
-
-    $response->assertRedirect('/');
+    ])->assertNotFound();
 });

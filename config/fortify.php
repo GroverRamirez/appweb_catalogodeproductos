@@ -161,7 +161,9 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Registro público desactivado: el catálogo es público y los clientes no
+        // requieren cuenta. Los usuarios del panel se crean desde Admin > Usuarios.
+        // Features::registration(),
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

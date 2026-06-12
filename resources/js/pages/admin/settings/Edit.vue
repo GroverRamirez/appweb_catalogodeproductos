@@ -115,20 +115,24 @@ const groupTitle = (g: string) => {
 <template>
     <Head title="Configuración" />
 
-    <div class="mx-auto max-w-3xl space-y-4 p-4 md:p-6">
+    <div class="mx-auto max-w-5xl space-y-3 p-3 md:p-4">
         <div>
-            <h1 class="text-2xl font-semibold">Configuración</h1>
+            <h1 class="text-xl font-semibold">Configuración</h1>
             <p class="text-sm text-muted-foreground">
                 Datos generales, contacto y opciones del catálogo público.
             </p>
         </div>
 
-        <form @submit.prevent="submit" class="space-y-4">
-            <Card v-for="(items, group) in grouped" :key="group">
-                <CardHeader>
+        <form @submit.prevent="submit" class="space-y-3">
+            <Card
+                v-for="(items, group) in grouped"
+                :key="group"
+                class="gap-3 py-4"
+            >
+                <CardHeader class="pb-0">
                     <CardTitle>{{ groupTitle(group) }}</CardTitle>
                 </CardHeader>
-                <CardContent class="space-y-4">
+                <CardContent class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
                     <div v-for="s in items" :key="s.key">
                         <Label :for="s.key">{{ s.label ?? s.key }}</Label>
 
@@ -204,10 +208,6 @@ const groupTitle = (g: string) => {
                             :type="s.type === 'number' ? 'number' : 'text'"
                             v-model="valueAt(s.key).value as any"
                         />
-
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            {{ s.key }}
-                        </p>
                     </div>
                 </CardContent>
             </Card>

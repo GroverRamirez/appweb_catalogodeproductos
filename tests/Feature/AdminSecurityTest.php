@@ -14,7 +14,7 @@ beforeEach(function () {
 });
 
 test('seller cannot delete products without delete permission', function () {
-    $seller = User::factory()->create();
+    $seller = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $seller->assignRole('vendedor');
     $product = Product::factory()->create();
 
@@ -26,7 +26,7 @@ test('seller cannot delete products without delete permission', function () {
 });
 
 test('seller cannot delete inquiries without delete permission', function () {
-    $seller = User::factory()->create();
+    $seller = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $seller->assignRole('vendedor');
     $inquiry = Inquiry::create([
         'customer_name' => 'Cliente Privado',
@@ -43,7 +43,7 @@ test('seller cannot delete inquiries without delete permission', function () {
 });
 
 test('seller cannot update catalog settings without settings permission', function () {
-    $seller = User::factory()->create();
+    $seller = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $seller->assignRole('vendedor');
     $setting = Setting::create([
         'key' => 'store_name',

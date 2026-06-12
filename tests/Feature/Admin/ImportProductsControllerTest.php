@@ -14,10 +14,10 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->admin = User::factory()->create();
-    $this->admin->assignRole('admin');
+    $this->admin = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->admin->assignRole('propietario');
 
-    $this->vendedor = User::factory()->create();
+    $this->vendedor = User::factory()->create(['two_factor_confirmed_at' => now()]);
     $this->vendedor->assignRole('vendedor');
 });
 
@@ -80,7 +80,7 @@ test('import returns error when required columns are missing', function () {
 
 test('import rejects entire batch when any row has validation errors', function () {
     // Estrategia todo-o-nada: si CUALQUIER fila es inválida no se importa nada.
-    $csv = <<<CSV
+    $csv = <<<'CSV'
     codigo,nombre,precio
     ABC-001,Producto Valido,50
     ,Sin Codigo,30
@@ -124,7 +124,7 @@ test('import creates product with correct data', function () {
         'codigo' => 'GAMER-001',
         'nombre' => 'Laptop Gamer',
         'precio' => 1299.99,
-        'stock'  => 5,
+        'stock' => 5,
     ]);
 });
 

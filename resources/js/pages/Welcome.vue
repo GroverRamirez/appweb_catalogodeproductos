@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
-import { login, logout, register } from '@/routes';
+import { login, logout } from '@/routes';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-const roles = computed(() => (page.props.auth?.roles ?? []) as string[]);
-const isStaff = computed(
-    () => roles.value.includes('admin') || roles.value.includes('vendedor'),
+const permissions = computed(
+    () => (page.props.auth?.permissions ?? []) as string[],
 );
+const isStaff = computed(() => permissions.value.length > 0);
 
 const handleLogout = () => {
     router.post(logout().url, {}, { onSuccess: () => router.flushAll() });
@@ -52,12 +52,6 @@ const handleLogout = () => {
                         class="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
                     >
                         Iniciar sesión
-                    </Link>
-                    <Link
-                        :href="register()"
-                        class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]"
-                    >
-                        Registrarme
                     </Link>
                 </template>
             </nav>

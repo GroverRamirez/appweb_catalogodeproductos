@@ -26,6 +26,7 @@ class RoleSeeder extends Seeder
             'inventory.view', 'inventory.adjust',
             // Administración
             'users.view', 'users.create', 'users.update', 'users.delete',
+            'roles.view', 'roles.create', 'roles.update', 'roles.delete',
             'settings.view', 'settings.update',
             'reports.view',
         ];
@@ -34,9 +35,24 @@ class RoleSeeder extends Seeder
             Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
         }
 
-        $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $admin->syncPermissions(Permission::all());
+        // Propietario: control total.
+        $propietario = Role::firstOrCreate(['name' => 'propietario', 'guard_name' => 'web']);
+        $propietario->syncPermissions(Permission::all());
 
+        // Encargado: catálogo completo + operación, sin administración (usuarios/roles/configuración).
+        $encargado = Role::firstOrCreate(['name' => 'encargado', 'guard_name' => 'web']);
+        $encargado->syncPermissions([
+            'categories.view', 'categories.create', 'categories.update', 'categories.delete',
+            'brands.view', 'brands.create', 'brands.update', 'brands.delete',
+            'products.view', 'products.create', 'products.update', 'products.delete',
+            'banners.view', 'banners.create', 'banners.update', 'banners.delete',
+            'coupons.view', 'coupons.create', 'coupons.update', 'coupons.delete',
+            'inquiries.view', 'inquiries.update', 'inquiries.delete',
+            'inventory.view', 'inventory.adjust',
+            'reports.view',
+        ]);
+
+        // Vendedor: operación limitada.
         $vendedor = Role::firstOrCreate(['name' => 'vendedor', 'guard_name' => 'web']);
         $vendedor->syncPermissions([
             'categories.view',
@@ -47,8 +63,9 @@ class RoleSeeder extends Seeder
             'reports.view',
         ]);
 
+        // Cliente: solo navega el catálogo público.
         $cliente = Role::firstOrCreate(['name' => 'cliente', 'guard_name' => 'web']);
-        $cliente->syncPermissions([]); // Cliente solo navega el catálogo público
+        $cliente->syncPermissions([]);
 
         Artisan::call('cache:clear');
     }

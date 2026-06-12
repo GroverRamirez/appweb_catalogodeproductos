@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreUserRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
+use App\Support\AdminGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -89,6 +90,18 @@ class UserController extends Controller
     {
         $data = $request->validated();
 
+        if (array_key_exists('role', $data)) {
+            $newRoles = $data['role'] ? [$data['role']] : [];
+
+            if ($user->id === $request->user()->id && ! in_array(AdminGuard::OWNER_ROLE, $newRoles, true) && $user->hasRole(AdminGuard::OWNER_ROLE)) {
+                return back()->with('error', 'No puedes quitarte tu propio rol de propietario.');
+            }
+
+            if (AdminGuard::wouldRemoveLastOwner($user, $newRoles)) {
+                return back()->with('error', 'No puedes degradar al último propietario del sistema.');
+            }
+        }
+
         $user->name = $data['name'];
         $user->email = $data['email'];
         if (! empty($data['password'])) {
@@ -107,6 +120,10 @@ class UserController extends Controller
     {
         if ($user->id === $request->user()->id) {
             return back()->with('error', 'No puedes eliminar tu propio usuario.');
+        }
+
+        if (AdminGuard::isLastOwner($user)) {
+            return back()->with('error', 'No puedes eliminar al último propietario del sistema.');
         }
 
         $user->delete();

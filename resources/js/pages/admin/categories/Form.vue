@@ -54,20 +54,20 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar categoría' : 'Nueva categoría'" />
 
-    <div class="mx-auto max-w-2xl space-y-4 p-4 md:p-6">
+    <div class="mx-auto max-w-2xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/categories"
                     ><ArrowLeft class="size-4"
                 /></Link>
             </Button>
-            <h1 class="text-2xl font-semibold">
+            <h1 class="text-xl font-semibold">
                 {{ isEdit ? 'Editar categoría' : 'Nueva categoría' }}
             </h1>
         </div>
 
-        <Card>
-            <CardContent class="pt-6">
+        <Card class="py-5">
+            <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
                     <div>
                         <Label for="name">Nombre</Label>
@@ -80,42 +80,46 @@ const submit = () => {
                         </p>
                     </div>
 
-                    <div>
-                        <Label for="slug"
-                            >Slug
-                            <span class="text-muted-foreground"
-                                >(opcional)</span
-                            ></Label
-                        >
-                        <Input
-                            id="slug"
-                            v-model="form.slug"
-                            placeholder="Se genera automáticamente"
-                        />
-                        <p
-                            v-if="form.errors.slug"
-                            class="mt-1 text-xs text-destructive"
-                        >
-                            {{ form.errors.slug }}
-                        </p>
-                    </div>
-
-                    <div>
-                        <Label for="parent_id">Categoría padre</Label>
-                        <select
-                            id="parent_id"
-                            v-model="form.parent_id"
-                            class="h-9 w-full rounded-md border bg-background px-3 text-sm"
-                        >
-                            <option :value="null">— Categoría raíz —</option>
-                            <option
-                                v-for="p in parents"
-                                :key="p.id"
-                                :value="p.id"
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <Label for="slug"
+                                >Slug
+                                <span class="text-muted-foreground"
+                                    >(opcional)</span
+                                ></Label
                             >
-                                {{ p.name }}
-                            </option>
-                        </select>
+                            <Input
+                                id="slug"
+                                v-model="form.slug"
+                                placeholder="Se genera automáticamente"
+                            />
+                            <p
+                                v-if="form.errors.slug"
+                                class="mt-1 text-xs text-destructive"
+                            >
+                                {{ form.errors.slug }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <Label for="parent_id">Categoría padre</Label>
+                            <select
+                                id="parent_id"
+                                v-model="form.parent_id"
+                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                            >
+                                <option :value="null">
+                                    — Categoría raíz —
+                                </option>
+                                <option
+                                    v-for="p in parents"
+                                    :key="p.id"
+                                    :value="p.id"
+                                >
+                                    {{ p.name }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>

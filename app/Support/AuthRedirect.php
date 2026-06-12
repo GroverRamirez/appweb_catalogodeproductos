@@ -15,7 +15,7 @@ class AuthRedirect
             return '/';
         }
 
-        if ($user->hasAnyRole(['admin', 'vendedor'])) {
+        if (AdminGuard::canAccessAdmin($user)) {
             return '/admin';
         }
 

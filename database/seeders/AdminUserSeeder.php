@@ -10,17 +10,30 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::updateOrCreate(
+        $propietario = User::updateOrCreate(
             ['email' => 'admin@catalogo.test'],
             [
-                'name' => 'Administrador',
+                'name' => 'Propietario',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
             ]
         );
 
-        if (! $admin->hasRole('admin')) {
-            $admin->assignRole('admin');
+        if (! $propietario->hasRole('propietario')) {
+            $propietario->syncRoles(['propietario']);
+        }
+
+        $encargado = User::updateOrCreate(
+            ['email' => 'encargado@catalogo.test'],
+            [
+                'name' => 'Encargado Demo',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        if (! $encargado->hasRole('encargado')) {
+            $encargado->syncRoles(['encargado']);
         }
 
         $vendedor = User::updateOrCreate(
@@ -33,7 +46,7 @@ class AdminUserSeeder extends Seeder
         );
 
         if (! $vendedor->hasRole('vendedor')) {
-            $vendedor->assignRole('vendedor');
+            $vendedor->syncRoles(['vendedor']);
         }
     }
 }

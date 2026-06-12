@@ -7,7 +7,15 @@
       "PowerShell(cd C:\\\\laragon\\\\www\\\\appweb_catalogodeproductos; $env:PAO_DISABLE=\"1\"; php artisan test --without-tty 2>&1 | Tee-Object test_clean.txt | Select-String -Pattern \"Tests:|FAILED|⨯ \" | Select-Object -Last 25; \"EXIT=$LASTEXITCODE\")",
       "Bash(sed -i 's|.*Category::create.*|$p = App\\\\\\\\Models\\\\\\\\Product::factory\\(\\)->create\\(['\\\\''activo'\\\\''=>true]\\);|; /Brand::create/d; /Product::create/d' /tmp/repro3.php)",
       "Read(//tmp/**)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(php /tmp/chknotif.php)",
+      "Bash(php artisan *)",
+      "Bash(npm run *)",
+      "Bash(powershell -Command \"\\(Get-Content .claude/launch.json -Raw\\) -replace '8000','8010' | Set-Content .claude/launch.json -Encoding utf8\")",
+      "Bash(awk '/^function resolveNode/,/^}/' node_modules/@inertiajs/vue3/dist/index.js)",
+      "Bash(npx eslint *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

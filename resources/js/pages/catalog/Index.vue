@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { LayoutGrid, List, SearchX } from 'lucide-vue-next';
 import { ref } from 'vue';
-import SeoHead from '@/components/catalog/SeoHead.vue';
 import Filters from '@/components/catalog/Filters.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import ProductRow from '@/components/catalog/ProductRow.vue';
+import SeoHead from '@/components/catalog/SeoHead.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import PublicLayout from '@/layouts/PublicLayout.vue';
@@ -64,59 +64,7 @@ const setView = (v: 'grid' | 'list') => {
         :noindex="seo.noindex"
     />
 
-    <!-- Encabezado del catálogo -->
-    <section class="border-b border-border bg-muted/40">
-        <div class="mx-auto max-w-[1600px] px-4 py-8 md:py-10">
-            <div class="flex flex-wrap items-end justify-between gap-4">
-                <div>
-                    <h1
-                        class="font-display text-2xl font-bold tracking-tight md:text-3xl"
-                    >
-                        Catálogo
-                    </h1>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        <span class="font-medium text-foreground">{{
-                            products.total
-                        }}</span>
-                        productos disponibles
-                        <span v-if="filters.q">
-                            para "<span class="font-medium text-foreground">{{
-                                filters.q
-                            }}</span
-                            >"
-                        </span>
-                    </p>
-                </div>
-
-                <div
-                    class="inline-flex rounded-md border border-border bg-card p-0.5"
-                >
-                    <Button
-                        type="button"
-                        size="sm"
-                        :variant="view === 'grid' ? 'default' : 'ghost'"
-                        class="rounded px-3"
-                        @click="setView('grid')"
-                        aria-label="Vista de cuadrícula"
-                    >
-                        <LayoutGrid class="size-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        size="sm"
-                        :variant="view === 'list' ? 'default' : 'ghost'"
-                        class="rounded px-3"
-                        @click="setView('list')"
-                        aria-label="Vista de lista"
-                    >
-                        <List class="size-4" />
-                    </Button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <div class="mx-auto max-w-[1600px] px-4 py-8">
+    <div class="mx-auto max-w-[1600px] px-4 py-4 md:py-5">
         <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div
                 class="scrollbar-thin lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto"
@@ -129,6 +77,33 @@ const setView = (v: 'grid' | 'list') => {
             </div>
 
             <div>
+                <div class="mb-4 flex justify-end">
+                    <div
+                        class="inline-flex rounded-md border border-border bg-card p-0.5"
+                    >
+                        <Button
+                            type="button"
+                            size="sm"
+                            :variant="view === 'grid' ? 'default' : 'ghost'"
+                            class="rounded px-3"
+                            @click="setView('grid')"
+                            aria-label="Vista de cuadrícula"
+                        >
+                            <LayoutGrid class="size-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            size="sm"
+                            :variant="view === 'list' ? 'default' : 'ghost'"
+                            class="rounded px-3"
+                            @click="setView('list')"
+                            aria-label="Vista de lista"
+                        >
+                            <List class="size-4" />
+                        </Button>
+                    </div>
+                </div>
+
                 <template v-if="products.data.length">
                     <div
                         v-if="view === 'grid'"

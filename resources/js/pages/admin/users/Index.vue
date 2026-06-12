@@ -65,7 +65,11 @@ const destroy = (u: Row) => {
 };
 
 const roleVariant = (r: string) =>
-    r === 'admin' ? 'destructive' : r === 'vendedor' ? 'default' : 'secondary';
+    r === 'propietario'
+        ? 'destructive'
+        : r === 'encargado' || r === 'vendedor'
+          ? 'default'
+          : 'secondary';
 </script>
 
 <template>

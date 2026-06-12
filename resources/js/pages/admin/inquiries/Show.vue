@@ -24,6 +24,13 @@ type Item = {
     product?: { id: number; name: string; code: string } | null;
 };
 
+type Note = {
+    id: number;
+    body: string;
+    created_at: string;
+    author?: { id: number; name: string } | null;
+};
+
 type Inquiry = {
     id: number;
     customer_name: string;
@@ -38,6 +45,7 @@ type Inquiry = {
     created_at: string;
     items: Item[];
     handler?: { id: number; name: string } | null;
+    notes: Note[];
 };
 
 const props = defineProps<{
@@ -51,6 +59,23 @@ const form = useForm({
 });
 
 const submit = () => form.patch(`/admin/inquiries/${props.inquiry.id}`);
+
+const noteForm = useForm({ body: '' });
+
+const submitNote = () =>
+    noteForm.post(`/admin/inquiries/${props.inquiry.id}/notas`, {
+        preserveScroll: true,
+        onSuccess: () => noteForm.reset(),
+    });
+
+const formatDate = (iso: string) =>
+    new Date(iso).toLocaleString('es', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
 
 const whatsappLink = (phone: string) =>
     `https://wa.me/${phone.replace(/[^0-9]/g, '')}`;
@@ -194,6 +219,52 @@ const whatsappLink = (phone: string) =>
                 </table>
                 <p v-else class="text-sm text-muted-foreground">
                     Esta consulta no tiene items asociados.
+                </p>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader><CardTitle>Historial de seguimiento</CardTitle></CardHeader>
+            <CardContent class="space-y-4">
+                <form class="flex items-start gap-2" @submit.prevent="submitNote">
+                    <div class="flex-1">
+                        <textarea
+                            v-model="noteForm.body"
+                            rows="2"
+                            placeholder="Registrar contacto, acuerdo o nota interna..."
+                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                        ></textarea>
+                        <p
+                            v-if="noteForm.errors.body"
+                            class="mt-1 text-xs text-destructive"
+                        >
+                            {{ noteForm.errors.body }}
+                        </p>
+                    </div>
+                    <Button
+                        type="submit"
+                        :disabled="noteForm.processing || !noteForm.body.trim()"
+                    >
+                        Agregar nota
+                    </Button>
+                </form>
+
+                <ul v-if="inquiry.notes.length" class="space-y-3">
+                    <li
+                        v-for="note in inquiry.notes"
+                        :key="note.id"
+                        class="rounded-md border bg-muted/40 p-3 text-sm"
+                    >
+                        <p class="whitespace-pre-line">{{ note.body }}</p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {{ note.author?.name ?? 'Sistema' }} ·
+                            {{ formatDate(note.created_at) }}
+                        </p>
+                    </li>
+                </ul>
+                <p v-else class="text-sm text-muted-foreground">
+                    Aún no hay notas. Registra aquí cada contacto con el
+                    cliente.
                 </p>
             </CardContent>
         </Card>

@@ -72,6 +72,9 @@ Route::middleware(['auth', 'verified', 'two_factor', 'can:access-admin'])
         Route::patch('inquiries/{inquiry}', [InquiryController::class, 'update'])
             ->middleware('permission:inquiries.update')
             ->name('inquiries.update');
+        Route::post('inquiries/{inquiry}/notas', [InquiryController::class, 'storeNote'])
+            ->middleware('permission:inquiries.update')
+            ->name('inquiries.notes.store');
         Route::delete('inquiries/{inquiry}', [InquiryController::class, 'destroy'])
             ->middleware('permission:inquiries.delete')
             ->name('inquiries.destroy');

@@ -100,6 +100,11 @@ class Inquiry extends Model
         return $this->belongsTo(User::class, 'atendido_por');
     }
 
+    public function notes(): HasMany
+    {
+        return $this->hasMany(InquiryNote::class, 'consulta_id')->latest('id');
+    }
+
     public function resolveRouteBindingQuery($query, $value, $field = null)
     {
         return parent::resolveRouteBindingQuery(

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreInquiryNoteRequest;
 use App\Http\Requests\Admin\UpdateInquiryRequest;
 use App\Models\Inquiry;
 use App\Support\CsvDownload;
@@ -38,7 +39,7 @@ class InquiryController extends Controller
 
     public function show(Inquiry $inquiry): Response
     {
-        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name']);
+        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name', 'notes.author:id,name']);
 
         return Inertia::render('admin/inquiries/Show', [
             'inquiry' => $inquiry,
@@ -50,6 +51,8 @@ class InquiryController extends Controller
     {
         $data = $request->validated();
 
+        $previousStatus = $inquiry->status;
+
         $inquiry->fill($data);
         if ($inquiry->status !== 'pendiente' && ! $inquiry->contacted_at) {
             $inquiry->contacted_at = now();
@@ -57,7 +60,25 @@ class InquiryController extends Controller
         }
         $inquiry->save();
 
+        // Dejar rastro del cambio de estado en el historial de seguimiento.
+        if ($inquiry->status !== $previousStatus) {
+            $inquiry->notes()->create([
+                'user_id' => $request->user()->id,
+                'body' => "Cambió el estado de \"{$previousStatus}\" a \"{$inquiry->status}\".",
+            ]);
+        }
+
         return back()->with('success', 'Consulta actualizada.');
+    }
+
+    public function storeNote(StoreInquiryNoteRequest $request, Inquiry $inquiry): RedirectResponse
+    {
+        $inquiry->notes()->create([
+            'user_id' => $request->user()->id,
+            'body' => $request->validated('body'),
+        ]);
+
+        return back()->with('success', 'Nota agregada.');
     }
 
     public function destroy(Inquiry $inquiry): RedirectResponse

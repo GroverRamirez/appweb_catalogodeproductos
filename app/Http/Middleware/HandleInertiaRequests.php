@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Inquiry;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
@@ -59,6 +60,10 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => fn () => $user?->getAllPermissions()->pluck('name') ?? [],
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            // Aviso al staff: consultas sin atender, para el badge del sidebar.
+            'pendingInquiries' => fn () => $user?->can('inquiries.view')
+                ? Inquiry::pending()->count()
+                : null,
             'locale' => App::getLocale(),
             'translations' => fn () => trans('catalog'),
             'flash' => [

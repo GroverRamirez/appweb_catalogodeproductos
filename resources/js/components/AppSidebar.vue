@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import {
     BarChart3,
     Home,
@@ -34,6 +34,8 @@ import { index as catalogIndex } from '@/routes/catalog';
 import type { NavItem } from '@/types';
 
 const { can } = usePermissions();
+
+const page = usePage<{ pendingInquiries?: number | null }>();
 
 type GatedNavItem = NavItem & { permission?: string };
 
@@ -75,6 +77,7 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: '/admin/inquiries',
             icon: MessageSquare,
             permission: 'inquiries.view',
+            badge: page.props.pendingInquiries || null,
         },
         {
             title: 'Reportes',

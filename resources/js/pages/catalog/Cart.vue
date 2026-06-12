@@ -36,10 +36,18 @@ const {
     removedByValidation,
 } = useCart();
 
+// ── Hidratación ───────────────────────────────────────────────────────────────
+// El carrito vive en localStorage, que no existe en el servidor: el SSR siempre
+// renderiza vacío. Mostramos el contenido recién al montar (con un skeleton
+// mientras tanto) para que el HTML del servidor coincida con el del cliente.
+const mounted = ref(false);
+
 // ── Validación al montar ──────────────────────────────────────────────────────
 const validationBanner = ref(false);
 
 onMounted(async () => {
+    mounted.value = true;
+
     const removed = await validate(/* force= */ true);
 
     if (removed > 0) {
@@ -208,8 +216,18 @@ const submit = (source: 'web' | 'whatsapp') => {
             <h1 class="text-2xl font-semibold">Tu carrito</h1>
         </div>
 
+        <!-- Skeleton durante SSR/hidratación: el carrito real solo existe en el cliente -->
         <div
-            v-if="!items.length"
+            v-if="!mounted"
+            class="grid gap-6 lg:grid-cols-[1fr_360px]"
+            aria-hidden="true"
+        >
+            <div class="h-64 animate-pulse rounded-lg border bg-muted/40"></div>
+            <div class="h-96 animate-pulse rounded-lg border bg-muted/40"></div>
+        </div>
+
+        <div
+            v-else-if="!items.length"
             class="rounded-lg border bg-card p-12 text-center"
         >
             <ShoppingCart

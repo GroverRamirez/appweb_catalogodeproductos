@@ -21,6 +21,7 @@ import {
 import {
     Sheet,
     SheetContent,
+    SheetDescription,
     SheetHeader,
     SheetTitle,
     SheetTrigger,
@@ -96,6 +97,9 @@ const rightNavItems: NavItem[] = [
                             <SheetTitle class="sr-only"
                                 >Menú de navegación</SheetTitle
                             >
+                            <SheetDescription class="sr-only">
+                                Enlaces de navegación del panel
+                            </SheetDescription>
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon
                                     class="size-6 fill-current text-black dark:text-white"

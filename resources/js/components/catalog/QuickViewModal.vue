@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
@@ -103,6 +104,9 @@ const consultViaWhatsApp = () => {
                             {{ product.category.name }}
                         </p>
                         <DialogTitle>{{ product.name }}</DialogTitle>
+                        <DialogDescription class="sr-only">
+                            Vista rápida del producto {{ product.name }}
+                        </DialogDescription>
                         <p
                             v-if="product.brand"
                             class="text-xs text-muted-foreground"

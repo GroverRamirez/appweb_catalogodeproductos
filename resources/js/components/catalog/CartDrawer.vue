@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import {
     Sheet,
     SheetContent,
+    SheetDescription,
     SheetHeader,
     SheetTitle,
 } from '@/components/ui/sheet';
@@ -53,6 +54,9 @@ watch(drawerOpen, (open) => {
                         ({{ count }} item<span v-if="count !== 1">s</span>)
                     </span>
                 </SheetTitle>
+                <SheetDescription class="sr-only">
+                    Productos agregados a tu carrito de consulta
+                </SheetDescription>
             </SheetHeader>
 
             <!-- Aviso de productos removidos por validación -->

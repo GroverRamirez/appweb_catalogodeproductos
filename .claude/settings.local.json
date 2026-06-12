@@ -15,7 +15,11 @@
       "Bash(awk '/^function resolveNode/,/^}/' node_modules/@inertiajs/vue3/dist/index.js)",
       "Bash(npx eslint *)",
       "Bash(git add *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(vendor/bin/pint --dirty)",
+      "PowerShell(npx eslint resources/js/pages/catalog/Cart.vue resources/js/layouts/PublicLayout.vue resources/js/components/catalog/CartDrawer.vue resources/js/components/catalog/QuickViewModal.vue resources/js/components/AppHeader.vue)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 13714 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 LocalPort, OwningProcess; try { \\(Invoke-WebRequest -Uri 'http://127.0.0.1:13714/health' -UseBasicParsing -TimeoutSec 3\\).Content } catch { \"health check fallo: $\\($_.Exception.Message\\)\" })",
+      "PowerShell(php artisan tinker --execute=\"$p = \\\\App\\\\Models\\\\Product::query\\(\\)->where\\('is_active', true\\)->first\\(['id','slug','name','code','price']\\); echo json_encode\\($p\\);\")"
     ]
   }
 }

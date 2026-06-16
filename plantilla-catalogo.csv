@@ -1,0 +1,7 @@
+codigo,nombre,precio,precio_oferta,stock,categoria,marca,activo
+TEC-001,Teclado Mecanico RGB,250,210,15,Teclados y Mouse,HAVIT,1
+ALM-001,SSD 1TB NVMe,720,,30,Almacenamiento,Kingston,1
+CAM-001,Camara IP WiFi 3MP Interior,290,,12,Camaras IP,Hikvision,1
+CAM-002,Kit Videovigilancia 4 Camaras DVR,1850,1690,5,Kits de Videovigilancia,Dahua,1
+RED-001,Router WiFi 6 Doble Banda,480,,20,Routers,TP-Link,1
+RED-002,Switch 8 Puertos Gigabit,210,,18,Switches,TP-Link,1

@@ -8,7 +8,7 @@ cuando esté hecha y verificada (tests + revisión en navegador).
 
 - [x] Configurar `APP_NAME` en `.env` y `.env.example` (hoy el título dice "Laravel")
 - [ ] Cargar identidad real en Admin → Configuración: nombre, logo, favicon, WhatsApp, email de contacto
-- [ ] Reemplazar datos demo por el catálogo real (usar import CSV en Admin → Productos)
+- [x] Reemplazar datos demo por el catálogo real (46 productos Digicorp importados; precios APROXIMADOS y stock placeholder por revisar, faltan fotos)
 - [x] Probar flujo completo como cliente: buscar → carrito → cupón → checkout → consulta visible en panel y email enviado
 
 ## 2. Puesta en producción (ver DEPLOY.md para el detalle)

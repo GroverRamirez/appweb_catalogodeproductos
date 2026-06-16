@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
 import InputError from '@/components/InputError.vue';
 import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -9,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { home } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
@@ -108,5 +110,14 @@ defineProps<{
                 </Button>
             </div>
         </Form>
+
+        <TextLink
+            :href="home()"
+            class="mt-6 inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            :tabindex="6"
+        >
+            <ArrowLeft class="size-4" />
+            Volver al catálogo
+        </TextLink>
     </div>
 </template>

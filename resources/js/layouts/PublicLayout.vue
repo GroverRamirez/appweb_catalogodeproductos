@@ -105,22 +105,48 @@ const mounted = ref(false);
 const { t } = useTranslations();
 
 const showSecondaryNav = ref(true);
+
+// Histéresis para evitar parpadeo: la barra secundaria (48px) vive dentro del
+// header sticky, así que ocultarla acorta el header y desplaza el scroll. Con un
+// solo umbral eso recrea la condición y entra en bucle. Usamos dos umbrales con
+// una zona muerta (60–140) mayor que la altura de la barra, de modo que el salto
+// de layout al ocultarla nunca vuelve a cruzar el umbral de mostrarla.
 const updateSecondaryNav = () => {
     if (typeof window === 'undefined') {
         return;
     }
 
-    showSecondaryNav.value = window.scrollY < 80;
+    const y = window.scrollY;
+
+    if (y > 140 && showSecondaryNav.value) {
+        showSecondaryNav.value = false;
+    } else if (y < 60 && ! showSecondaryNav.value) {
+        showSecondaryNav.value = true;
+    }
+};
+
+// Throttle con requestAnimationFrame: una sola medición por frame, no por evento.
+let navTicking = false;
+const onScroll = () => {
+    if (navTicking) {
+        return;
+    }
+
+    navTicking = true;
+    window.requestAnimationFrame(() => {
+        updateSecondaryNav();
+        navTicking = false;
+    });
 };
 
 onMounted(() => {
     mounted.value = true;
     updateSecondaryNav();
-    window.addEventListener('scroll', updateSecondaryNav, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
 });
 
 onBeforeUnmount(() => {
-    window.removeEventListener('scroll', updateSecondaryNav);
+    window.removeEventListener('scroll', onScroll);
 });
 
 const showFlash = ref(false);

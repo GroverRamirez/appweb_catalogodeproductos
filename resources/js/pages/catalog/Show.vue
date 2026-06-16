@@ -2,6 +2,7 @@
 import { Link, useForm, usePage } from '@inertiajs/vue3';
 import {
     Check,
+    ChevronDown,
     Heart,
     MessageCircle,
     Minus,
@@ -124,6 +125,10 @@ const submitForm = () => {
 // montaje para no romper la hidratación SSR.
 const mounted = ref(false);
 onMounted(() => (mounted.value = true));
+
+// El formulario de "déjanos tus datos" arranca colapsado para que el recuadro
+// de compra entre en pantalla; se despliega bajo demanda.
+const showLeadForm = ref(false);
 
 const { has: inWishlist, toggle: toggleWishlist } = useWishlist();
 const isFavorite = computed(() => mounted.value && inWishlist(props.product.id));
@@ -388,11 +393,24 @@ const sendWhatsApp = () => {
                             Consultar por WhatsApp
                         </Button>
 
-                        <p class="text-center text-xs text-muted-foreground">
+                        <button
+                            type="button"
+                            class="flex w-full items-center justify-center gap-1 text-center text-xs text-muted-foreground transition hover:text-foreground"
+                            :aria-expanded="showLeadForm"
+                            @click="showLeadForm = !showLeadForm"
+                        >
                             o déjanos tus datos y te contactamos
-                        </p>
+                            <ChevronDown
+                                class="size-3.5 transition-transform"
+                                :class="{ 'rotate-180': showLeadForm }"
+                            />
+                        </button>
 
-                        <form @submit.prevent="submitForm" class="space-y-2">
+                        <form
+                            v-show="showLeadForm"
+                            @submit.prevent="submitForm"
+                            class="space-y-2"
+                        >
                             <div class="grid gap-2 sm:grid-cols-2">
                                 <Input
                                     v-model="form.customer_name"

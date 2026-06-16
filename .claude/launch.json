@@ -4,8 +4,8 @@
         {
             "name": "catalogo",
             "runtimeExecutable": "php",
-            "runtimeArgs": ["artisan", "serve", "--port=8010"],
-            "port": 8010
+            "runtimeArgs": ["artisan", "serve", "--port=8090"],
+            "port": 8090
         }
     ]
 }

@@ -9,7 +9,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->encargado = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->encargado = User::factory()->create();
     $this->encargado->assignRole('encargado');
 });
 

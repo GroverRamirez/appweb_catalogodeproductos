@@ -16,6 +16,7 @@ import { useTranslations } from '@/composables/useTranslations';
 import PublicLayout from '@/layouts/PublicLayout.vue';
 import { imageUrl } from '@/lib/catalog';
 import type { CatalogProduct, StoreSettings } from '@/lib/catalog';
+import { categoryIcon } from '@/lib/categoryIcons';
 
 defineOptions({ layout: PublicLayout });
 
@@ -93,7 +94,7 @@ const perks = [
         <!-- Hero fallback cuando no hay banners -->
         <section v-else class="border-b border-border bg-muted/40">
             <div
-                class="mx-auto flex max-w-[1600px] flex-col items-start gap-5 px-4 py-20 md:py-24"
+                class="mx-auto flex max-w-[1400px] flex-col items-start gap-5 px-6 py-20 md:py-24 lg:px-8"
             >
                 <h1
                     class="max-w-3xl font-display text-4xl leading-[1.1] font-bold tracking-tight md:text-5xl"
@@ -131,7 +132,7 @@ const perks = [
         <!-- Perks / value props -->
         <section class="border-b border-border bg-background">
             <div
-                class="mx-auto grid max-w-[1600px] gap-x-8 gap-y-6 px-4 py-10 sm:grid-cols-2 lg:grid-cols-4"
+                class="mx-auto grid max-w-[1400px] gap-x-8 gap-y-6 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:px-8"
             >
                 <div
                     v-for="p in perks"
@@ -158,7 +159,7 @@ const perks = [
         </section>
 
         <!-- Categorías -->
-        <section v-if="categories.length" class="mx-auto max-w-[1600px] px-4 py-14">
+        <section v-if="categories.length" class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
             <div class="mb-6 flex items-end justify-between gap-3">
                 <h2
                     class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
@@ -188,9 +189,9 @@ const perks = [
                     />
                     <div
                         v-else
-                        class="grid size-12 place-items-center rounded-md bg-accent text-lg font-bold text-primary"
+                        class="grid size-12 place-items-center rounded-md bg-accent text-primary"
                     >
-                        {{ c.name.charAt(0) }}
+                        <component :is="categoryIcon(c.slug)" class="size-6" />
                     </div>
                     <span
                         class="text-sm leading-tight font-medium text-foreground"
@@ -206,7 +207,7 @@ const perks = [
             v-if="featured.length"
             class="border-t border-border bg-muted/40"
         >
-            <div class="mx-auto max-w-[1600px] px-4 py-14">
+            <div class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
                 <div class="mb-6 flex items-end justify-between gap-3">
                     <h2
                         class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
@@ -234,7 +235,7 @@ const perks = [
         </section>
 
         <!-- Nuevos -->
-        <section v-if="newest.length" class="mx-auto max-w-[1600px] px-4 py-14">
+        <section v-if="newest.length" class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
             <div class="mb-6 flex items-end justify-between gap-3">
                 <h2
                     class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"

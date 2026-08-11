@@ -14,10 +14,10 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->admin = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->admin = User::factory()->create();
     $this->admin->assignRole('propietario');
 
-    $this->vendedor = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->vendedor = User::factory()->create();
     $this->vendedor->assignRole('vendedor');
 });
 

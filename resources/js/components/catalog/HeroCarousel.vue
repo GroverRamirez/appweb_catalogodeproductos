@@ -61,7 +61,7 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
         @mouseleave="start"
     >
         <div
-            class="relative min-h-[360px] w-full md:min-h-[440px] lg:min-h-[480px]"
+            class="relative min-h-[200px] w-full md:min-h-[260px] lg:min-h-[320px]"
         >
             <transition-group name="fade">
                 <div
@@ -73,25 +73,26 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
                     <img
                         :src="b.image_url"
                         :alt="b.title ?? ''"
-                        class="h-full min-h-[360px] w-full object-cover md:min-h-[440px] lg:min-h-[480px]"
+                        class="h-full min-h-[200px] w-full object-cover md:min-h-[260px] lg:min-h-[320px]"
                     />
-                    <!-- Velo plano para legibilidad del texto (no es degradado de marca) -->
+                    <!-- Velo en degradado: oscurece solo donde va el texto (izquierda) y
+                         deja la imagen del producto a la derecha sin opacar. -->
                     <div
-                        class="absolute inset-0 bg-[hsl(222_33%_10%)]/55"
+                        class="absolute inset-0 bg-gradient-to-r from-[hsl(222_33%_8%)]/85 via-[hsl(222_33%_10%)]/40 to-transparent md:via-30% md:to-55%"
                     ></div>
 
                     <div
-                        class="absolute inset-0 mx-auto flex max-w-[1600px] flex-col items-start justify-center gap-4 px-6 text-white md:px-10 lg:px-12"
+                        class="absolute inset-0 mx-auto flex max-w-[1400px] flex-col items-start justify-center gap-3 px-6 text-white md:px-10 lg:px-12"
                     >
                         <h2
                             v-if="b.title"
-                            class="max-w-3xl font-display text-3xl leading-[1.1] font-bold tracking-tight md:text-5xl"
+                            class="max-w-3xl font-display text-2xl leading-[1.1] font-bold tracking-tight md:text-4xl"
                         >
                             {{ b.title }}
                         </h2>
                         <p
                             v-if="b.subtitle"
-                            class="max-w-2xl text-base leading-relaxed text-white/80 md:text-lg"
+                            class="max-w-2xl text-sm leading-relaxed text-white/80 md:text-base"
                         >
                             {{ b.subtitle }}
                         </p>

@@ -17,7 +17,7 @@ cuando esté hecha y verificada (tests + revisión en navegador).
 - [ ] `.env` de producción: `APP_ENV=production`, `APP_DEBUG=false`, SMTP real, Redis, contraseñas fuertes
 - [ ] Reverse proxy con TLS, workers de cola activos, healthcheck `/up` en verde
 - [ ] Backup manual probado y copiado fuera del servidor
-- [ ] Usuario propietario real creado, login + 2FA verificados en producción
+- [ ] Usuario propietario real creado, login verificado en producción
 
 ## 3. Funcionalidades siguientes
 
@@ -30,7 +30,7 @@ cuando esté hecha y verificada (tests + revisión en navegador).
 
 ## 4. Calidad y operación continua
 
-- [ ] Tests E2E (Playwright o Dusk): checkout, login con 2FA, CRUD de producto con imagen
+- [ ] Tests E2E (Playwright o Dusk): checkout, login, CRUD de producto con imagen
 - [ ] Monitoreo de errores en producción (Sentry o similar) + alerta de uptime
 - [ ] `composer audit` y `npm audit` en el CI existente (`.github/workflows/`)
 - [ ] Auditoría Lighthouse del catálogo público con contenido real

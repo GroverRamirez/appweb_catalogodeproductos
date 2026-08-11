@@ -3,7 +3,6 @@
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Laravel\Fortify\Features;
 use Laravel\Passkeys\Contracts\PasskeyLoginResponse;
 
 test('login screen can be rendered', function () {
@@ -37,28 +36,6 @@ test('passkey login response redirects a customer to home', function () {
     $jsonResponse = app(PasskeyLoginResponse::class)->toResponse($request);
 
     expect($jsonResponse->getData()->redirect)->toBe(url('/'));
-});
-
-test('users with two factor enabled are redirected to two factor challenge', function () {
-    if (! Features::canManageTwoFactorAuthentication()) {
-        $this->markTestSkipped('Two-factor authentication is not enabled.');
-    }
-
-    Features::twoFactorAuthentication([
-        'confirm' => true,
-        'confirmPassword' => true,
-    ]);
-
-    $user = User::factory()->withTwoFactor()->create();
-
-    $response = $this->post(route('login'), [
-        'email' => $user->email,
-        'password' => 'password',
-    ]);
-
-    $response->assertRedirect(route('two-factor.login'));
-    $response->assertSessionHas('login.id', $user->id);
-    $this->assertGuest();
 });
 
 test('users can not authenticate with invalid password', function () {

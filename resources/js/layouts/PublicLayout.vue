@@ -2,7 +2,9 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     Heart,
+    Home,
     LayoutDashboard,
+    LayoutGrid,
     LogIn,
     LogOut,
     Mail,
@@ -11,6 +13,7 @@ import {
     Phone,
     Search,
     ShoppingCart,
+    User,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
@@ -76,6 +79,28 @@ const secondaryNavItems = computed(() => [
         withIcon: false,
     },
 ]);
+// Destino/ícono/etiqueta del último tab de la barra móvil: staff va al panel,
+// cliente logueado a su cuenta, invitado al login.
+const accountHref = computed(() => {
+    if (!user.value) {
+        return login();
+    }
+
+    return isStaff.value ? '/admin' : '/settings/profile';
+});
+const accountIcon = computed(() => {
+    if (!user.value) {
+        return LogIn;
+    }
+
+    return isStaff.value ? LayoutDashboard : User;
+});
+const accountActive = computed(() =>
+    isStaff.value
+        ? currentPath.value.startsWith('/admin')
+        : currentPath.value.startsWith('/settings'),
+);
+
 const flash = computed(
     () => (page.props.flash ?? {}) as { success?: string; error?: string },
 );
@@ -181,7 +206,7 @@ useReveal();
     </Head>
 
     <div
-        class="storefront flex min-h-screen flex-col overflow-x-clip bg-background text-foreground"
+        class="storefront flex min-h-screen flex-col overflow-x-clip bg-background pb-16 text-foreground md:pb-0"
     >
         <!-- Topbar de contacto -->
         <div
@@ -189,7 +214,7 @@ useReveal();
             class="hidden bg-[hsl(222_33%_13%)] text-[12px] text-white/80 md:block"
         >
             <div
-                class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-4 py-1.5"
+                class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-1.5 lg:px-8"
             >
                 <div class="flex items-center gap-4">
                     <span
@@ -226,9 +251,9 @@ useReveal();
         </div>
 
         <!-- Header -->
-        <header class="sticky top-0 z-30 border-b border-border bg-background">
+        <header class="sticky top-0 z-30 border-b border-primary/15 bg-accent">
             <div
-                class="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-4 md:gap-6"
+                class="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-6 md:gap-6 lg:px-8"
             >
                 <div class="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
                 <Link href="/" class="flex shrink-0 items-center gap-2.5">
@@ -327,6 +352,11 @@ useReveal();
                     </Button>
 
                     <template v-if="user">
+                        <span
+                            class="hidden max-w-32 truncate text-sm font-medium text-muted-foreground sm:inline"
+                        >
+                            Hola, {{ user.name.split(' ')[0] }}
+                        </span>
                         <Button
                             v-if="isStaff"
                             variant="outline"
@@ -428,7 +458,7 @@ useReveal();
                     aria-label="Navegación secundaria"
                 >
                     <div
-                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-8 px-4 text-sm font-bold uppercase"
+                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-8 px-6 text-sm font-bold uppercase lg:px-8"
                     >
                         <Link
                             v-for="item in secondaryNavItems"
@@ -466,7 +496,7 @@ useReveal();
         >
             <div
                 v-if="showFlash && flash.success"
-                class="sticky top-20 z-20 mx-auto max-w-[1400px] px-4 pt-3"
+                class="sticky top-20 z-20 mx-auto max-w-[1400px] px-6 pt-3 lg:px-8"
             >
                 <div
                     class="rounded-md border border-primary/30 bg-accent px-4 py-3 text-sm font-medium text-accent-foreground"
@@ -483,9 +513,86 @@ useReveal();
         <CartDrawer />
         <WhatsAppFab />
 
+        <!-- Barra de navegación fija (solo móvil) -->
+        <nav
+            class="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+            aria-label="Navegación móvil"
+        >
+            <Link
+                href="/"
+                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
+                :class="
+                    currentPath === '/'
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
+                "
+            >
+                <Home class="size-5" />
+                {{ t('home') }}
+            </Link>
+            <Link
+                href="/catalogo"
+                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
+                :class="
+                    currentPath.startsWith('/catalogo')
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
+                "
+            >
+                <LayoutGrid class="size-5" />
+                {{ t('categories') }}
+            </Link>
+            <button
+                type="button"
+                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground"
+                @click="openCart"
+            >
+                <span class="relative">
+                    <ShoppingCart class="size-5" />
+                    <span
+                        v-if="mounted && cartCount > 0"
+                        class="absolute -top-1.5 -right-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] leading-none font-bold text-primary-foreground"
+                    >
+                        {{ cartCount }}
+                    </span>
+                </span>
+                {{ t('cart') }}
+            </button>
+            <Link
+                href="/favoritos"
+                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
+                :class="
+                    currentPath === '/favoritos'
+                        ? 'text-primary'
+                        : 'text-muted-foreground'
+                "
+            >
+                <span class="relative">
+                    <Heart class="size-5" />
+                    <span
+                        v-if="mounted && wishlistCount > 0"
+                        class="absolute -top-1.5 -right-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] leading-none font-bold text-primary-foreground"
+                    >
+                        {{ wishlistCount }}
+                    </span>
+                </span>
+                {{ t('favorites') }}
+            </Link>
+            <Link
+                :href="accountHref"
+                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
+                :class="
+                    accountActive ? 'text-primary' : 'text-muted-foreground'
+                "
+            >
+                <component :is="accountIcon" class="size-5" />
+                {{ user ? (isStaff ? t('panel') : t('account')) : t('login') }}
+            </Link>
+        </nav>
+
         <footer class="mt-16 bg-[hsl(222_33%_13%)] text-white">
             <div
-                class="mx-auto grid max-w-[1400px] gap-10 px-4 py-14 text-sm md:grid-cols-4"
+                class="mx-auto grid max-w-[1400px] gap-10 px-6 py-14 text-sm md:grid-cols-4 lg:px-8"
             >
                 <div class="md:col-span-2">
                     <h4 class="mb-2 font-display text-xl font-bold">

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CartValidationController;
 use App\Http\Controllers\Catalog\CatalogController;
 use App\Http\Controllers\Catalog\InquiryController as PublicInquiryController;
@@ -54,6 +55,14 @@ Route::post('/carrito/validar', CartValidationController::class)
 
 // Multi-idioma
 Route::get('/locale/{locale}', [LocaleController::class, 'set'])->name('locale.set');
+
+// Login con Google (solo clientes; el staff siempre usa contraseña)
+Route::middleware('guest')->group(function () {
+    Route::get('/login/google', [GoogleAuthController::class, 'redirect'])->name('login.google');
+    Route::get('/login/google/callback', [GoogleAuthController::class, 'callback'])
+        ->middleware('throttle:20,1')
+        ->name('login.google.callback');
+});
 
 // Dashboard del starter -> redirige según el rol
 Route::middleware(['auth', 'verified'])->group(function () {

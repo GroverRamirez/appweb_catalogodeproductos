@@ -31,7 +31,7 @@ test('descarga una imagen desde URL y la adjunta como principal', function () {
 
     $this->artisan('products:image', [
         'code' => $product->code,
-        'url' => 'https://cdn.ejemplo.com/foto.jpg',
+        'url' => 'https://example.com/foto.jpg',
     ])->assertExitCode(0);
 
     expect($product->images()->count())->toBe(1);

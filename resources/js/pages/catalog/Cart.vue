@@ -58,10 +58,14 @@ onMounted(async () => {
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
 
+// Si el cliente ya inició sesión (p. ej. con Google), precargamos su nombre
+// y email para que no los tenga que volver a tipear.
+const authUser = page.props.auth?.user ?? null;
+
 const form = reactive({
-    customer_name: '',
+    customer_name: authUser?.name ?? '',
     customer_phone: '',
-    customer_email: '',
+    customer_email: authUser?.email ?? '',
     message: '',
     source: 'web',
 });

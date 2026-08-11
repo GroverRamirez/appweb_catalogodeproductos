@@ -44,7 +44,7 @@ const moveToCart = (productId: number) => {
 <template>
     <Head title="Favoritos" />
 
-    <div class="mx-auto w-full max-w-[1400px] px-4 py-8 md:px-6">
+    <div class="mx-auto w-full max-w-[1400px] px-6 py-8 lg:px-8">
         <div class="mb-6 flex items-center justify-between">
             <h1 class="text-2xl font-semibold">Tus favoritos</h1>
             <Button

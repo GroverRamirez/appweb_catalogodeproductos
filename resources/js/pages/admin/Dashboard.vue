@@ -10,11 +10,16 @@ import {
     PackageX,
     Tag,
     Tags,
+    TrendingUp,
 } from 'lucide-vue-next';
 import StatCard from '@/components/admin/StatCard.vue';
+import ViewsTrendChart from '@/components/admin/ViewsTrendChart.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { can } = usePermissions();
 
 defineOptions({
     layout: () => ({
@@ -155,6 +160,34 @@ const statusColor = (s: string) => {
             />
         </div>
 
+        <!-- Tendencia de vistas -->
+        <Card class="admin-card overflow-hidden rounded-xl border">
+            <CardHeader
+                class="flex flex-row items-center justify-between space-y-0 border-b bg-muted/70"
+            >
+                <CardTitle class="flex items-center gap-2 font-display">
+                    <span
+                        class="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm"
+                    >
+                        <TrendingUp class="size-4" />
+                    </span>
+                    Visitas del catálogo
+                </CardTitle>
+                <Link
+                    href="/admin/reportes"
+                    class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                >
+                    Ver reportes
+                    <ArrowRight
+                        class="size-3 transition-transform group-hover:translate-x-1"
+                    />
+                </Link>
+            </CardHeader>
+            <CardContent class="pt-6">
+                <ViewsTrendChart :data="viewsLast7Days" />
+            </CardContent>
+        </Card>
+
         <!-- Tarjetas inferiores -->
         <div class="grid gap-6 lg:grid-cols-2">
             <Card class="admin-card overflow-hidden rounded-xl border">
@@ -179,13 +212,26 @@ const statusColor = (s: string) => {
                                 <td class="px-4 py-3">
                                     <Link
                                         :href="`/admin/products/${p.id}/edit`"
-                                        class="font-medium hover:text-primary hover:underline"
+                                        class="flex items-center gap-3"
                                     >
-                                        {{ p.name }}
+                                        <span
+                                            class="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"
+                                        >
+                                            <Package class="size-4" />
+                                        </span>
+                                        <span>
+                                            <span
+                                                class="font-medium hover:text-primary hover:underline"
+                                            >
+                                                {{ p.name }}
+                                            </span>
+                                            <span
+                                                class="block text-xs text-muted-foreground"
+                                            >
+                                                {{ p.code }}
+                                            </span>
+                                        </span>
                                     </Link>
-                                    <p class="text-xs text-muted-foreground">
-                                        {{ p.code }}
-                                    </p>
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <span
@@ -200,14 +246,22 @@ const statusColor = (s: string) => {
                             </tr>
                         </tbody>
                     </table>
-                    <p v-else class="px-4 py-6 text-sm text-muted-foreground">
-                        Aún no hay vistas registradas.
-                    </p>
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 px-4 py-10 text-center"
+                    >
+                        <Eye class="size-6 text-muted-foreground/50" />
+                        <p class="text-sm text-muted-foreground">
+                            Aún no hay vistas registradas.
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
 
             <Card class="admin-card overflow-hidden rounded-xl border">
-                <CardHeader class="border-b bg-muted/70">
+                <CardHeader
+                    class="flex flex-row items-center justify-between space-y-0 border-b bg-muted/70"
+                >
                     <CardTitle class="flex items-center gap-2 font-display">
                         <span
                             class="grid size-9 place-items-center rounded-lg bg-amber-600 text-white shadow-sm"
@@ -216,6 +270,13 @@ const statusColor = (s: string) => {
                         </span>
                         Stock bajo
                     </CardTitle>
+                    <Link
+                        v-if="can('inventory.adjust')"
+                        href="/admin/purchases/create"
+                        class="text-xs font-semibold text-primary hover:underline"
+                    >
+                        Registrar compra
+                    </Link>
                 </CardHeader>
                 <CardContent class="p-0">
                     <table
@@ -231,13 +292,26 @@ const statusColor = (s: string) => {
                                 <td class="px-4 py-3">
                                     <Link
                                         :href="`/admin/products/${p.id}/edit`"
-                                        class="font-medium hover:text-amber-700 hover:underline dark:hover:text-amber-300"
+                                        class="flex items-center gap-3"
                                     >
-                                        {{ p.name }}
+                                        <span
+                                            class="grid size-8 shrink-0 place-items-center rounded-md bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"
+                                        >
+                                            <Package class="size-4" />
+                                        </span>
+                                        <span>
+                                            <span
+                                                class="font-medium hover:text-amber-700 hover:underline dark:hover:text-amber-300"
+                                            >
+                                                {{ p.name }}
+                                            </span>
+                                            <span
+                                                class="block text-xs text-muted-foreground"
+                                            >
+                                                {{ p.code }}
+                                            </span>
+                                        </span>
                                     </Link>
-                                    <p class="text-xs text-muted-foreground">
-                                        {{ p.code }}
-                                    </p>
                                 </td>
                                 <td class="px-4 py-3 text-right">
                                     <Badge
@@ -251,9 +325,17 @@ const statusColor = (s: string) => {
                             </tr>
                         </tbody>
                     </table>
-                    <p v-else class="px-4 py-6 text-sm text-muted-foreground">
-                        Todo el stock está sobre el umbral.
-                    </p>
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 px-4 py-10 text-center"
+                    >
+                        <AlertTriangle
+                            class="size-6 text-muted-foreground/50"
+                        />
+                        <p class="text-sm text-muted-foreground">
+                            Todo el stock está sobre el umbral.
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
 
@@ -327,9 +409,15 @@ const statusColor = (s: string) => {
                             </tr>
                         </tbody>
                     </table>
-                    <p v-else class="px-4 py-6 text-sm text-muted-foreground">
-                        No hay consultas todavía.
-                    </p>
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 px-4 py-10 text-center"
+                    >
+                        <MessageSquare class="size-6 text-muted-foreground/50" />
+                        <p class="text-sm text-muted-foreground">
+                            No hay consultas todavía.
+                        </p>
+                    </div>
                 </CardContent>
             </Card>
         </div>

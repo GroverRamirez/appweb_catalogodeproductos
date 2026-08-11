@@ -91,17 +91,10 @@ test('catalog index shows only active products', function () {
         );
 });
 
-test('catalog index filters products by search term', function () {
-    Product::factory()->create(['nombre' => 'Laptop Gamer Ultra', 'activo' => true]);
-    Product::factory()->create(['nombre' => 'Mouse Inalambrico', 'activo' => true]);
-    Product::factory()->create(['nombre' => 'Teclado Mecanico', 'activo' => true]);
-
-    $this->get(route('catalog.index', ['q' => 'Mouse']))
-        ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page
-            ->where('products.total', 1)
-        );
-});
+// La búsqueda por término (fulltext en MySQL) se prueba en
+// CatalogSearchTest.php con DatabaseTruncation: RefreshDatabase deja cada
+// test en una transacción sin commit, y el índice FULLTEXT de InnoDB solo
+// ve filas ya confirmadas, así que aquí nunca vería los productos creados.
 
 test('catalog index filters by SKU code', function () {
     Product::factory()->create(['codigo' => 'SKU-ESPECIAL-001', 'activo' => true]);

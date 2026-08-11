@@ -107,7 +107,7 @@ const onToggleFavorite = (e: MouseEvent) => {
     <div class="group relative">
         <Link
             :href="`/catalogo/${product.slug}`"
-            class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-200 ease-out hover:-translate-y-1 hover:border-transparent hover:shadow-[0_12px_28px_-8px_rgba(15,23,42,0.18)]"
+            class="flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm transition-all duration-200 ease-out hover:-translate-y-1 hover:border-primary/40 hover:shadow-[0_12px_28px_-8px_rgba(15,23,42,0.18)]"
         >
             <!-- Imagen -->
             <div class="relative aspect-square overflow-hidden bg-muted">
@@ -159,7 +159,7 @@ const onToggleFavorite = (e: MouseEvent) => {
                     </span>
                     <span
                         v-else-if="isNew"
-                        class="rounded bg-[hsl(222_33%_18%)] px-1.5 py-0.5 text-[11px] font-medium text-white"
+                        class="rounded bg-primary px-1.5 py-0.5 text-[11px] font-medium text-primary-foreground"
                     >
                         Nuevo
                     </span>
@@ -193,15 +193,15 @@ const onToggleFavorite = (e: MouseEvent) => {
             </div>
 
             <!-- Contenido -->
-            <div class="flex flex-1 flex-col gap-1 p-3">
+            <div class="flex flex-1 flex-col gap-1.5 p-4">
                 <p
                     v-if="product.category"
-                    class="text-[11px] font-medium tracking-wide text-muted-foreground uppercase"
+                    class="text-[11px] font-semibold tracking-wide text-primary/80 uppercase"
                 >
                     {{ product.category.name }}
                 </p>
                 <h3
-                    class="line-clamp-2 text-sm leading-snug font-medium text-foreground"
+                    class="line-clamp-2 text-base leading-snug font-semibold text-foreground"
                 >
                     {{ product.name }}
                 </h3>
@@ -209,12 +209,12 @@ const onToggleFavorite = (e: MouseEvent) => {
                     {{ product.brand.name }}
                 </p>
 
-                <div class="mt-auto pt-2">
+                <div class="mt-auto pt-3">
                     <div
                         v-if="store.show_prices"
                         class="flex items-baseline gap-2"
                     >
-                        <span class="text-base font-semibold text-foreground">
+                        <span class="text-xl font-bold text-primary">
                             {{
                                 formatPrice(
                                     product.sale_price ?? product.price,
@@ -234,10 +234,10 @@ const onToggleFavorite = (e: MouseEvent) => {
 
                     <div
                         v-if="store.show_stock"
-                        class="mt-1.5 flex items-center gap-1.5 text-xs text-muted-foreground"
+                        class="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"
                     >
                         <span
-                            class="size-1.5 rounded-full"
+                            class="size-2 rounded-full"
                             :class="stockDotClass"
                         ></span>
                         <span v-if="outOfStock">Sin stock</span>

@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->vendedor = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->vendedor = User::factory()->create();
     $this->vendedor->assignRole('vendedor');
 
     $this->inquiry = Inquiry::create([
@@ -52,7 +52,7 @@ test('note body is required and limited to 2000 characters', function () {
 });
 
 test('staff without inquiries.update cannot add notes', function () {
-    $viewer = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $viewer = User::factory()->create();
     $role = Role::create(['name' => 'solo-lectura', 'guard_name' => 'web']);
     $role->givePermissionTo('inquiries.view');
     $viewer->assignRole($role);
@@ -124,7 +124,7 @@ test('pending inquiries count is shared with staff for the sidebar badge', funct
 });
 
 test('pending inquiries count is not exposed to users without permission', function () {
-    $cliente = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $cliente = User::factory()->create();
     $cliente->assignRole('cliente');
 
     $this->actingAs($cliente)

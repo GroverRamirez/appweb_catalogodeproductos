@@ -48,7 +48,7 @@ class ProductController extends Controller
     {
         return Inertia::render('admin/products/Form', [
             'product' => null,
-            'categories' => Category::query()->whereNotNull('categoria_padre_id')->orderBy('nombre')->get(['id', 'nombre']),
+            'categories' => Category::query()->orderBy('nombre')->get(['id', 'nombre']),
             'brands' => Brand::query()->orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }
@@ -73,7 +73,7 @@ class ProductController extends Controller
 
         return Inertia::render('admin/products/Form', [
             'product' => $product,
-            'categories' => Category::query()->whereNotNull('categoria_padre_id')->orderBy('nombre')->get(['id', 'nombre']),
+            'categories' => Category::query()->orderBy('nombre')->get(['id', 'nombre']),
             'brands' => Brand::query()->orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }

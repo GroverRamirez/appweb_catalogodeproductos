@@ -64,7 +64,7 @@ const setView = (v: 'grid' | 'list') => {
         :noindex="seo.noindex"
     />
 
-    <div class="mx-auto max-w-[1600px] px-4 py-4 md:py-5">
+    <div class="mx-auto max-w-[1400px] px-6 py-4 md:py-5 lg:px-8">
         <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div
                 class="scrollbar-thin lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto"

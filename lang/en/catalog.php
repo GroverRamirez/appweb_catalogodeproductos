@@ -8,6 +8,8 @@ return [
     'panel' => 'Dashboard',
     'login' => 'Sign in',
     'logout' => 'Sign out',
+    'favorites' => 'Favorites',
+    'account' => 'Account',
     'search_placeholder' => 'Search products...',
 
     // Hero

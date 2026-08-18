@@ -2,6 +2,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
 import { ref } from 'vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -134,63 +135,99 @@ const submit = () => {
                     <CardContent class="space-y-3">
                         <div class="grid gap-4 sm:grid-cols-2">
                             <div>
-                                <Label for="code">Código (SKU)</Label>
-                                <Input id="code" v-model="form.code" required />
-                                <p
-                                    v-if="form.errors.code"
-                                    class="mt-1 text-xs text-destructive"
-                                >
-                                    {{ form.errors.code }}
-                                </p>
-                            </div>
-                            <div>
-                                <Label for="unit">Unidad</Label>
-                                <Input id="unit" v-model="form.unit" />
-                            </div>
-                        </div>
-
-                        <div>
-                            <Label for="name">Nombre</Label>
-                            <Input id="name" v-model="form.name" required />
-                            <p
-                                v-if="form.errors.name"
-                                class="mt-1 text-xs text-destructive"
-                            >
-                                {{ form.errors.name }}
-                            </p>
-                        </div>
-
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <Label for="slug"
-                                    >Slug
-                                    <span class="text-muted-foreground"
-                                        >(opcional)</span
-                                    ></Label
-                                >
-                                <Input id="slug" v-model="form.slug" />
-                            </div>
-                            <div>
-                                <Label for="short_description"
-                                    >Descripción corta</Label
+                                <Label for="code" class="mb-2"
+                                    >Código (SKU)</Label
                                 >
                                 <Input
-                                    id="short_description"
-                                    v-model="form.short_description"
+                                    id="code"
+                                    v-model="form.code"
+                                    :aria-invalid="!!form.errors.code"
+                                    required
+                                />
+                                <InputError
+                                    :message="form.errors.code"
+                                    class="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label for="unit" class="mb-2">Unidad</Label>
+                                <Input
+                                    id="unit"
+                                    v-model="form.unit"
+                                    :aria-invalid="!!form.errors.unit"
+                                />
+                                <InputError
+                                    :message="form.errors.unit"
+                                    class="mt-1"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <Label for="description"
+                            <Label for="name" class="mb-2">Nombre</Label>
+                            <Input
+                                id="name"
+                                v-model="form.name"
+                                :aria-invalid="!!form.errors.name"
+                                required
+                            />
+                            <InputError
+                                :message="form.errors.name"
+                                class="mt-1"
+                            />
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <Label for="slug" class="mb-2"
+                                    >Slug
+                                    <span class="text-muted-foreground"
+                                        >(opcional)</span
+                                    ></Label
+                                >
+                                <Input
+                                    id="slug"
+                                    v-model="form.slug"
+                                    :aria-invalid="!!form.errors.slug"
+                                />
+                                <InputError
+                                    :message="form.errors.slug"
+                                    class="mt-1"
+                                />
+                            </div>
+                            <div>
+                                <Label for="short_description" class="mb-2"
+                                    >Descripción corta</Label
+                                >
+                                <Input
+                                    id="short_description"
+                                    v-model="form.short_description"
+                                    :aria-invalid="
+                                        !!form.errors.short_description
+                                    "
+                                />
+                                <InputError
+                                    :message="form.errors.short_description"
+                                    class="mt-1"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <Label for="description" class="mb-2"
                                 >Descripción completa</Label
                             >
                             <textarea
                                 id="description"
                                 v-model="form.description"
                                 rows="3"
+                                :aria-invalid="!!form.errors.description"
                                 class="w-full rounded-md border bg-background px-3 py-2 text-sm"
                             ></textarea>
+                            <InputError
+                                :message="form.errors.description"
+                                class="mt-1"
+                            />
                         </div>
                     </CardContent>
                 </Card>
@@ -205,16 +242,36 @@ const submit = () => {
                             :key="i"
                             class="flex items-center gap-2"
                         >
-                            <Input
-                                v-model="attr.key"
-                                placeholder="Atributo (ej: Color)"
-                                class="flex-1"
-                            />
-                            <Input
-                                v-model="attr.value"
-                                placeholder="Valor (ej: Negro)"
-                                class="flex-1"
-                            />
+                            <div class="flex-1">
+                                <Input
+                                    v-model="attr.key"
+                                    placeholder="Atributo (ej: Color)"
+                                    :aria-invalid="
+                                        !!form.errors[`attributes.${i}.key`]
+                                    "
+                                />
+                                <InputError
+                                    :message="
+                                        form.errors[`attributes.${i}.key`]
+                                    "
+                                    class="mt-1"
+                                />
+                            </div>
+                            <div class="flex-1">
+                                <Input
+                                    v-model="attr.value"
+                                    placeholder="Valor (ej: Negro)"
+                                    :aria-invalid="
+                                        !!form.errors[`attributes.${i}.value`]
+                                    "
+                                />
+                                <InputError
+                                    :message="
+                                        form.errors[`attributes.${i}.value`]
+                                    "
+                                    class="mt-1"
+                                />
+                            </div>
                             <Button
                                 type="button"
                                 variant="ghost"
@@ -277,9 +334,15 @@ const submit = () => {
                             type="file"
                             multiple
                             accept="image/*"
+                            :aria-invalid="
+                                !!form.errors.images ||
+                                !!form.errors['images.0']
+                            "
                             @change="onFiles"
                             class="block w-full text-sm"
                         />
+                        <InputError :message="form.errors.images" />
+                        <InputError :message="form.errors['images.0']" />
                         <p class="text-xs text-muted-foreground">
                             Hasta 8 imágenes, máx 4 MB cada una. La primera se
                             marca como principal automáticamente.
@@ -295,56 +358,87 @@ const submit = () => {
                     >
                     <CardContent class="space-y-3">
                         <div>
-                            <Label for="price">Precio</Label>
+                            <Label for="price" class="mb-2">Precio</Label>
                             <Input
                                 id="price"
                                 type="number"
                                 step="0.01"
                                 min="0"
                                 v-model="form.price"
+                                :aria-invalid="!!form.errors.price"
                                 required
+                            />
+                            <InputError
+                                :message="form.errors.price"
+                                class="mt-1"
                             />
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <Label for="sale_price">Precio oferta</Label>
+                                <Label for="sale_price" class="mb-2"
+                                    >Precio oferta</Label
+                                >
                                 <Input
                                     id="sale_price"
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     v-model="form.sale_price"
+                                    :aria-invalid="!!form.errors.sale_price"
+                                />
+                                <InputError
+                                    :message="form.errors.sale_price"
+                                    class="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label for="cost">Costo (interno)</Label>
+                                <Label for="cost" class="mb-2"
+                                    >Costo (interno)</Label
+                                >
                                 <Input
                                     id="cost"
                                     type="number"
                                     step="0.01"
                                     min="0"
                                     v-model="form.cost"
+                                    :aria-invalid="!!form.errors.cost"
+                                />
+                                <InputError
+                                    :message="form.errors.cost"
+                                    class="mt-1"
                                 />
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <Label for="stock">Stock</Label>
+                                <Label for="stock" class="mb-2">Stock</Label>
                                 <Input
                                     id="stock"
                                     type="number"
                                     min="0"
                                     v-model.number="form.stock"
+                                    :aria-invalid="!!form.errors.stock"
                                     required
+                                />
+                                <InputError
+                                    :message="form.errors.stock"
+                                    class="mt-1"
                                 />
                             </div>
                             <div>
-                                <Label for="min_stock">Mín. stock</Label>
+                                <Label for="min_stock" class="mb-2"
+                                    >Mín. stock</Label
+                                >
                                 <Input
                                     id="min_stock"
                                     type="number"
                                     min="0"
                                     v-model.number="form.min_stock"
+                                    :aria-invalid="!!form.errors.min_stock"
+                                />
+                                <InputError
+                                    :message="form.errors.min_stock"
+                                    class="mt-1"
                                 />
                             </div>
                         </div>
@@ -357,10 +451,13 @@ const submit = () => {
                     >
                     <CardContent class="space-y-3">
                         <div>
-                            <Label for="category_id">Categoría</Label>
+                            <Label for="category_id" class="mb-2"
+                                >Categoría</Label
+                            >
                             <select
                                 id="category_id"
                                 v-model="form.category_id"
+                                :aria-invalid="!!form.errors.category_id"
                                 class="h-9 w-full rounded-md border bg-background px-3 text-sm"
                             >
                                 <option :value="null">— Sin categoría —</option>
@@ -372,12 +469,17 @@ const submit = () => {
                                     {{ c.name }}
                                 </option>
                             </select>
+                            <InputError
+                                :message="form.errors.category_id"
+                                class="mt-1"
+                            />
                         </div>
                         <div>
-                            <Label for="brand_id">Marca</Label>
+                            <Label for="brand_id" class="mb-2">Marca</Label>
                             <select
                                 id="brand_id"
                                 v-model="form.brand_id"
+                                :aria-invalid="!!form.errors.brand_id"
                                 class="h-9 w-full rounded-md border bg-background px-3 text-sm"
                             >
                                 <option :value="null">— Sin marca —</option>
@@ -389,6 +491,10 @@ const submit = () => {
                                     {{ b.name }}
                                 </option>
                             </select>
+                            <InputError
+                                :message="form.errors.brand_id"
+                                class="mt-1"
+                            />
                         </div>
                         <div class="flex items-center gap-6 pt-1">
                             <div class="flex items-center gap-2">
@@ -408,6 +514,14 @@ const submit = () => {
                         </div>
                     </CardContent>
                 </Card>
+
+                <div
+                    v-if="form.hasErrors"
+                    role="alert"
+                    class="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+                >
+                    No se pudo guardar el producto. Revisa los campos marcados.
+                </div>
 
                 <div class="flex gap-2">
                     <Button variant="outline" as-child class="flex-1">

@@ -7,12 +7,14 @@ import {
     LayoutGrid,
     MessageSquare,
     Package,
+    PackagePlus,
     Settings as SettingsIcon,
     ShieldCheck,
     ShoppingBag,
     Tag,
     Tags,
     Ticket,
+    Truck,
     Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -59,6 +61,18 @@ const mainNavItems = computed<NavItem[]>(() => {
             href: '/admin/brands',
             icon: Tag,
             permission: 'brands.view',
+        },
+        {
+            title: 'Proveedores',
+            href: '/admin/suppliers',
+            icon: Truck,
+            permission: 'inventory.view',
+        },
+        {
+            title: 'Compras',
+            href: '/admin/purchases',
+            icon: PackagePlus,
+            permission: 'inventory.view',
         },
         {
             title: 'Banners',

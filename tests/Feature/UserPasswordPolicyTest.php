@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->owner = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->owner = User::factory()->create();
     $this->owner->assignRole('propietario');
 });
 

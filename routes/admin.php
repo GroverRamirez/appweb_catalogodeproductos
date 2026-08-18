@@ -8,13 +8,15 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ImportProductsController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'two_factor', 'can:access-admin'])
+Route::middleware(['auth', 'verified', 'can:access-admin'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
@@ -45,6 +47,20 @@ Route::middleware(['auth', 'verified', 'two_factor', 'can:access-admin'])
             ->middlewareFor(['create', 'store'], 'permission:products.create')
             ->middlewareFor(['edit', 'update'], 'permission:products.update')
             ->middlewareFor('destroy', 'permission:products.delete');
+
+        Route::resource('suppliers', SupplierController::class)
+            ->except(['show'])
+            ->middlewareFor('index', 'permission:inventory.view')
+            ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'permission:inventory.adjust');
+
+        // Debe ir antes del resource para no chocar con el wildcard {purchase}
+        Route::patch('purchases/{purchase}/void', [PurchaseController::class, 'void'])
+            ->middleware('permission:inventory.adjust')
+            ->name('purchases.void');
+        Route::resource('purchases', PurchaseController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->middlewareFor(['index', 'show'], 'permission:inventory.view')
+            ->middlewareFor(['create', 'store'], 'permission:inventory.adjust');
 
         Route::resource('banners', BannerController::class)
             ->except(['show'])

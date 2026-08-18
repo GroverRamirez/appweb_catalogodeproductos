@@ -38,7 +38,7 @@ const waUrl = computed(() => {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Contactar por WhatsApp"
-            class="fixed right-5 bottom-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_18px_34px_-14px_rgba(37,211,102,0.9)] ring-4 ring-[#25D366]/25 transition hover:scale-105 hover:bg-[#128C7E] hover:ring-[#25D366]/35 focus-visible:ring-4 focus-visible:ring-[#25D366]/45 focus-visible:outline-none active:scale-95"
+            class="fixed right-5 bottom-24 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_18px_34px_-14px_rgba(37,211,102,0.9)] ring-4 ring-[#25D366]/25 transition hover:scale-105 hover:bg-[#128C7E] hover:ring-[#25D366]/35 focus-visible:ring-4 focus-visible:ring-[#25D366]/45 focus-visible:outline-none active:scale-95 md:bottom-6"
         >
             <!-- Official WhatsApp logo mark SVG -->
             <svg

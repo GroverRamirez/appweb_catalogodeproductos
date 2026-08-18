@@ -8,7 +8,7 @@ WhatsApp/email. Panel admin con roles y permisos granulares.
 
 Ver `AGENTS.md` (guías de Laravel Boost: versiones exactas, convenciones de
 código, skills). Resumen: Laravel 13 + Inertia v3 + Vue 3 + Tailwind 4,
-Fortify (login, 2FA, passkeys; registro público DESHABILITADO a propósito),
+Fortify (login, passkeys; registro público DESHABILITADO a propósito),
 Spatie Permission, Pest v4.
 
 ## Documentos clave
@@ -36,7 +36,6 @@ corriendo). Para previews usar otro puerto (`.claude/launch.json` usa 8010).
 - Roles del sistema: `propietario` (super-admin), `encargado`, `vendedor`, `cliente`.
   El acceso al panel se decide por permisos (`App\Support\AdminGuard`), cada ruta
   admin exige su permiso en `routes/admin.php`.
-- Staff sin 2FA confirmado no entra al panel (`EnsureStaffTwoFactor`).
 - Precios y totales SIEMPRE se calculan en el servidor desde la BD, nunca se
   confía en montos del cliente.
 - Imágenes subidas siempre pasan por `App\Services\ImageProcessor` (WebP, sin EXIF).

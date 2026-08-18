@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->seed(RoleSeeder::class);
 
-    $this->owner = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $this->owner = User::factory()->create();
     $this->owner->assignRole('propietario');
 });
 
@@ -33,7 +33,7 @@ test('a custom role with a permission can access the admin panel', function () {
     $role = Role::create(['name' => 'editor', 'guard_name' => 'web']);
     $role->givePermissionTo('products.view');
 
-    $editor = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $editor = User::factory()->create();
     $editor->assignRole('editor');
 
     $this->actingAs($editor)
@@ -51,7 +51,7 @@ test('a custom role with a permission can access the admin panel', function () {
 });
 
 test('a user without permissions cannot access the admin panel', function () {
-    $cliente = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $cliente = User::factory()->create();
     $cliente->assignRole('cliente');
 
     $this->actingAs($cliente)
@@ -60,7 +60,7 @@ test('a user without permissions cannot access the admin panel', function () {
 });
 
 test('encargado cannot access role management', function () {
-    $encargado = User::factory()->create(['two_factor_confirmed_at' => now()]);
+    $encargado = User::factory()->create();
     $encargado->assignRole('encargado');
 
     $this->actingAs($encargado)

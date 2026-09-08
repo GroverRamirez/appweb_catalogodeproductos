@@ -3,14 +3,17 @@
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ClientController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ImportProductsController;
 use App\Http\Controllers\Admin\InquiryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\ProductCostController;
 use App\Http\Controllers\Admin\PurchaseController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SaleController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UserController;
@@ -41,6 +44,14 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middleware('permission:products.create')
             ->name('products.import');
 
+        // Carga masiva de costos — también antes del resource por el wildcard
+        Route::get('products/costs', [ProductCostController::class, 'edit'])
+            ->middleware('permission:inventory.view')
+            ->name('products.costs.edit');
+        Route::patch('products/costs', [ProductCostController::class, 'update'])
+            ->middleware('permission:inventory.adjust')
+            ->name('products.costs.update');
+
         Route::resource('products', ProductController::class)
             ->except(['show'])
             ->middlewareFor('index', 'permission:products.view')
@@ -53,14 +64,36 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middlewareFor('index', 'permission:inventory.view')
             ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'permission:inventory.adjust');
 
-        // Debe ir antes del resource para no chocar con el wildcard {purchase}
+        // Deben ir antes del resource para no chocar con el wildcard {purchase}
         Route::patch('purchases/{purchase}/void', [PurchaseController::class, 'void'])
             ->middleware('permission:inventory.adjust')
             ->name('purchases.void');
+        Route::get('purchases/reference-check', [PurchaseController::class, 'referenceCheck'])
+            ->middleware('permission:inventory.adjust')
+            ->name('purchases.reference-check');
         Route::resource('purchases', PurchaseController::class)
             ->only(['index', 'create', 'store', 'show'])
             ->middlewareFor(['index', 'show'], 'permission:inventory.view')
             ->middlewareFor(['create', 'store'], 'permission:inventory.adjust');
+
+        // Debe ir antes del resource para no chocar con el wildcard {client}
+        Route::get('clients/search', [ClientController::class, 'search'])
+            ->middleware('permission:clients.view')
+            ->name('clients.search');
+        Route::resource('clients', ClientController::class)
+            ->middlewareFor(['index', 'show'], 'permission:clients.view')
+            ->middlewareFor(['create', 'store'], 'permission:clients.create')
+            ->middlewareFor(['edit', 'update'], 'permission:clients.update')
+            ->middlewareFor('destroy', 'permission:clients.delete');
+
+        // Debe ir antes del resource para no chocar con el wildcard {sale}
+        Route::patch('sales/{sale}/void', [SaleController::class, 'void'])
+            ->middleware('permission:sales.void')
+            ->name('sales.void');
+        Route::resource('sales', SaleController::class)
+            ->only(['index', 'create', 'store', 'show'])
+            ->middlewareFor(['index', 'show'], 'permission:sales.view')
+            ->middlewareFor(['create', 'store'], 'permission:sales.create');
 
         Route::resource('banners', BannerController::class)
             ->except(['show'])

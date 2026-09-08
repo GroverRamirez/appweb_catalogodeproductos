@@ -48,7 +48,7 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar usuario' : 'Nuevo usuario'" />
 
-    <div class="mx-auto max-w-xl space-y-3 p-3 md:p-4">
+    <div class="mx-auto max-w-2xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/users"><ArrowLeft class="size-4" /></Link>
@@ -61,7 +61,7 @@ const submit = () => {
         <Card class="py-5">
             <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="name">Nombre</Label>
                         <Input id="name" v-model="form.name" required />
                         <p
@@ -72,7 +72,7 @@ const submit = () => {
                         </p>
                     </div>
 
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="email">Correo</Label>
                         <Input
                             id="email"
@@ -88,7 +88,7 @@ const submit = () => {
                         </p>
                     </div>
 
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="password"
                             >Contraseña
                             <span v-if="isEdit" class="text-muted-foreground"
@@ -110,12 +110,12 @@ const submit = () => {
                         </p>
                     </div>
 
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="role">Rol</Label>
                         <select
                             id="role"
                             v-model="form.role"
-                            class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                            class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                         >
                             <option value="">— Sin rol —</option>
                             <option v-for="r in roles" :key="r" :value="r">

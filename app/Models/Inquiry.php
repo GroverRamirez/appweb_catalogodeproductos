@@ -17,6 +17,7 @@ class Inquiry extends Model
     protected $table = 'consultas';
 
     protected $fillable = [
+        'client_id',
         'customer_name',
         'customer_phone',
         'customer_email',
@@ -39,6 +40,7 @@ class Inquiry extends Model
     protected function aliases(): array
     {
         return [
+            'client_id' => 'cliente_id',
             'customer_name' => 'cliente_nombre',
             'customer_phone' => 'cliente_telefono',
             'customer_email' => 'cliente_email',
@@ -98,6 +100,16 @@ class Inquiry extends Model
     public function handler(): BelongsTo
     {
         return $this->belongsTo(User::class, 'atendido_por');
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class, 'cliente_id');
+    }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class, 'consulta_id')->latest('id');
     }
 
     public function notes(): HasMany

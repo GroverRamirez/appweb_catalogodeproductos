@@ -92,7 +92,7 @@ const destroy = (s: Supplier) => {
             </div>
             <select
                 v-model="status"
-                class="h-9 rounded-md border bg-background px-3 text-sm"
+                class="h-9 rounded-md border bg-card px-3 text-sm"
             >
                 <option value="">Todos</option>
                 <option value="1">Activos</option>
@@ -100,7 +100,7 @@ const destroy = (s: Supplier) => {
             </select>
         </div>
 
-        <div class="overflow-x-auto rounded-md border">
+        <div class="overflow-x-auto rounded-md border bg-card">
             <table class="w-full text-sm">
                 <thead
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"

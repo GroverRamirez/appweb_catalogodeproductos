@@ -432,7 +432,7 @@ const sendWhatsApp = () => {
                                 v-model="form.message"
                                 rows="2"
                                 placeholder="Mensaje (opcional)"
-                                class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
                             ></textarea>
                             <Button
                                 type="submit"

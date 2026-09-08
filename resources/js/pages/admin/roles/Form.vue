@@ -91,7 +91,7 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar rol' : 'Nuevo rol'" />
 
-    <div class="mx-auto max-w-5xl space-y-3 p-3 md:p-4">
+    <div class="mx-auto max-w-6xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/roles"><ArrowLeft class="size-4" /></Link>
@@ -107,7 +107,7 @@ const submit = () => {
         <Card class="py-5">
             <CardContent class="space-y-4 pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="name">Nombre del rol</Label>
                         <Input
                             id="name"
@@ -139,21 +139,23 @@ const submit = () => {
                             {{ form.errors.permissions }}
                         </p>
 
-                        <div class="grid gap-3 sm:grid-cols-2">
+                        <div
+                            class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                        >
                             <div
                                 v-for="[module, perms] in groups"
                                 :key="module"
                                 class="rounded-md border p-3"
                             >
                                 <div
-                                    class="mb-2 flex items-center justify-between"
+                                    class="mb-2 flex items-center justify-between gap-2"
                                 >
                                     <span class="text-sm font-semibold">
                                         {{ moduleLabels[module] ?? module }}
                                     </span>
                                     <button
                                         type="button"
-                                        class="text-xs text-primary hover:underline"
+                                        class="shrink-0 text-xs text-primary hover:underline"
                                         @click="toggleGroup(perms)"
                                     >
                                         {{

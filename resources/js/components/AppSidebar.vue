@@ -11,8 +11,8 @@ import {
     Settings as SettingsIcon,
     ShieldCheck,
     ShoppingBag,
-    Tag,
-    Tags,
+    ShoppingCart,
+    UserRound,
     Ticket,
     Truck,
     Users,
@@ -41,26 +41,40 @@ const page = usePage<{ pendingInquiries?: number | null }>();
 
 type GatedNavItem = NavItem & { permission?: string };
 
+/** Pestañas de Gestión de Productos, en el orden en que se muestran. */
+const PRODUCT_TABS = [
+    { permission: 'products.view', href: '/admin/products' },
+    { permission: 'categories.view', href: '/admin/categories' },
+    { permission: 'brands.view', href: '/admin/brands' },
+];
+
+const productsHref = computed(
+    () => PRODUCT_TABS.find((tab) => can(tab.permission))?.href ?? null,
+);
+
 const mainNavItems = computed<NavItem[]>(() => {
     const items: GatedNavItem[] = [
         { title: 'Panel', href: '/admin', icon: LayoutGrid },
+        // Categorías y Marcas ya no son entradas propias: son pestañas dentro
+        // de Productos (ver ProductTabs.vue). El destino es la primera pestaña
+        // que el usuario puede ver, para que un rol con permiso solo sobre
+        // categorías no aterrice en un 403.
         {
             title: 'Productos',
-            href: '/admin/products',
+            href: productsHref.value ?? '/admin/products',
             icon: Package,
-            permission: 'products.view',
         },
         {
-            title: 'Categorías',
-            href: '/admin/categories',
-            icon: Tags,
-            permission: 'categories.view',
+            title: 'Clientes',
+            href: '/admin/clients',
+            icon: UserRound,
+            permission: 'clients.view',
         },
         {
-            title: 'Marcas',
-            href: '/admin/brands',
-            icon: Tag,
-            permission: 'brands.view',
+            title: 'Ventas',
+            href: '/admin/sales',
+            icon: ShoppingCart,
+            permission: 'sales.view',
         },
         {
             title: 'Proveedores',
@@ -119,7 +133,14 @@ const mainNavItems = computed<NavItem[]>(() => {
         },
     ];
 
-    return items.filter((item) => !item.permission || can(item.permission));
+    return items.filter((item) => {
+        // Productos se oculta solo si no puede ver ninguna de sus pestañas.
+        if (item.title === 'Productos') {
+            return productsHref.value !== null;
+        }
+
+        return !item.permission || can(item.permission);
+    });
 });
 
 const publicCatalogNavItems: NavItem[] = [

@@ -95,7 +95,7 @@ watch([q, status], () => {
             </div>
             <select
                 v-model="status"
-                class="h-9 rounded-md border bg-background px-3 text-sm"
+                class="h-9 rounded-md border bg-card px-3 text-sm"
             >
                 <option value="">Todas</option>
                 <option value="confirmada">Confirmadas</option>
@@ -103,7 +103,7 @@ watch([q, status], () => {
             </select>
         </div>
 
-        <div class="overflow-x-auto rounded-md border">
+        <div class="overflow-x-auto rounded-md border bg-card">
             <table class="w-full text-sm">
                 <thead
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Models\Concerns\HasSpanishAliases;
 use Database\Factories\PurchaseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -35,6 +36,14 @@ class Purchase extends Model
             'costo_total' => 'decimal:2',
             'anulado_en' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // El panel muestra gasto en compras y valor de inventario; ambos
+        // cambian al registrar o anular una compra.
+        static::saved(fn () => DashboardController::flushCache());
+        static::deleted(fn () => DashboardController::flushCache());
     }
 
     protected function aliases(): array

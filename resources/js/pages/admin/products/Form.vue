@@ -134,10 +134,8 @@ const submit = () => {
                     >
                     <CardContent class="space-y-3">
                         <div class="grid gap-4 sm:grid-cols-2">
-                            <div>
-                                <Label for="code" class="mb-2"
-                                    >Código (SKU)</Label
-                                >
+                            <div class="space-y-1.5">
+                                <Label for="code">Código (SKU)</Label>
                                 <Input
                                     id="code"
                                     v-model="form.code"
@@ -149,8 +147,8 @@ const submit = () => {
                                     class="mt-1"
                                 />
                             </div>
-                            <div>
-                                <Label for="unit" class="mb-2">Unidad</Label>
+                            <div class="space-y-1.5">
+                                <Label for="unit">Unidad</Label>
                                 <Input
                                     id="unit"
                                     v-model="form.unit"
@@ -163,8 +161,8 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <Label for="name" class="mb-2">Nombre</Label>
+                        <div class="space-y-1.5">
+                            <Label for="name">Nombre</Label>
                             <Input
                                 id="name"
                                 v-model="form.name"
@@ -178,8 +176,8 @@ const submit = () => {
                         </div>
 
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <Label for="slug" class="mb-2"
+                            <div class="space-y-1.5">
+                                <Label for="slug"
                                     >Slug
                                     <span class="text-muted-foreground"
                                         >(opcional)</span
@@ -195,8 +193,8 @@ const submit = () => {
                                     class="mt-1"
                                 />
                             </div>
-                            <div>
-                                <Label for="short_description" class="mb-2"
+                            <div class="space-y-1.5">
+                                <Label for="short_description"
                                     >Descripción corta</Label
                                 >
                                 <Input
@@ -213,8 +211,8 @@ const submit = () => {
                             </div>
                         </div>
 
-                        <div>
-                            <Label for="description" class="mb-2"
+                        <div class="space-y-1.5">
+                            <Label for="description"
                                 >Descripción completa</Label
                             >
                             <textarea
@@ -222,7 +220,7 @@ const submit = () => {
                                 v-model="form.description"
                                 rows="3"
                                 :aria-invalid="!!form.errors.description"
-                                class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
                             ></textarea>
                             <InputError
                                 :message="form.errors.description"
@@ -357,8 +355,8 @@ const submit = () => {
                         ><CardTitle>Precio y stock</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-3">
-                        <div>
-                            <Label for="price" class="mb-2">Precio</Label>
+                        <div class="space-y-1.5">
+                            <Label for="price">Precio</Label>
                             <Input
                                 id="price"
                                 type="number"
@@ -374,10 +372,8 @@ const submit = () => {
                             />
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <Label for="sale_price" class="mb-2"
-                                    >Precio oferta</Label
-                                >
+                            <div class="space-y-1.5">
+                                <Label for="sale_price">Precio oferta</Label>
                                 <Input
                                     id="sale_price"
                                     type="number"
@@ -391,10 +387,8 @@ const submit = () => {
                                     class="mt-1"
                                 />
                             </div>
-                            <div>
-                                <Label for="cost" class="mb-2"
-                                    >Costo (interno)</Label
-                                >
+                            <div class="space-y-1.5">
+                                <Label for="cost">Costo (interno)</Label>
                                 <Input
                                     id="cost"
                                     type="number"
@@ -410,8 +404,8 @@ const submit = () => {
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <Label for="stock" class="mb-2">Stock</Label>
+                            <div class="space-y-1.5">
+                                <Label for="stock">Stock</Label>
                                 <Input
                                     id="stock"
                                     type="number"
@@ -425,10 +419,8 @@ const submit = () => {
                                     class="mt-1"
                                 />
                             </div>
-                            <div>
-                                <Label for="min_stock" class="mb-2"
-                                    >Mín. stock</Label
-                                >
+                            <div class="space-y-1.5">
+                                <Label for="min_stock">Mín. stock</Label>
                                 <Input
                                     id="min_stock"
                                     type="number"
@@ -450,15 +442,13 @@ const submit = () => {
                         ><CardTitle>Clasificación</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-3">
-                        <div>
-                            <Label for="category_id" class="mb-2"
-                                >Categoría</Label
-                            >
+                        <div class="space-y-1.5">
+                            <Label for="category_id">Categoría</Label>
                             <select
                                 id="category_id"
                                 v-model="form.category_id"
                                 :aria-invalid="!!form.errors.category_id"
-                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                             >
                                 <option :value="null">— Sin categoría —</option>
                                 <option
@@ -474,13 +464,13 @@ const submit = () => {
                                 class="mt-1"
                             />
                         </div>
-                        <div>
-                            <Label for="brand_id" class="mb-2">Marca</Label>
+                        <div class="space-y-1.5">
+                            <Label for="brand_id">Marca</Label>
                             <select
                                 id="brand_id"
                                 v-model="form.brand_id"
                                 :aria-invalid="!!form.errors.brand_id"
-                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                             >
                                 <option :value="null">— Sin marca —</option>
                                 <option

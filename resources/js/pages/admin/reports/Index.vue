@@ -8,6 +8,9 @@ import {
     Eye,
     MessageSquare,
     Percent,
+    Receipt,
+    ShoppingCart,
+    TrendingUp,
 } from 'lucide-vue-next';
 import { computed, reactive, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
@@ -34,8 +37,11 @@ type Kpis = {
     sold: number;
     pending: number;
     closed: number;
-    estimated_revenue: number;
     conversion_rate: number;
+    revenue: number;
+    sales_count: number;
+    average_ticket: number;
+    margin: number;
 };
 type Series = { day: string; total: number; revenue: number };
 type TopProduct = {
@@ -57,6 +63,7 @@ const props = defineProps<{
     kpis: Kpis;
     series: Series[];
     topProducts: TopProduct[];
+    topSold: TopProduct[];
     topViewed: TopViewed[];
 }>();
 
@@ -97,7 +104,7 @@ const maxRevenue = computed(() =>
             :icon="BarChart3"
             eyebrow="Inteligencia"
             title="Reportes"
-            description="Métricas de consultas y conversión en el rango seleccionado."
+            description="Consultas, ventas e ingresos reales del rango seleccionado."
         >
             <template #actions>
                 <div class="flex flex-wrap items-end gap-3">
@@ -139,11 +146,29 @@ const maxRevenue = computed(() =>
                 :icon="Percent"
             />
             <StatCard
-                label="Ingresos estimados"
-                :value="cur(kpis.estimated_revenue)"
-                hint="suma de ventas marcadas como vendido"
+                label="Ingresos"
+                :value="cur(kpis.revenue)"
+                hint="ventas confirmadas del rango"
                 tone="success"
                 :icon="DollarSign"
+            />
+            <StatCard
+                label="Ventas"
+                :value="kpis.sales_count"
+                :icon="ShoppingCart"
+            />
+            <StatCard
+                label="Ticket promedio"
+                :value="cur(kpis.average_ticket)"
+                hint="ingresos / ventas"
+                :icon="Receipt"
+            />
+            <StatCard
+                label="Margen"
+                :value="cur(kpis.margin)"
+                hint="precio menos costo, descuentos incluidos"
+                :tone="kpis.margin >= 0 ? 'success' : 'warn'"
+                :icon="TrendingUp"
             />
             <StatCard
                 label="Pendientes"
@@ -215,7 +240,43 @@ const maxRevenue = computed(() =>
             </CardContent>
         </Card>
 
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Productos más vendidos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <table v-if="topSold.length" class="w-full text-sm">
+                        <thead
+                            class="text-left text-xs text-muted-foreground uppercase"
+                        >
+                            <tr>
+                                <th class="py-2">Producto</th>
+                                <th class="py-2 text-right">Cantidad</th>
+                                <th class="py-2 text-right">Ingresos</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y">
+                            <tr v-for="p in topSold" :key="p.product_id">
+                                <td class="py-2">
+                                    <div class="font-medium">{{ p.name }}</div>
+                                    <div class="text-xs text-muted-foreground">
+                                        {{ p.code }}
+                                    </div>
+                                </td>
+                                <td class="py-2 text-right">{{ p.qty }}</td>
+                                <td class="py-2 text-right">
+                                    {{ cur(Number(p.revenue)) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p v-else class="text-sm text-muted-foreground">
+                        Sin ventas en este rango.
+                    </p>
+                </CardContent>
+            </Card>
+
             <Card>
                 <CardHeader
                     ><CardTitle

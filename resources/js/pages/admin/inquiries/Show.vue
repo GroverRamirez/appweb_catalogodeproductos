@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Phone } from 'lucide-vue-next';
+import { ArrowLeft, Phone, ShoppingCart } from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +31,13 @@ type Note = {
     author?: { id: number; name: string } | null;
 };
 
+type LinkedSale = {
+    id: number;
+    receipt_number: number;
+    status: string;
+    total: string;
+};
+
 type Inquiry = {
     id: number;
     customer_name: string;
@@ -46,6 +53,7 @@ type Inquiry = {
     items: Item[];
     handler?: { id: number; name: string } | null;
     notes: Note[];
+    sales: LinkedSale[];
 };
 
 const props = defineProps<{
@@ -93,6 +101,29 @@ const whatsappLink = (phone: string) =>
             </Button>
             <h1 class="text-2xl font-semibold">Consulta #{{ inquiry.id }}</h1>
             <Badge class="ml-2">{{ inquiry.status }}</Badge>
+        </div>
+
+        <!-- Marcar la consulta como vendida genera la venta: es la que
+             descuenta el stock y la que leen los reportes. -->
+        <div
+            v-if="inquiry.sales.length"
+            class="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm"
+        >
+            <ShoppingCart class="size-4 text-muted-foreground" />
+            <span class="text-muted-foreground">Ventas generadas:</span>
+            <Link
+                v-for="sale in inquiry.sales"
+                :key="sale.id"
+                :href="`/admin/sales/${sale.id}`"
+                class="font-mono font-medium hover:text-primary hover:underline"
+                :class="
+                    sale.status === 'anulada'
+                        ? 'text-muted-foreground line-through'
+                        : ''
+                "
+            >
+                {{ String(sale.receipt_number).padStart(6, '0') }}
+            </Link>
         </div>
 
         <div class="grid gap-4 md:grid-cols-3">
@@ -147,7 +178,7 @@ const whatsappLink = (phone: string) =>
                             <select
                                 id="status"
                                 v-model="form.status"
-                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                             >
                                 <option
                                     v-for="s in statuses"
@@ -164,7 +195,7 @@ const whatsappLink = (phone: string) =>
                                 id="admin_notes"
                                 v-model="form.admin_notes"
                                 rows="4"
-                                class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
                             ></textarea>
                         </div>
                         <Button
@@ -224,15 +255,20 @@ const whatsappLink = (phone: string) =>
         </Card>
 
         <Card>
-            <CardHeader><CardTitle>Historial de seguimiento</CardTitle></CardHeader>
+            <CardHeader
+                ><CardTitle>Historial de seguimiento</CardTitle></CardHeader
+            >
             <CardContent class="space-y-4">
-                <form class="flex items-start gap-2" @submit.prevent="submitNote">
+                <form
+                    class="flex items-start gap-2"
+                    @submit.prevent="submitNote"
+                >
                     <div class="flex-1">
                         <textarea
                             v-model="noteForm.body"
                             rows="2"
                             placeholder="Registrar contacto, acuerdo o nota interna..."
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                            class="w-full rounded-md border bg-card px-3 py-2 text-sm"
                         ></textarea>
                         <p
                             v-if="noteForm.errors.body"

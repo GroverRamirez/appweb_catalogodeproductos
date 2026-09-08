@@ -94,7 +94,10 @@
    Sin degradados, sin neón: superficies planas, bordes definidos.
    =========================================================================== */
 :root {
-    --background: hsl(0 0% 100%);
+    /* Gris claro, no blanco: las tarjetas quedan en blanco encima y se
+       despegan del fondo. Los controles de formulario usan --card, no
+       --background, para no verse hundidos dentro de esas tarjetas. */
+    --background: hsl(220 16% 96%);
     --foreground: hsl(222 33% 14%);
 
     --card: hsl(0 0% 100%);
@@ -263,6 +266,21 @@
         background: var(--card);
         border-color: var(--border);
         box-shadow: 0 1px 2px hsl(0 0% 0% / 0.3);
+    }
+
+    /* Cabecera con banda gris de las tarjetas del panel.
+       El CardHeader de shadcn no trae padding vertical propio: lo hereda del
+       py-6 del Card padre. Al pintarle un fondo, la banda quedaba despegada
+       del borde superior y con el relleno descentrado (0 arriba, 24px abajo).
+       Esta utilidad le da su propio relleno simetrico y la pega al borde.
+       Ojo: NO usar la clase `border-b` junto con esta, porque dispara el
+       `[.border-b]:pb-6` del componente y vuelve a descentrar el relleno. */
+    .admin-card-header {
+        margin-top: -1.5rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+        background-color: var(--muted);
+        border-bottom: 1px solid var(--border);
     }
 
     .admin-table-header {

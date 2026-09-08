@@ -3,8 +3,9 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     CheckCircle2,
+    Coins,
     FileUp,
-    Package,
+    LayoutGrid,
     Pencil,
     Plus,
     Search,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
+import ProductTabs from '@/components/admin/ProductTabs.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +27,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { usePermissions } from '@/composables/usePermissions';
 import { xsrfToken } from '@/lib/xsrf';
 
 defineOptions({
@@ -65,19 +68,23 @@ const props = defineProps<{
         brand?: number | string;
         status?: string;
         low_stock?: boolean;
+        no_cost?: boolean;
     };
     categories: { id: number; name: string }[];
     brands: { id: number; name: string }[];
 }>();
+
+const { can } = usePermissions();
 
 const q = ref(props.filters.q ?? '');
 const category = ref(props.filters.category ?? '');
 const brand = ref(props.filters.brand ?? '');
 const status = ref(props.filters.status ?? '');
 const lowStock = ref(!!props.filters.low_stock);
+const noCost = ref(!!props.filters.no_cost);
 
 let timer: ReturnType<typeof setTimeout> | null = null;
-watch([q, category, brand, status, lowStock], () => {
+watch([q, category, brand, status, lowStock, noCost], () => {
     if (timer) {
         clearTimeout(timer);
     }
@@ -91,6 +98,7 @@ watch([q, category, brand, status, lowStock], () => {
                 brand: brand.value,
                 status: status.value,
                 low_stock: lowStock.value ? 1 : '',
+                no_cost: noCost.value ? 1 : '',
             },
             { preserveState: true, preserveScroll: true, replace: true },
         );
@@ -210,10 +218,10 @@ async function runImport() {
 
     <div class="space-y-6 p-4 md:p-6">
         <PageHeader
-            :icon="Package"
+            :icon="LayoutGrid"
             eyebrow="Catálogo"
-            title="Productos"
-            :description="`${products.total} productos en total.`"
+            title="Gestión de Productos"
+            description="Administra categorías, marcas y prendas."
         >
             <template #actions>
                 <Button
@@ -223,6 +231,16 @@ async function runImport() {
                 >
                     <FileUp class="size-4" /> Importar CSV
                 </Button>
+                <Button
+                    v-if="can('inventory.view')"
+                    as-child
+                    variant="outline"
+                    class="rounded-full"
+                >
+                    <Link href="/admin/products/costs">
+                        <Coins class="size-4" /> Cargar costos
+                    </Link>
+                </Button>
                 <Button as-child class="rounded-md">
                     <Link href="/admin/products/create">
                         <Plus class="size-4" /> Nuevo producto
@@ -230,6 +248,8 @@ async function runImport() {
                 </Button>
             </template>
         </PageHeader>
+
+        <ProductTabs />
 
         <div class="grid gap-3 rounded-2xl border bg-card p-4 md:grid-cols-5">
             <div class="relative md:col-span-2">
@@ -244,7 +264,7 @@ async function runImport() {
             </div>
             <select
                 v-model="category"
-                class="h-10 rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Todas las categorías</option>
                 <option v-for="c in categories" :key="c.id" :value="c.id">
@@ -253,7 +273,7 @@ async function runImport() {
             </select>
             <select
                 v-model="brand"
-                class="h-10 rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Todas las marcas</option>
                 <option v-for="b in brands" :key="b.id" :value="b.id">
@@ -262,21 +282,31 @@ async function runImport() {
             </select>
             <select
                 v-model="status"
-                class="h-10 rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Estado</option>
                 <option value="1">Activos</option>
                 <option value="0">Inactivos</option>
             </select>
 
-            <label class="col-span-full flex items-center gap-2 text-sm">
-                <input
-                    type="checkbox"
-                    v-model="lowStock"
-                    class="accent-brand"
-                />
-                Solo stock bajo
-            </label>
+            <div class="col-span-full flex flex-wrap gap-x-5 gap-y-2">
+                <label class="flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        v-model="lowStock"
+                        class="accent-brand"
+                    />
+                    Solo stock bajo
+                </label>
+                <label class="flex items-center gap-2 text-sm">
+                    <input
+                        type="checkbox"
+                        v-model="noCost"
+                        class="accent-brand"
+                    />
+                    Solo sin costo cargado
+                </label>
+            </div>
         </div>
 
         <div class="overflow-hidden rounded-2xl border bg-card shadow-sm">
@@ -445,7 +475,7 @@ async function runImport() {
                         <input
                             type="file"
                             accept=".csv,text/csv"
-                            class="block w-full cursor-pointer rounded-lg border bg-background px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-brand"
+                            class="block w-full cursor-pointer rounded-lg border bg-card px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:rounded-md file:border-0 file:bg-brand/10 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-brand"
                             @change="onFileChange"
                         />
                         <p class="text-xs text-muted-foreground">

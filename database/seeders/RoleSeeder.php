@@ -24,6 +24,8 @@ class RoleSeeder extends Seeder
             // Operación
             'inquiries.view', 'inquiries.update', 'inquiries.delete',
             'inventory.view', 'inventory.adjust',
+            'sales.view', 'sales.create', 'sales.void',
+            'clients.view', 'clients.create', 'clients.update', 'clients.delete',
             // Administración
             'users.view', 'users.create', 'users.update', 'users.delete',
             'roles.view', 'roles.create', 'roles.update', 'roles.delete',
@@ -49,6 +51,8 @@ class RoleSeeder extends Seeder
             'coupons.view', 'coupons.create', 'coupons.update', 'coupons.delete',
             'inquiries.view', 'inquiries.update', 'inquiries.delete',
             'inventory.view', 'inventory.adjust',
+            'sales.view', 'sales.create', 'sales.void',
+            'clients.view', 'clients.create', 'clients.update', 'clients.delete',
             'reports.view',
         ]);
 
@@ -60,6 +64,11 @@ class RoleSeeder extends Seeder
             'products.view', 'products.update',
             'inquiries.view', 'inquiries.update',
             'inventory.view', 'inventory.adjust',
+            // Vende, pero no anula: anular es la forma de hacer desaparecer
+            // una operacion ya cobrada, asi que queda en encargado/propietario.
+            'sales.view', 'sales.create',
+            // Registra y corrige clientes al vender, pero no los da de baja.
+            'clients.view', 'clients.create', 'clients.update',
             'reports.view',
         ]);
 

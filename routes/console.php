@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\ProductView;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -27,4 +28,9 @@ Schedule::exec('/usr/local/bin/backup.sh')
 Schedule::command('queue:prune-failed --hours=168')
     ->weekly();
 
-// Purga de registros de actividad/vistas antiguos podría agregarse aquí.
+// Purga del detalle de visitas antiguo (ver ProductView::prunable()).
+// `producto_visitas` es un log de solo inserción y crece sin techo; el total
+// acumulado por producto vive aparte en `productos.visitas`, así que esto no
+// pierde el histórico.
+Schedule::command('model:prune', ['--model' => [ProductView::class]])
+    ->dailyAt('03:30');

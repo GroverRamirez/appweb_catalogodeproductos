@@ -313,7 +313,7 @@ useReveal();
                     <Input
                         v-model="q"
                         :placeholder="t('search_placeholder')"
-                        class="h-10 w-full rounded-md border-input bg-background pl-10 focus-visible:border-ring"
+                        class="h-10 w-full rounded-md border-input bg-card pl-10 focus-visible:border-ring"
                     />
                 </form>
 
@@ -515,7 +515,7 @@ useReveal();
 
         <!-- Barra de navegación fija (solo móvil) -->
         <nav
-            class="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:hidden"
+            class="fixed inset-x-0 bottom-0 z-30 flex items-stretch justify-around border-t border-border bg-card pb-[env(safe-area-inset-bottom)] md:hidden"
             aria-label="Navegación móvil"
         >
             <Link

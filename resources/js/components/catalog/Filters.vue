@@ -85,7 +85,7 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
             </Label>
             <select
                 v-model="local.category"
-                class="h-10 w-full rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 w-full rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Todas</option>
                 <option v-for="c in rootCategories" :key="c.id" :value="c.slug">
@@ -102,7 +102,7 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
             </Label>
             <select
                 v-model="local.brand"
-                class="h-10 w-full rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 w-full rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Todas</option>
                 <option v-for="b in brands" :key="b.id" :value="b.slug">
@@ -157,7 +157,7 @@ const rootCategories = props.categories.filter((c) => !c.parent_id);
             </Label>
             <select
                 v-model="local.sort"
-                class="h-10 w-full rounded-lg border bg-background px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
+                class="h-10 w-full rounded-lg border bg-card px-3 text-sm transition focus:border-brand focus:ring-2 focus:ring-brand/20"
             >
                 <option value="">Relevancia</option>
                 <option value="newest">Más nuevos</option>

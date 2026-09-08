@@ -173,7 +173,7 @@ const onToggleFavorite = (e: MouseEvent) => {
                         type="button"
                         size="sm"
                         variant="secondary"
-                        class="h-8 flex-1 rounded-md border border-border bg-background text-foreground hover:bg-muted"
+                        class="h-8 flex-1 rounded-md border border-border bg-card text-foreground hover:bg-muted"
                         @click="openQuick"
                     >
                         <Eye class="size-4" />

@@ -51,7 +51,7 @@ const cardBorder: Record<string, string> = {
                     {{ label }}
                 </p>
                 <p
-                    class="mt-2 font-display text-3xl leading-tight font-extrabold tracking-tight text-foreground md:text-4xl"
+                    class="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-foreground tabular-nums md:text-4xl"
                 >
                     {{ value }}
                 </p>

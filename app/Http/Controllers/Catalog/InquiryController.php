@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Catalog\CheckoutRequest;
 use App\Http\Requests\Catalog\StoreInquiryRequest;
 use App\Http\Requests\Catalog\ValidateCouponRequest;
+use App\Models\Client;
 use App\Models\Coupon;
 use App\Models\Inquiry;
 use App\Models\InquiryItem;
 use App\Models\Product;
 use App\Models\Setting;
+use App\Models\User;
 use App\Notifications\NewInquiryNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -27,8 +29,13 @@ class InquiryController extends Controller
     {
         $data = $request->validated();
 
-        $inquiry = DB::transaction(function () use ($data) {
+        $user = $request->user();
+
+        $inquiry = DB::transaction(function () use ($data, $user) {
+            $client = $this->resolveClient($data, $user);
+
             $inquiry = Inquiry::create([
+                'client_id' => $client?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -68,8 +75,13 @@ class InquiryController extends Controller
     {
         $data = $request->validated();
 
-        $inquiry = DB::transaction(function () use ($data) {
+        $user = $request->user();
+
+        $inquiry = DB::transaction(function () use ($data, $user) {
+            $client = $this->resolveClient($data, $user);
+
             $inquiry = Inquiry::create([
+                'client_id' => $client?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -132,6 +144,41 @@ class InquiryController extends Controller
     /**
      * Valida un código de cupón vs subtotal. Devuelve JSON para el frontend del carrito.
      */
+    /**
+     * Identifica al cliente detrás de una consulta del catálogo.
+     *
+     * Si viene logueado, su cuenta manda: se busca el cliente ya enlazado a ese
+     * usuario. Si no lo hay, se cae al teléfono, de modo que quien ya compró en
+     * la tienda y después se registra en la web queda como UN cliente y no dos;
+     * en ese caso se aprovecha para enlazar la cuenta a la ficha existente.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveClient(array $data, ?User $user): ?Client
+    {
+        if ($user) {
+            $existing = Client::where('user_id', $user->id)->first();
+
+            if ($existing) {
+                return $existing;
+            }
+        }
+
+        $client = Client::resolveByPhone($data['customer_phone'] ?? null, [
+            'name' => $data['customer_name'],
+            'email' => $data['customer_email'] ?? null,
+            'user_id' => $user?->id,
+        ]);
+
+        // El cliente ya existía de una compra en tienda y ahora entró con su
+        // cuenta: se enlazan, en vez de dejar dos identidades del mismo humano.
+        if ($client && $user && $client->user_id === null) {
+            $client->update(['user_id' => $user->id]);
+        }
+
+        return $client;
+    }
+
     public function validateCoupon(ValidateCouponRequest $request): JsonResponse
     {
         $data = $request->validated();

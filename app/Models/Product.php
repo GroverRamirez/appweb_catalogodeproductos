@@ -177,6 +177,15 @@ class Product extends Model
         return $query->whereColumn('stock', '<=', 'stock_minimo');
     }
 
+    /**
+     * Productos sin costo cargado. Sin este dato no se puede valorizar el
+     * inventario ni calcular margen, así que el panel los reporta aparte.
+     */
+    public function scopeWithoutCost(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $q) => $q->whereNull('costo')->orWhere('costo', '<=', 0));
+    }
+
     public function scopeSearch(Builder $query, ?string $term): Builder
     {
         if (blank($term)) {

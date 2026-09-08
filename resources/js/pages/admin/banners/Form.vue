@@ -81,7 +81,7 @@ const currentImg = ref(
 <template>
     <Head :title="isEdit ? 'Editar banner' : 'Nuevo banner'" />
 
-    <div class="mx-auto max-w-5xl space-y-3 p-3 md:p-4">
+    <div class="mx-auto max-w-4xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/banners"><ArrowLeft class="size-4" /></Link>
@@ -99,11 +99,11 @@ const currentImg = ref(
                     >
                     <CardContent class="space-y-3">
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="title">Título</Label>
                                 <Input id="title" v-model="form.title" />
                             </div>
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="cta_text">Texto del botón</Label>
                                 <Input
                                     id="cta_text"
@@ -112,11 +112,11 @@ const currentImg = ref(
                                 />
                             </div>
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="subtitle">Subtítulo</Label>
                             <Input id="subtitle" v-model="form.subtitle" />
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="link">Enlace (URL o ruta)</Label>
                             <Input
                                 id="link"
@@ -139,7 +139,7 @@ const currentImg = ref(
                             class="aspect-[16/5] w-full rounded-md object-cover"
                         />
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="image_file">Subir imagen</Label>
                                 <input
                                     id="image_file"
@@ -152,7 +152,7 @@ const currentImg = ref(
                                     Recomendado 1600×600. Máx. 4 MB.
                                 </p>
                             </div>
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="image_url">…o URL externa</Label>
                                 <Input
                                     id="image_url"
@@ -178,7 +178,7 @@ const currentImg = ref(
                         ><CardTitle>Visibilidad</CardTitle></CardHeader
                     >
                     <CardContent class="space-y-3">
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="sort_order">Orden</Label>
                             <Input
                                 id="sort_order"
@@ -188,7 +188,7 @@ const currentImg = ref(
                             />
                         </div>
                         <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="starts_at">Desde</Label>
                                 <Input
                                     id="starts_at"
@@ -196,7 +196,7 @@ const currentImg = ref(
                                     v-model="form.starts_at"
                                 />
                             </div>
-                            <div>
+                            <div class="space-y-1.5">
                                 <Label for="ends_at">Hasta</Label>
                                 <Input
                                     id="ends_at"

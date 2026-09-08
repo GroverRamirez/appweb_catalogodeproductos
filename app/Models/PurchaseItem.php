@@ -21,6 +21,7 @@ class PurchaseItem extends Model
         'product_code_snapshot',
         'quantity',
         'unit_cost',
+        'previous_cost',
     ];
 
     protected function casts(): array
@@ -28,6 +29,7 @@ class PurchaseItem extends Model
         return [
             'cantidad' => 'integer',
             'costo_unitario' => 'decimal:2',
+            'costo_anterior' => 'decimal:2',
         ];
     }
 
@@ -40,6 +42,7 @@ class PurchaseItem extends Model
             'product_code_snapshot' => 'producto_codigo_copia',
             'quantity' => 'cantidad',
             'unit_cost' => 'costo_unitario',
+            'previous_cost' => 'costo_anterior',
         ];
     }
 

@@ -115,7 +115,7 @@ const groupTitle = (g: string) => {
 <template>
     <Head title="Configuración" />
 
-    <div class="mx-auto max-w-5xl space-y-3 p-3 md:p-4">
+    <div class="mx-auto max-w-6xl space-y-3 p-3 md:p-4">
         <div>
             <h1 class="text-xl font-semibold">Configuración</h1>
             <p class="text-sm text-muted-foreground">
@@ -124,93 +124,102 @@ const groupTitle = (g: string) => {
         </div>
 
         <form @submit.prevent="submit" class="space-y-3">
-            <Card
-                v-for="(items, group) in grouped"
-                :key="group"
-                class="gap-3 py-4"
-            >
-                <CardHeader class="pb-0">
-                    <CardTitle>{{ groupTitle(group) }}</CardTitle>
-                </CardHeader>
-                <CardContent class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
-                    <div v-for="s in items" :key="s.key">
-                        <Label :for="s.key">{{ s.label ?? s.key }}</Label>
+            <div class="space-y-3 xl:columns-2 xl:gap-3 xl:space-y-0">
+                <Card
+                    v-for="(items, group) in grouped"
+                    :key="group"
+                    class="gap-3 py-4 xl:mb-3 xl:break-inside-avoid"
+                >
+                    <CardHeader class="pb-0">
+                        <CardTitle>{{ groupTitle(group) }}</CardTitle>
+                    </CardHeader>
+                    <CardContent class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+                        <div
+                            v-for="s in items"
+                            :key="s.key"
+                            class="space-y-1.5"
+                        >
+                            <Label :for="s.key">{{ s.label ?? s.key }}</Label>
 
-                        <!-- Image / file -->
-                        <div v-if="s.type === 'image'" class="space-y-2">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="grid h-20 w-20 place-items-center overflow-hidden rounded-md border bg-muted/40"
-                                >
-                                    <img
-                                        v-if="currentImage(s)"
-                                        :src="currentImage(s)!"
-                                        :alt="s.label ?? s.key"
-                                        class="h-full w-full object-contain"
-                                    />
-                                    <span
-                                        v-else
-                                        class="px-2 text-center text-[10px] text-muted-foreground"
+                            <!-- Image / file -->
+                            <div v-if="s.type === 'image'" class="space-y-2">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="grid h-20 w-20 place-items-center overflow-hidden rounded-md border bg-muted/40"
                                     >
-                                        Sin imagen
-                                    </span>
-                                </div>
-                                <div class="flex flex-col gap-1">
-                                    <label
-                                        :for="`file_${s.key}`"
-                                        class="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
-                                    >
-                                        <Upload class="size-3" /> Subir imagen
-                                    </label>
-                                    <input
-                                        :id="`file_${s.key}`"
-                                        type="file"
-                                        accept="image/*"
-                                        class="hidden"
-                                        @change="onFileChange(s.key, $event)"
-                                    />
-                                    <button
-                                        v-if="currentImage(s)"
-                                        type="button"
-                                        class="inline-flex items-center gap-1 text-xs text-destructive hover:underline"
-                                        @click="markDelete(s.key)"
-                                    >
-                                        <Trash2 class="size-3" /> Quitar
-                                    </button>
+                                        <img
+                                            v-if="currentImage(s)"
+                                            :src="currentImage(s)!"
+                                            :alt="s.label ?? s.key"
+                                            class="h-full w-full object-contain"
+                                        />
+                                        <span
+                                            v-else
+                                            class="px-2 text-center text-[10px] text-muted-foreground"
+                                        >
+                                            Sin imagen
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <label
+                                            :for="`file_${s.key}`"
+                                            class="inline-flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-xs hover:bg-accent"
+                                        >
+                                            <Upload class="size-3" /> Subir
+                                            imagen
+                                        </label>
+                                        <input
+                                            :id="`file_${s.key}`"
+                                            type="file"
+                                            accept="image/*"
+                                            class="hidden"
+                                            @change="
+                                                onFileChange(s.key, $event)
+                                            "
+                                        />
+                                        <button
+                                            v-if="currentImage(s)"
+                                            type="button"
+                                            class="inline-flex items-center gap-1 text-xs text-destructive hover:underline"
+                                            @click="markDelete(s.key)"
+                                        >
+                                            <Trash2 class="size-3" /> Quitar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div
-                            v-else-if="s.type === 'boolean'"
-                            class="flex items-center gap-2"
-                        >
-                            <Checkbox
+                            <div
+                                v-else-if="s.type === 'boolean'"
+                                class="flex items-center gap-2"
+                            >
+                                <Checkbox
+                                    :id="s.key"
+                                    v-model="valueAt(s.key).value as any"
+                                />
+                                <span class="text-sm text-muted-foreground">
+                                    {{ valueAt(s.key).value ? 'Sí' : 'No' }}
+                                </span>
+                            </div>
+
+                            <textarea
+                                v-else-if="s.type === 'text'"
                                 :id="s.key"
                                 v-model="valueAt(s.key).value as any"
+                                rows="3"
+                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
+                            ></textarea>
+
+                            <Input
+                                v-else
+                                :id="s.key"
+                                :type="s.type === 'number' ? 'number' : 'text'"
+                                v-model="valueAt(s.key).value as any"
                             />
-                            <span class="text-sm text-muted-foreground">
-                                {{ valueAt(s.key).value ? 'Sí' : 'No' }}
-                            </span>
                         </div>
-
-                        <textarea
-                            v-else-if="s.type === 'text'"
-                            :id="s.key"
-                            v-model="valueAt(s.key).value as any"
-                            rows="3"
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
-                        ></textarea>
-
-                        <Input
-                            v-else
-                            :id="s.key"
-                            :type="s.type === 'number' ? 'number' : 'text'"
-                            v-model="valueAt(s.key).value as any"
-                        />
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
 
             <div class="flex justify-end">
                 <Button type="submit" :disabled="form.processing">

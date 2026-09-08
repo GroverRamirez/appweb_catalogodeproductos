@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Tag, Trash2 } from 'lucide-vue-next';
+import { LayoutGrid, Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
+import ProductTabs from '@/components/admin/ProductTabs.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ defineOptions({
     layout: () => ({
         breadcrumbs: [
             { title: 'Panel', href: '/admin' },
-            { title: 'Marcas', href: '/admin/brands' },
+            { title: 'Productos', href: '/admin/products' },
         ],
     }),
 });
@@ -68,19 +69,13 @@ const destroy = (b: Brand) => {
 
     <div class="space-y-6 p-4 md:p-6">
         <PageHeader
-            :icon="Tag"
+            :icon="LayoutGrid"
             eyebrow="Catálogo"
-            title="Marcas"
-            description="Marcas asociadas a los productos."
-        >
-            <template #actions>
-                <Button as-child class="rounded-md">
-                    <Link href="/admin/brands/create">
-                        <Plus class="size-4" /> Nueva marca
-                    </Link>
-                </Button>
-            </template>
-        </PageHeader>
+            title="Gestión de Productos"
+            description="Administra categorías, marcas y prendas."
+        />
+
+        <ProductTabs />
 
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative max-w-sm flex-1">
@@ -91,15 +86,20 @@ const destroy = (b: Brand) => {
             </div>
             <select
                 v-model="status"
-                class="h-9 rounded-md border bg-background px-3 text-sm"
+                class="h-9 rounded-md border bg-card px-3 text-sm"
             >
                 <option value="">Todas</option>
                 <option value="1">Activas</option>
                 <option value="0">Inactivas</option>
             </select>
+            <Button as-child class="ml-auto rounded-md">
+                <Link href="/admin/brands/create">
+                    <Plus class="size-4" /> Nueva marca
+                </Link>
+            </Button>
         </div>
 
-        <div class="overflow-x-auto rounded-md border">
+        <div class="overflow-x-auto rounded-md border bg-card">
             <table class="w-full text-sm">
                 <thead
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"

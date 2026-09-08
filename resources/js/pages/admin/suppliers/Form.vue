@@ -52,7 +52,7 @@ const submit = () => {
 <template>
     <Head :title="isEdit ? 'Editar proveedor' : 'Nuevo proveedor'" />
 
-    <div class="mx-auto max-w-5xl space-y-3 p-3 md:p-4">
+    <div class="mx-auto max-w-4xl space-y-3 p-3 md:p-4">
         <div class="flex items-center gap-2">
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/admin/suppliers"
@@ -64,7 +64,7 @@ const submit = () => {
             </h1>
         </div>
 
-        <Card class="max-w-4xl py-5">
+        <Card class="py-5">
             <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
                     <div class="grid gap-4 md:grid-cols-2">

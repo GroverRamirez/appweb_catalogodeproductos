@@ -3,12 +3,17 @@
 namespace App\Models;
 
 use App\Models\Concerns\HasSpanishAliases;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductView extends Model
 {
-    use HasSpanishAliases;
+    use HasSpanishAliases, Prunable;
+
+    /** Meses de detalle de visitas que se conservan. */
+    public const RETENTION_MONTHS = 6;
 
     public $timestamps = false;
 
@@ -45,5 +50,16 @@ class ProductView extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class, 'producto_id');
+    }
+
+    /**
+     * Esta tabla es un log de solo inserción: crece sin techo mientras haya
+     * trafico. Se purga el detalle viejo, no el historico: el contador
+     * acumulado vive en `productos.visitas` y lo incrementa RecordProductView
+     * aparte, asi que purgar aca no pierde el total de vistas de un producto.
+     */
+    public function prunable(): Builder
+    {
+        return static::where('visto_en', '<=', now()->subMonths(self::RETENTION_MONTHS));
     }
 }

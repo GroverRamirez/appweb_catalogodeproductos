@@ -130,7 +130,7 @@ const perks = [
         </section>
 
         <!-- Perks / value props -->
-        <section class="border-b border-border bg-background">
+        <section class="border-b border-border bg-card">
             <div
                 class="mx-auto grid max-w-[1400px] gap-x-8 gap-y-6 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:px-8"
             >

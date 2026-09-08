@@ -32,13 +32,14 @@ class ProductController extends Controller
                 $q->where('activo', $request->boolean('status'));
             })
             ->when($request->boolean('low_stock'), fn ($q) => $q->lowStock())
+            ->when($request->boolean('no_cost'), fn ($q) => $q->withoutCost())
             ->latest()
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('admin/products/Index', [
             'products' => $products,
-            'filters' => $request->only(['q', 'category', 'brand', 'status', 'low_stock']),
+            'filters' => $request->only(['q', 'category', 'brand', 'status', 'low_stock', 'no_cost']),
             'categories' => Category::query()->orderBy('nombre')->get(['id', 'nombre']),
             'brands' => Brand::query()->orderBy('nombre')->get(['id', 'nombre']),
         ]);

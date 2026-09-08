@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Tags, Trash2 } from 'lucide-vue-next';
+import { LayoutGrid, Pencil, Plus, Search, Trash2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
+import ProductTabs from '@/components/admin/ProductTabs.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ defineOptions({
     layout: () => ({
         breadcrumbs: [
             { title: 'Panel', href: '/admin' },
-            { title: 'Categorías', href: '/admin/categories' },
+            { title: 'Productos', href: '/admin/products' },
         ],
     }),
 });
@@ -69,19 +70,13 @@ const destroy = (c: Category) => {
 
     <div class="space-y-6 p-4 md:p-6">
         <PageHeader
-            :icon="Tags"
+            :icon="LayoutGrid"
             eyebrow="Catálogo"
-            title="Categorías"
-            description="Organiza el catálogo por categorías y subcategorías."
-        >
-            <template #actions>
-                <Button as-child class="rounded-md">
-                    <Link href="/admin/categories/create">
-                        <Plus class="size-4" /> Nueva categoría
-                    </Link>
-                </Button>
-            </template>
-        </PageHeader>
+            title="Gestión de Productos"
+            description="Administra categorías, marcas y prendas."
+        />
+
+        <ProductTabs />
 
         <div class="flex flex-wrap items-center gap-3">
             <div class="relative max-w-sm flex-1">
@@ -92,15 +87,20 @@ const destroy = (c: Category) => {
             </div>
             <select
                 v-model="status"
-                class="h-9 rounded-md border bg-background px-3 text-sm"
+                class="h-9 rounded-md border bg-card px-3 text-sm"
             >
                 <option value="">Todas</option>
                 <option value="1">Activas</option>
                 <option value="0">Inactivas</option>
             </select>
+            <Button as-child class="ml-auto rounded-md">
+                <Link href="/admin/categories/create">
+                    <Plus class="size-4" /> Nueva categoría
+                </Link>
+            </Button>
         </div>
 
-        <div class="overflow-x-auto rounded-md border">
+        <div class="overflow-x-auto rounded-md border bg-card">
             <table class="w-full text-sm">
                 <thead
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"

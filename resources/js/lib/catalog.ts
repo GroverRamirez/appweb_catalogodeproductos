@@ -58,14 +58,19 @@ export const productMainImage = (product: CatalogProduct): string | null => {
     return imageUrl(fromList);
 };
 
+/**
+ * Formatea un monto con separador de miles. Usa la convencion boliviana
+ * (es-BO): 165.668,72 — punto para miles, coma para decimales. Es la misma
+ * que ya usaba el comprobante de compra, asi que todo el sistema queda igual.
+ */
 export const formatPrice = (value: string | number, symbol = 'S/'): string => {
     const amount = typeof value === 'string' ? parseFloat(value) : value;
+    const safe = Number.isNaN(amount) ? 0 : amount;
 
-    if (Number.isNaN(amount)) {
-        return `${symbol} 0.00`;
-    }
-
-    return `${symbol} ${amount.toFixed(2)}`;
+    return `${symbol} ${safe.toLocaleString('es-BO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
 };
 
 export const buildWhatsAppLink = (

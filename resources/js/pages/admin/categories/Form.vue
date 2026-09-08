@@ -69,7 +69,7 @@ const submit = () => {
         <Card class="py-5">
             <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="name">Nombre</Label>
                         <Input id="name" v-model="form.name" required />
                         <p
@@ -81,7 +81,7 @@ const submit = () => {
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="slug"
                                 >Slug
                                 <span class="text-muted-foreground"
@@ -101,12 +101,12 @@ const submit = () => {
                             </p>
                         </div>
 
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="parent_id">Categoría padre</Label>
                             <select
                                 id="parent_id"
                                 v-model="form.parent_id"
-                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                             >
                                 <option :value="null">
                                     — Categoría raíz —
@@ -122,18 +122,18 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="description">Descripción</Label>
                         <textarea
                             id="description"
                             v-model="form.description"
                             rows="3"
-                            class="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                            class="w-full rounded-md border bg-card px-3 py-2 text-sm"
                         ></textarea>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
+                    <div class="grid gap-4 sm:grid-cols-2">
+                        <div class="space-y-1.5">
                             <Label for="sort_order">Orden</Label>
                             <Input
                                 id="sort_order"

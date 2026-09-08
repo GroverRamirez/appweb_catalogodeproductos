@@ -70,7 +70,7 @@ const submit = () => {
             <CardContent class="pt-0">
                 <form class="space-y-4" @submit.prevent="submit">
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="code">Código</Label>
                             <Input
                                 id="code"
@@ -86,12 +86,12 @@ const submit = () => {
                                 {{ form.errors.code }}
                             </p>
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="type">Tipo</Label>
                             <select
                                 id="type"
                                 v-model="form.type"
-                                class="h-9 w-full rounded-md border bg-background px-3 text-sm"
+                                class="h-9 w-full rounded-md border bg-card px-3 text-sm"
                             >
                                 <option value="percent">Porcentaje (%)</option>
                                 <option value="fixed">Monto fijo</option>
@@ -100,7 +100,7 @@ const submit = () => {
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-2">
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="value">
                                 Valor
                                 <span class="text-muted-foreground">
@@ -116,7 +116,7 @@ const submit = () => {
                                 required
                             />
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="min_subtotal"
                                 >Subtotal mínimo (opcional)</Label
                             >
@@ -130,13 +130,13 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <div>
+                    <div class="space-y-1.5">
                         <Label for="description">Descripción (opcional)</Label>
                         <Input id="description" v-model="form.description" />
                     </div>
 
                     <div class="grid gap-4 sm:grid-cols-3">
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="max_uses">Máx. usos</Label>
                             <Input
                                 id="max_uses"
@@ -146,7 +146,7 @@ const submit = () => {
                                 placeholder="∞"
                             />
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="starts_at">Desde</Label>
                             <Input
                                 id="starts_at"
@@ -154,7 +154,7 @@ const submit = () => {
                                 v-model="form.starts_at"
                             />
                         </div>
-                        <div>
+                        <div class="space-y-1.5">
                             <Label for="ends_at">Hasta</Label>
                             <Input
                                 id="ends_at"

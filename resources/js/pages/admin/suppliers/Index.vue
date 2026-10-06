@@ -107,7 +107,7 @@ const destroy = (s: Supplier) => {
                 >
                     <tr>
                         <th class="px-3 py-2">Nombre</th>
-                        <th class="px-3 py-2">Contacto</th>
+                        <th class="px-3 py-2">Persona de contacto</th>
                         <th class="px-3 py-2">Teléfono</th>
                         <th class="w-24 px-3 py-2">Estado</th>
                         <th class="w-32 px-3 py-2"></th>

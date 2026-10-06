@@ -64,3 +64,16 @@ test('a user without inventory.adjust cannot create suppliers', function () {
         ->post(route('admin.suppliers.store'), ['name' => 'X'])
         ->assertForbidden();
 });
+
+test('contact name errors call the field persona de contacto', function () {
+    app()->setLocale('es');
+
+    $this->actingAs($this->owner)
+        ->post(route('admin.suppliers.store'), [
+            'name' => 'Proveedor de Prueba',
+            'contact_name' => str_repeat('a', 151),
+        ])
+        ->assertSessionHasErrors([
+            'contact_name' => 'El campo persona de contacto no debe tener más de 150 caracteres.',
+        ]);
+});

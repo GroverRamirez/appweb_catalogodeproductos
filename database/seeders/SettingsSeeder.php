@@ -26,6 +26,7 @@ class SettingsSeeder extends Seeder
             ['key' => 'exchange_rate_source', 'value' => 'manual', 'type' => 'string', 'group' => 'moneda', 'label' => 'Origen de la última cotización (bcb o manual) — lo escribe el sistema'],
             ['key' => 'exchange_rate_updated_at', 'value' => '', 'type' => 'string', 'group' => 'moneda', 'label' => 'Última actualización del tipo de cambio — lo escribe el sistema'],
             ['key' => 'price_list_currency', 'value' => 'USD', 'type' => 'string', 'group' => 'moneda', 'label' => 'Moneda de la lista de precios — la escribe el sistema'],
+            ['key' => 'purchases_currency', 'value' => 'USD', 'type' => 'string', 'group' => 'moneda', 'label' => 'Moneda de las compras — la escribe el sistema'],
             ['key' => 'show_prices', 'value' => '1', 'type' => 'boolean', 'group' => 'catalogo', 'label' => 'Mostrar precios en el catálogo público'],
             ['key' => 'show_stock', 'value' => '1', 'type' => 'boolean', 'group' => 'catalogo', 'label' => 'Mostrar disponibilidad'],
             ['key' => 'products_per_page', 'value' => '15', 'type' => 'number', 'group' => 'catalogo', 'label' => 'Productos por página'],

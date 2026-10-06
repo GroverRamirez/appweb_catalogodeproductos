@@ -38,12 +38,14 @@ return new class extends Migration
         ];
 
         foreach ($settings as $row) {
-            // updateOrInsert y no insert: la instalacion nueva ya las trae del
-            // seeder, y esta migracion no debe pisarle el valor cargado.
-            DB::table('configuraciones')->updateOrInsert(
-                ['clave' => $row['clave']],
-                array_merge($row, ['created_at' => $now, 'updated_at' => $now]),
-            );
+            // Solo se agrega si falta: la instalacion nueva ya las trae del
+            // seeder, y esta migracion no debe pisarle el valor cargado
+            // (updateOrInsert lo pisaba y devolvia la marca de la lista a BOB).
+            if (DB::table('configuraciones')->where('clave', $row['clave'])->exists()) {
+                continue;
+            }
+
+            DB::table('configuraciones')->insert(array_merge($row, ['created_at' => $now, 'updated_at' => $now]));
         }
     }
 

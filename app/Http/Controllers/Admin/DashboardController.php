@@ -146,6 +146,15 @@ class DashboardController extends Controller
             ->take(5)
             ->get(['id', 'proveedor_id', 'numero_referencia', 'estado', 'costo_total', 'created_at']);
 
+        // Mismo criterio que las stats: las compras estan en dolares y el
+        // panel habla en bolivianos, asi que se convierten fuera del cache.
+        $spendByMonth = array_map(
+            fn ($row) => ['month' => $row['month'], 'total' => $rates->toBs($row['total'])],
+            $spendByMonth,
+        );
+
+        $recentPurchases->each(fn (Purchase $p) => $p->setAttribute('total_cost', $rates->toBs($p->total_cost)));
+
         return Inertia::render('admin/Dashboard', [
             'stats' => $stats,
             'topProducts' => $topProducts,

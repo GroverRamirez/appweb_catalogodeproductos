@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
  * El catalogo nacio con los precios cargados en bolivianos. Desde que la
  * vitrina convierte al tipo de cambio del dia, `productos.precio`,
  * `precio_oferta` y `costo` tienen que estar en dolares; este comando hace esa
- * division con la cotizacion que se le indique.
+ * division con la cotizacion que se le indique, y pasa tambien las compras
+ * registradas hasta ese momento (ver `compras:convertir-a-usd`).
  *
  * Se protege contra correrlo dos veces: dividir la lista de nuevo dejaria todo
  * a una doceava parte de su valor.
@@ -90,6 +91,15 @@ class ConvertPricesToUsd extends Command
         Setting::set('price_list_currency', 'USD', 'string', 'moneda', 'Moneda de la lista de precios — la escribe el sistema');
 
         $this->info("Listo: {$total} productos quedaron con su precio en dolares.");
+
+        // Las compras registradas hasta hoy tambien estan en bolivianos y
+        // alimentan el costo: si quedaran asi, el panel las mostraria como USD.
+        $this->call('compras:convertir-a-usd', [
+            '--antes' => now()->addDay()->toDateString(),
+            '--tc' => (string) $rate,
+            '--sin-backup' => true,
+            '--si' => true,
+        ]);
         $this->comment('Revisa un par de fichas en el panel antes de publicar.');
 
         return self::SUCCESS;

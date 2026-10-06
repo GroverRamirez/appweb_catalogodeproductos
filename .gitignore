@@ -30,3 +30,11 @@ yarn-error.log
 /dist
 /database/demo.sqlite
 /storage/backups
+
+# Volcados de base y salidas locales: nunca al repo (traen datos de clientes
+# y hashes de contraseña). Las copias viven en storage/backups.
+*.sql
+*.sql.gz
+*.tgz
+/test_out.txt
+/Claude outputs

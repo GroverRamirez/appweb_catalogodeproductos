@@ -77,3 +77,13 @@ test('contact name errors call the field persona de contacto', function () {
             'contact_name' => 'El campo persona de contacto no debe tener más de 150 caracteres.',
         ]);
 });
+
+test('suppliers list includes the address', function () {
+    Supplier::factory()->create(['direccion' => 'Av. Busch 1234']);
+
+    $this->actingAs($this->owner)
+        ->get(route('admin.suppliers.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('suppliers.data.0.address', 'Av. Busch 1234')
+        );
+});

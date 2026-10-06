@@ -24,6 +24,13 @@ Schedule::exec('/usr/local/bin/backup.sh')
     ->withoutOverlapping()
     ->runInBackground();
 
+// Tipo de cambio oficial del dólar. El BCB publica a las 23:30 de cada día
+// hábil y esa cotización rige al día siguiente, así que se consulta a primera
+// hora. Si la consulta falla, la tienda sigue con la última cotización cargada.
+Schedule::command('tipo-cambio:actualizar')
+    ->dailyAt('00:20')
+    ->withoutOverlapping();
+
 // Limpieza de jobs fallidos con más de 7 días, semanal.
 Schedule::command('queue:prune-failed --hours=168')
     ->weekly();

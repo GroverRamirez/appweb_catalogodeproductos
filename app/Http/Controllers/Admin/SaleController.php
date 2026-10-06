@@ -5,9 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreSaleRequest;
 use App\Models\Client;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Services\ExchangeRate;
+use App\Services\InventoryLedger;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,10 +50,47 @@ class SaleController extends Controller
     public function create(): Response
     {
         return Inertia::render('admin/sales/Create', [
+            // Sin `costo`: el formulario de venta sugiere el precio, no el
+            // costo, así que mandarlo solo pondría el costo de todo el
+            // catálogo en el HTML de quien registra una venta.
+            // Los precios van convertidos a bolivianos: la venta se cobra en
+            // Bs y el formulario no tiene que hacer cuentas de cambio.
             'products' => Product::query()
                 ->orderBy('nombre')
-                ->get(['id', 'nombre', 'codigo', 'precio', 'precio_oferta', 'costo', 'stock']),
+                ->get(['id', 'nombre', 'codigo', 'precio', 'precio_oferta', 'stock'])
+                ->map(function (Product $p) {
+                    $rates = app(ExchangeRate::class);
+
+                    $p->setAttribute('precio', $rates->toBs($p->price));
+                    $p->setAttribute('precio_oferta', $p->sale_price !== null
+                        ? $rates->toBs($p->sale_price)
+                        : null);
+
+                    return $p;
+                }),
             'paymentMethods' => Sale::PAYMENT_METHODS,
+        ]);
+    }
+
+    /**
+     * Busca la ficha del cliente por CI para autocompletar el formulario de
+     * venta. Va con el permiso de registrar ventas, no con el de ver
+     * clientes: es parte de vender y devuelve solo lo que el formulario usa.
+     */
+    public function clientLookup(Request $request): JsonResponse
+    {
+        $request->validate(['ci' => ['required', 'string', 'max:30']]);
+
+        $client = Client::findByIdCard($request->string('ci')->toString());
+
+        return response()->json([
+            'client' => $client ? [
+                'id' => $client->id,
+                'name' => $client->name,
+                'phone' => $client->phone,
+                'id_card' => $client->id_card,
+                'sales_count' => $client->sales()->count(),
+            ] : null,
         ]);
     }
 
@@ -68,13 +109,15 @@ class SaleController extends Controller
         $negatives = [];
 
         $sale = DB::transaction(function () use ($data, $request, &$negatives) {
-            // El cliente se resuelve por teléfono: si ya compró antes se reusa
-            // su ficha, si no se crea. Sin teléfono la venta queda sin cliente
-            // (consumidor final), que es lo normal en la venta al paso.
-            $client = Client::resolveByPhone($data['customer_phone'] ?? null, [
-                'name' => ($data['customer_name'] ?? null) ?: 'Cliente sin nombre',
-                'id_card' => $data['id_card'] ?? null,
-            ]);
+            // El cliente se resuelve por CI y, si no hay, por teléfono: si ya
+            // compró antes se reusa su ficha, si no se crea. Sin CI ni
+            // teléfono la venta queda sin cliente (consumidor final), que es
+            // lo normal en la venta al paso.
+            $client = Client::resolveForSale(
+                $data['id_card'] ?? null,
+                $data['customer_phone'] ?? null,
+                $data['customer_name'] ?? null,
+            );
 
             $sale = Sale::create([
                 'receipt_number' => Sale::nextReceiptNumber(),
@@ -88,6 +131,9 @@ class SaleController extends Controller
                 'notes' => $data['notes'] ?? null,
                 'status' => 'confirmada',
                 'created_by' => $request->user()->id,
+                // Cotizacion del momento: el recibo tiene que seguir diciendo
+                // lo mismo cuando el BCB publique otra manana.
+                'exchange_rate' => app(ExchangeRate::class)->current(),
             ]);
 
             $subtotal = $this->applyItems($sale, $data['items'], $negatives);
@@ -118,7 +164,11 @@ class SaleController extends Controller
     public function show(Sale $sale): Response
     {
         $sale->load([
-            'items', 'creator:id,name', 'voider:id,name',
+            // Las líneas van sin `costo_unitario`: el comprobante no lo
+            // muestra y no hay motivo para mandar el costo de cada producto al
+            // navegador de quien solo mira la venta.
+            'items:id,venta_id,producto_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario',
+            'creator:id,name', 'voider:id,name',
             'inquiry:id,cliente_nombre',
             'client:id,nombre,telefono,carnet_identidad',
         ]);
@@ -134,12 +184,19 @@ class SaleController extends Controller
      */
     public function void(Sale $sale): RedirectResponse
     {
-        abort_unless($sale->status === 'confirmada', 422, 'Esta venta ya está anulada.');
-
         DB::transaction(function () use ($sale) {
-            static::restoreStock($sale);
+            // La venta se relee con su fila bloqueada y recién ahí se verifica
+            // el estado. Verificarlo antes de la transacción dejaba la puerta
+            // abierta a que dos pedidos simultáneos —dos pestañas, o un
+            // reintento después de un timeout— pasaran los dos el control y
+            // devolvieran el stock dos veces.
+            $locked = Sale::query()->whereKey($sale->getKey())->lockForUpdate()->first();
 
-            $sale->update([
+            abort_unless($locked?->status === 'confirmada', 422, 'Esta venta ya está anulada.');
+
+            static::restoreStock($locked);
+
+            $locked->update([
                 'status' => 'anulada',
                 'voided_by' => auth()->id(),
                 'voided_at' => now(),
@@ -182,10 +239,13 @@ class SaleController extends Controller
                 'unit_price' => $unitPrice,
                 // Congelado al vender: el costo del producto cambia con cada
                 // compra posterior y consultarlo después daría margen falso.
-                'unit_cost' => $product->cost,
+                // Se guarda en bolivianos, igual que el precio de la línea: el
+                // costo de lista está en dólares y un margen que reste dólares
+                // a bolivianos no significa nada.
+                'unit_cost' => app(ExchangeRate::class)->toBs($product->cost, (float) $sale->exchange_rate ?: null),
             ]);
 
-            $product->update(['stock' => $product->stock - $qty]);
+            InventoryLedger::record($product, -$qty, InventoryMovement::TYPE_SALE, $sale);
 
             if ($product->stock < 0) {
                 $negatives[] = $product->code;
@@ -215,7 +275,12 @@ class SaleController extends Controller
                 continue;
             }
 
-            $product->update(['stock' => $product->stock + (int) $item->quantity]);
+            InventoryLedger::record(
+                $product,
+                (int) $item->quantity,
+                InventoryMovement::TYPE_SALE_VOID,
+                $sale,
+            );
         }
     }
 

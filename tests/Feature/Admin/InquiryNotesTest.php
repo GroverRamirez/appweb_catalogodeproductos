@@ -70,7 +70,6 @@ test('changing the status records an automatic note in the history', function ()
     $this->actingAs($this->vendedor)
         ->patch(route('admin.inquiries.update', $this->inquiry), [
             'status' => 'contactado',
-            'admin_notes' => '',
         ])
         ->assertRedirect();
 
@@ -85,11 +84,36 @@ test('saving without changing the status does not record a note', function () {
     $this->actingAs($this->vendedor)
         ->patch(route('admin.inquiries.update', $this->inquiry), [
             'status' => 'pendiente',
-            'admin_notes' => 'Solo actualizo las notas.',
         ])
         ->assertRedirect();
 
     expect($this->inquiry->notes()->count())->toBe(0);
+});
+
+test('the csv export carries the note history', function () {
+    // El historial es el unico lugar donde viven las notas desde que se retiro
+    // `consultas.notas_admin`; si el export no lo lee, la columna Notas sale
+    // siempre vacia.
+    $this->actingAs($this->vendedor)
+        ->post(route('admin.inquiries.notes.store', $this->inquiry), [
+            'body' => 'Llamé y quedó en pasar el jueves.',
+        ]);
+
+    $this->actingAs($this->vendedor)
+        ->post(route('admin.inquiries.notes.store', $this->inquiry), [
+            'body' => 'Pasó y se llevó dos.',
+        ]);
+
+    $response = $this->actingAs($this->vendedor)->get(route('admin.inquiries.export'));
+    $response->assertOk();
+
+    $csv = $response->streamedContent();
+
+    expect($csv)->toContain('Llamé y quedó en pasar el jueves.');
+    expect($csv)->toContain('Pasó y se llevó dos.');
+
+    // En orden cronologico, no al reves.
+    expect(strpos($csv, 'Llamé y quedó'))->toBeLessThan(strpos($csv, 'Pasó y se llevó'));
 });
 
 test('inquiry detail page includes the notes with their author', function () {

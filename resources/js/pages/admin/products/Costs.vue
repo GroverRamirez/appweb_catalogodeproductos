@@ -38,7 +38,8 @@ const props = defineProps<{
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
-const cur = (n: number) => formatPrice(n, store.value.currency_symbol);
+// Compras y costos se manejan en dólares, igual que la lista de precios.
+const cur = (n: number) => formatPrice(n, 'USD');
 const { can } = usePermissions();
 
 // Borradores locales por id. No usamos useForm porque al guardar volvemos con

@@ -78,6 +78,107 @@ class Client extends Model
     }
 
     /**
+     * Normaliza el carnet: sin espacios sobrantes y en mayúsculas.
+     *
+     * El complemento y la extensión ("1234567 LP", "1234567-1B") se escriben
+     * de mil formas en el mostrador; sin esto la búsqueda por CI no encuentra
+     * a quien ya está registrado y se duplica la ficha.
+     */
+    public static function normalizeIdCard(?string $value): ?string
+    {
+        $clean = mb_strtoupper(preg_replace('/\s+/', ' ', trim((string) $value)));
+
+        return $clean === '' ? null : $clean;
+    }
+
+    public function setCarnetIdentidadAttribute(?string $value): void
+    {
+        $this->attributes['carnet_identidad'] = static::normalizeIdCard($value);
+    }
+
+    /**
+     * Cliente vigente con ese carnet, o null. Es lo que consulta el formulario
+     * de venta para autocompletar los datos apenas se escribe el CI.
+     */
+    public static function findByIdCard(?string $idCard): ?self
+    {
+        $normalized = static::normalizeIdCard($idCard);
+
+        if ($normalized === null) {
+            return null;
+        }
+
+        // El carnet no es único en la tabla (hay fichas viejas sin depurar):
+        // ante dos con el mismo, gana la más reciente.
+        return static::query()->where('carnet_identidad', $normalized)->latest('id')->first();
+    }
+
+    /**
+     * Resuelve la ficha del cliente de una venta de mostrador.
+     *
+     * Con CI, el carnet es la identidad: si ya existe se reusa y se actualiza
+     * con lo que se escribió en el mostrador (nombre y teléfono), y si no, se
+     * busca por teléfono antes de crear una ficha nueva. Sin CI se sigue el
+     * camino de siempre por teléfono, sin tocar la ficha encontrada.
+     */
+    public static function resolveForSale(?string $idCard, ?string $phone, ?string $name): ?self
+    {
+        $idCard = static::normalizeIdCard($idCard);
+        $name = trim((string) $name);
+
+        if ($idCard === null) {
+            return static::resolveByPhone($phone, ['name' => $name ?: 'Cliente sin nombre']);
+        }
+
+        $phone = static::normalizePhone($phone);
+
+        $client = static::withTrashed()->where('carnet_identidad', $idCard)->latest('id')->first();
+
+        if (! $client && $phone !== null) {
+            $byPhone = static::withTrashed()->where('telefono', $phone)->first();
+
+            // Ese teléfono es de alguien con otro carnet: no es la misma
+            // persona, así que no se le pisa la ficha.
+            if ($byPhone && ($byPhone->id_card === null || $byPhone->id_card === $idCard)) {
+                $client = $byPhone;
+            }
+        }
+
+        if (! $client) {
+            return static::create([
+                'name' => $name ?: 'Cliente sin nombre',
+                'id_card' => $idCard,
+                // El teléfono es único: si ya lo usa otra ficha, la nueva
+                // queda sin él (la venta igual lo guarda en su copia).
+                'phone' => $phone !== null && static::withTrashed()->where('telefono', $phone)->doesntExist()
+                    ? $phone
+                    : null,
+            ]);
+        }
+
+        if ($client->trashed()) {
+            $client->restore();
+        }
+
+        if ($name !== '') {
+            $client->name = $name;
+        }
+
+        if ($client->id_card === null) {
+            $client->id_card = $idCard;
+        }
+
+        if ($phone !== null && $phone !== $client->phone
+            && static::withTrashed()->where('telefono', $phone)->whereKeyNot($client->id)->doesntExist()) {
+            $client->phone = $phone;
+        }
+
+        $client->save();
+
+        return $client;
+    }
+
+    /**
      * Busca al cliente por teléfono, o lo crea. Es el camino que usan tanto la
      * venta de mostrador como el checkout público, para que el mismo cliente no
      * termine duplicado según por dónde entró.

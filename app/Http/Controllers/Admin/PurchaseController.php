@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePurchaseRequest;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Supplier;
+use App\Services\InventoryLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -125,13 +127,11 @@ class PurchaseController extends Controller
                 // cargo (bonificaciones, reposición por garantía), y dejarlos
                 // sobrescribir borraría un dato real y sacaría al producto de
                 // la valorización del inventario.
-                $changes = ['stock' => $product->stock + $qty];
+                InventoryLedger::record($product, $qty, InventoryMovement::TYPE_PURCHASE, $purchase);
 
                 if ($unitCost > 0) {
-                    $changes['cost'] = $unitCost;
+                    $product->update(['cost' => $unitCost]);
                 }
-
-                $product->update($changes);
             }
 
             $purchase->update(['total_cost' => $total]);
@@ -159,12 +159,18 @@ class PurchaseController extends Controller
      */
     public function void(Purchase $purchase): RedirectResponse
     {
-        abort_unless($purchase->status === 'confirmada', 422, 'Esta compra ya está anulada.');
-
         $restoredCosts = 0;
 
         DB::transaction(function () use ($purchase, &$restoredCosts) {
-            foreach ($purchase->items as $item) {
+            // Mismo criterio que la anulación de ventas: se relee con la fila
+            // bloqueada y el estado se verifica adentro. Verificarlo afuera
+            // permitía que dos pedidos simultáneos revirtieran el stock dos
+            // veces.
+            $locked = Purchase::query()->whereKey($purchase->getKey())->lockForUpdate()->first();
+
+            abort_unless($locked?->status === 'confirmada', 422, 'Esta compra ya está anulada.');
+
+            foreach ($locked->items as $item) {
                 if (! $item->product_id) {
                     continue;
                 }
@@ -178,22 +184,25 @@ class PurchaseController extends Controller
                     continue;
                 }
 
-                $changes = ['stock' => $product->stock - (int) $item->quantity];
-
                 // El costo solo se devuelve si el que está vigente es el que
                 // puso esta compra. Si otra compra posterior ya lo cambió,
                 // pisarlo con un valor viejo seria peor que dejarlo como esta.
                 $setByThisPurchase = (float) $product->cost === (float) $item->unit_cost;
 
                 if ($item->previous_cost !== null && $setByThisPurchase) {
-                    $changes['cost'] = (float) $item->previous_cost;
+                    $product->update(['cost' => (float) $item->previous_cost]);
                     $restoredCosts++;
                 }
 
-                $product->update($changes);
+                InventoryLedger::record(
+                    $product,
+                    -(int) $item->quantity,
+                    InventoryMovement::TYPE_PURCHASE_VOID,
+                    $locked,
+                );
             }
 
-            $purchase->update([
+            $locked->update([
                 'status' => 'anulada',
                 'voided_by' => auth()->id(),
                 'voided_at' => now(),

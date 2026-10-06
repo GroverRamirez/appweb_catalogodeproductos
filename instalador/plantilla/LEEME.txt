@@ -1,0 +1,32 @@
+PC STORE PRO - version de prueba
+================================
+
+QUE ES
+------
+La tienda completa funcionando en esta computadora: el catalogo que ven los
+clientes y el panel de administracion. No necesita internet para funcionar
+(solo lo usa para actualizar la cotizacion del dolar).
+
+COMO SE USA
+-----------
+1. Doble clic en "Iniciar PC Store Pro".
+2. Se abre una ventana negra: dejala abierta, es la tienda funcionando.
+3. El navegador se abre solo en la tienda. Si no se abre, entra a:
+
+       http://127.0.0.1:8020
+
+4. Para cerrar, cerra la ventana negra (o usa "Detener PC Store Pro").
+
+EL PANEL DE ADMINISTRACION
+--------------------------
+Esta en http://127.0.0.1:8020/login y se entra con el usuario y la contrasena
+que te pasaron aparte.
+
+COSAS PARA SABER
+----------------
+- Todo lo que cargues aca queda solo en esta computadora. Es una copia para
+  probar: no afecta a la tienda real.
+- La base de datos es el archivo app\database\database.sqlite. Si queres
+  volver a empezar de cero, pedi una copia nueva de la carpeta.
+- Si al iniciar dice que el puerto 8020 esta ocupado, es que la tienda ya
+  estaba abierta en otra ventana.

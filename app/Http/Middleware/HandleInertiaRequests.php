@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Inquiry;
 use App\Models\Setting;
+use App\Services\ExchangeRate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
@@ -83,8 +84,14 @@ class HandleInertiaRequests extends Middleware
                 'email' => Setting::get('email_contact', ''),
                 'address' => Setting::get('address', ''),
                 'hours' => Setting::get('business_hours', ''),
-                'currency' => Setting::get('currency', 'PEN'),
-                'currency_symbol' => Setting::get('currency_symbol', 'S/'),
+                'currency' => Setting::get('currency', 'BOB'),
+                'currency_symbol' => Setting::get('currency_symbol', 'Bs'),
+                // La lista de precios esta en dolares y la tienda cobra en
+                // bolivianos: el front necesita la cotizacion para mostrar el
+                // precio del dia sin pedirla en cada pagina.
+                'exchange_rate' => app(ExchangeRate::class)->current(),
+                'exchange_rate_source' => app(ExchangeRate::class)->source(),
+                'exchange_rate_updated_at' => app(ExchangeRate::class)->updatedAt(),
                 'show_prices' => (bool) Setting::get('show_prices', true),
                 'show_stock' => (bool) Setting::get('show_stock', true),
                 'logo_url' => $this->assetUrl(Setting::get('logo_path')),

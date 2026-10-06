@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import {
+    ArrowLeft,
+    Loader2,
+    Plus,
+    Trash2,
+    UserCheck,
+    UserPlus,
+} from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 import ProductCombobox from '@/components/admin/ProductCombobox.vue';
 import type { ProductOption } from '@/components/admin/ProductCombobox.vue';
 import InputError from '@/components/InputError.vue';
@@ -56,9 +63,119 @@ const form = useForm({
     ],
 });
 
-const addItem = () =>
+/** Ficha que devuelve la búsqueda por CI. */
+type FoundClient = {
+    id: number;
+    name: string;
+    phone: string | null;
+    id_card: string | null;
+    sales_count: number;
+};
+
+// Estado de la búsqueda por CI: 'found' rellena los datos, 'new' avisa que
+// la ficha se crea al registrar la venta.
+const ciLookup = ref<'idle' | 'loading' | 'found' | 'new'>('idle');
+const foundClient = ref<FoundClient | null>(null);
+
+// Lo último que autocompletamos. Sirve para saber si el campo todavía tiene
+// el dato de la ficha (se puede reemplazar) o si alguien lo escribió a mano
+// (no se toca).
+const autofilled = { name: '', phone: '' };
+let ciTimer: ReturnType<typeof setTimeout> | undefined;
+let lastCi = '';
+
+/** Escribe el dato en el campo solo si está vacío o sigue siendo el autocompletado. */
+const fill = (field: 'customer_name' | 'customer_phone', value: string) => {
+    const key = field === 'customer_name' ? 'name' : 'phone';
+
+    if (form[field] === '' || form[field] === autofilled[key]) {
+        form[field] = value;
+        autofilled[key] = value;
+    }
+};
+
+const lookupClient = async () => {
+    const ci = form.id_card.trim();
+
+    if (ci === lastCi) {
+        return;
+    }
+
+    lastCi = ci;
+
+    // Con menos de 4 caracteres no hay carnet posible: no se busca.
+    if (ci.length < 4) {
+        ciLookup.value = 'idle';
+        foundClient.value = null;
+
+        return;
+    }
+
+    ciLookup.value = 'loading';
+
+    try {
+        const res = await fetch(
+            `/admin/sales/client-lookup?${new URLSearchParams({ ci })}`,
+            { headers: { Accept: 'application/json' } },
+        );
+
+        // Si mientras tanto se siguió escribiendo, esta respuesta ya es vieja.
+        if (ci !== form.id_card.trim()) {
+            return;
+        }
+
+        if (!res.ok) {
+            ciLookup.value = 'idle';
+
+            return;
+        }
+
+        const data = (await res.json()) as { client: FoundClient | null };
+        foundClient.value = data.client;
+
+        if (data.client) {
+            ciLookup.value = 'found';
+            fill('customer_name', data.client.name);
+            fill('customer_phone', data.client.phone ?? '');
+        } else {
+            ciLookup.value = 'new';
+            // Los datos de la ficha anterior eran de otra persona.
+            fill('customer_name', '');
+            fill('customer_phone', '');
+        }
+    } catch {
+        // Sin red no se autocompleta nada: es una ayuda, no una validacion.
+        ciLookup.value = 'idle';
+    }
+};
+
+watch(
+    () => form.id_card,
+    () => {
+        clearTimeout(ciTimer);
+        ciTimer = setTimeout(lookupClient, 400);
+    },
+);
+
+/** Al salir del campo se busca sin esperar el debounce. */
+const onCiBlur = () => {
+    clearTimeout(ciTimer);
+    lookupClient();
+};
+
+// Producto al que corresponde el precio que autocompletamos en cada fila.
+// Es lo que permite distinguir "cambió de producto" de "volvió a elegir el
+// mismo", que es la diferencia entre pisar el precio o respetarlo.
+const pricedFor = ref<(number | null)[]>([null]);
+
+const addItem = () => {
     form.items.push({ product_id: null, quantity: 1, unit_price: '' });
-const removeItem = (i: number) => form.items.splice(i, 1);
+    pricedFor.value.push(null);
+};
+const removeItem = (i: number) => {
+    form.items.splice(i, 1);
+    pricedFor.value.splice(i, 1);
+};
 
 const productById = computed(
     () => new Map(props.products.map((p) => [p.id, p])),
@@ -68,12 +185,23 @@ const productById = computed(
 const sellPrice = (product: SaleProductOption) =>
     Number(product.sale_price ?? product.price);
 
+/**
+ * Cambiar de producto invalida el precio de la fila: el que estaba era el del
+ * producto anterior. Corregir el producto elegido es el gesto más común del
+ * mostrador y, sin pisarlo, la venta quedaba registrada al precio equivocado.
+ *
+ * Volver a elegir el mismo producto no toca nada, para no borrar un precio
+ * negociado a mano.
+ */
 const onProductPick = (i: number, product: ProductOption) => {
     const full = productById.value.get(product.id);
 
-    if (full && !form.items[i].unit_price) {
-        form.items[i].unit_price = sellPrice(full);
+    if (!full || pricedFor.value[i] === full.id) {
+        return;
     }
+
+    pricedFor.value[i] = full.id;
+    form.items[i].unit_price = sellPrice(full);
 };
 
 /** Stock disponible del producto de la fila, o null si todavía no se eligió. */
@@ -124,6 +252,55 @@ const submit = () => form.post('/admin/sales');
                 </CardHeader>
                 <CardContent class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div class="space-y-1.5">
+                        <Label for="id_card">
+                            CI
+                            <span class="text-muted-foreground">
+                                (opcional)
+                            </span>
+                        </Label>
+                        <div class="relative">
+                            <Input
+                                id="id_card"
+                                v-model="form.id_card"
+                                placeholder="Carnet de identidad"
+                                autocomplete="off"
+                                autofocus
+                                :aria-invalid="!!form.errors.id_card"
+                                @blur="onCiBlur"
+                            />
+                            <Loader2
+                                v-if="ciLookup === 'loading'"
+                                class="absolute top-2.5 right-3 size-4 animate-spin text-muted-foreground"
+                            />
+                        </div>
+                        <InputError :message="form.errors.id_card" />
+                        <p
+                            v-if="ciLookup === 'found' && foundClient"
+                            class="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400"
+                        >
+                            <UserCheck class="size-3.5" />
+                            Cliente registrado<template
+                                v-if="foundClient.sales_count"
+                                >, {{ foundClient.sales_count }}
+                                {{
+                                    foundClient.sales_count === 1
+                                        ? 'compra'
+                                        : 'compras'
+                                }}</template
+                            >. Datos completados.
+                        </p>
+                        <p
+                            v-else-if="ciLookup === 'new'"
+                            class="flex items-center gap-1 text-xs text-muted-foreground"
+                        >
+                            <UserPlus class="size-3.5" />
+                            CI nuevo: se registrará el cliente con la venta.
+                        </p>
+                        <p v-else class="text-xs text-muted-foreground">
+                            Si ya compró antes, se completan sus datos.
+                        </p>
+                    </div>
+                    <div class="space-y-1.5">
                         <Label for="customer_name">
                             Cliente
                             <span class="text-muted-foreground">
@@ -152,24 +329,6 @@ const submit = () => form.post('/admin/sales');
                             :aria-invalid="!!form.errors.customer_phone"
                         />
                         <InputError :message="form.errors.customer_phone" />
-                        <p class="text-xs text-muted-foreground">
-                            Si ya compró antes, se reusa su ficha de cliente.
-                        </p>
-                    </div>
-                    <div class="space-y-1.5">
-                        <Label for="id_card">
-                            CI
-                            <span class="text-muted-foreground">
-                                (opcional)
-                            </span>
-                        </Label>
-                        <Input
-                            id="id_card"
-                            v-model="form.id_card"
-                            placeholder="Carnet de identidad"
-                            :aria-invalid="!!form.errors.id_card"
-                        />
-                        <InputError :message="form.errors.id_card" />
                     </div>
                     <div class="space-y-1.5">
                         <Label for="payment_method">Método de pago</Label>

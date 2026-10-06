@@ -34,6 +34,7 @@ class Sale extends Model
         'subtotal',
         'discount_amount',
         'total',
+        'exchange_rate',
         'status',
         'notes',
         'created_by',
@@ -48,6 +49,7 @@ class Sale extends Model
             'subtotal' => 'decimal:2',
             'descuento_monto' => 'decimal:2',
             'total' => 'decimal:2',
+            'tipo_cambio' => 'decimal:4',
             'anulado_en' => 'datetime',
         ];
     }
@@ -71,6 +73,7 @@ class Sale extends Model
             'customer_phone' => 'cliente_telefono',
             'payment_method' => 'metodo_pago',
             'discount_amount' => 'descuento_monto',
+            'exchange_rate' => 'tipo_cambio',
             'status' => 'estado',
             'notes' => 'notas',
             'created_by' => 'creado_por',

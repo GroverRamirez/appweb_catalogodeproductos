@@ -2,6 +2,7 @@
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,6 +86,49 @@ test('a product can be created without images or attributes', function () {
         'codigo' => 'TEST-002',
         'nombre' => 'Producto Simple',
     ]);
+});
+
+test('renaming a product resyncs the alt of its images', function () {
+    $product = Product::factory()->create(['nombre' => 'Cámara IP Domo 2MP']);
+
+    // Alt autogenerado al subir la imagen: es una copia del nombre.
+    $auto = ProductImage::create([
+        'product_id' => $product->id,
+        'path' => 'products/'.$product->id.'/auto.webp',
+        'alt' => 'Cámara IP Domo 2MP',
+        'sort_order' => 0,
+        'is_main' => true,
+    ]);
+
+    // Alt escrito a mano: describe la imagen, no repite el nombre.
+    $manual = ProductImage::create([
+        'product_id' => $product->id,
+        'path' => 'products/'.$product->id.'/manual.webp',
+        'alt' => 'Vista lateral con el soporte puesto',
+        'sort_order' => 1,
+        'is_main' => false,
+    ]);
+
+    $product->update(['name' => 'Cámara IP Domo 2MP Full Color']);
+
+    expect($auto->fresh()->alt)->toBe('Cámara IP Domo 2MP Full Color');
+    expect($manual->fresh()->alt)->toBe('Vista lateral con el soporte puesto');
+});
+
+test('saving a product without renaming it leaves the alt of its images alone', function () {
+    $product = Product::factory()->create(['nombre' => 'Cámara IP Domo 2MP']);
+
+    $image = ProductImage::create([
+        'product_id' => $product->id,
+        'path' => 'products/'.$product->id.'/auto.webp',
+        'alt' => 'Cámara IP Domo 2MP',
+        'sort_order' => 0,
+        'is_main' => true,
+    ]);
+
+    $product->update(['price' => 41]);
+
+    expect($image->fresh()->alt)->toBe('Cámara IP Domo 2MP');
 });
 
 test('sale price cannot exceed the regular price', function () {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSettingsRequest;
 use App\Models\Setting;
+use App\Services\ExchangeRate;
 use App\Services\ImageProcessor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
@@ -13,7 +14,10 @@ use Inertia\Response;
 
 class SettingsController extends Controller
 {
-    public function __construct(private readonly ImageProcessor $images) {}
+    public function __construct(
+        private readonly ImageProcessor $images,
+        private readonly ExchangeRate $rates,
+    ) {}
 
     public function edit(): Response
     {
@@ -58,12 +62,23 @@ class SettingsController extends Controller
                     $this->images->delete($existing->value ?? '');
                     $existing->update(['value' => '']);
                 }
+
                 continue;
             }
 
             $value = isset($row['value']) && is_array($row['value'])
                 ? json_encode($row['value'])
                 : (string) ($row['value'] ?? '');
+
+            // Tocar el tipo de cambio a mano lo marca como manual y le pone
+            // fecha: sin esto, la pantalla seguiria diciendo que la cotizacion
+            // la trajo el BCB cuando en realidad la fijo una persona.
+            if ($row['key'] === 'exchange_rate' && (float) $value !== (float) $existing->value) {
+                $this->rates->store((float) $value, 'manual');
+
+                continue;
+            }
+
             $existing->update(['value' => $value]);
         }
 

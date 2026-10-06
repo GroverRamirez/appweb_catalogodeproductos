@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BannerController;
 use App\Http\Controllers\Admin\BrandController;
 use App\Http\Controllers\Admin\CategoryController;
@@ -52,6 +53,15 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middleware('permission:inventory.adjust')
             ->name('products.costs.update');
 
+        // Kardex del producto. Ver el historial es parte de ver el inventario;
+        // moverlo a mano pide el permiso de ajuste, igual que la carga de costos.
+        Route::get('products/{product}/inventario', [ProductController::class, 'inventory'])
+            ->middleware('permission:inventory.view')
+            ->name('products.inventory');
+        Route::post('products/{product}/inventario', [ProductController::class, 'adjust'])
+            ->middleware('permission:inventory.adjust')
+            ->name('products.adjust');
+
         Route::resource('products', ProductController::class)
             ->except(['show'])
             ->middlewareFor('index', 'permission:products.view')
@@ -87,6 +97,9 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middlewareFor('destroy', 'permission:clients.delete');
 
         // Debe ir antes del resource para no chocar con el wildcard {sale}
+        Route::get('sales/client-lookup', [SaleController::class, 'clientLookup'])
+            ->middleware('permission:sales.create')
+            ->name('sales.client-lookup');
         Route::patch('sales/{sale}/void', [SaleController::class, 'void'])
             ->middleware('permission:sales.void')
             ->name('sales.void');
@@ -150,6 +163,14 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::get('reportes/export.csv', [ReportController::class, 'export'])
             ->middleware('permission:reports.view')
             ->name('reports.export');
+        // Exportaciones del mismo reporte: quien puede verlo en pantalla puede
+        // llevarselo, y quien no, tampoco puede pedirlo por URL.
+        Route::get('reportes/export.pdf', [ReportController::class, 'pdf'])
+            ->middleware('permission:reports.view')
+            ->name('reports.pdf');
+        Route::get('reportes/export.xlsx', [ReportController::class, 'excel'])
+            ->middleware('permission:reports.view')
+            ->name('reports.excel');
 
         Route::get('settings', [SettingsController::class, 'edit'])
             ->middleware('permission:settings.view')
@@ -157,4 +178,17 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::patch('settings', [SettingsController::class, 'update'])
             ->middleware('permission:settings.update')
             ->name('settings.update');
+
+        // Copias de seguridad de la base: solo quien tenga backups.manage
+        // (por defecto, el propietario). Los archivos viven fuera de public y
+        // solo salen por la ruta de descarga, nunca por URL directa.
+        Route::middleware('permission:backups.manage')
+            ->prefix('settings/backups')
+            ->name('backups.')
+            ->group(function () {
+                Route::get('/', [BackupController::class, 'index'])->name('index');
+                Route::post('/', [BackupController::class, 'store'])->name('store');
+                Route::get('{backup}', [BackupController::class, 'download'])->name('download');
+                Route::delete('{backup}', [BackupController::class, 'destroy'])->name('destroy');
+            });
     });

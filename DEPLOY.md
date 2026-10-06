@@ -135,6 +135,18 @@ docker compose exec app /usr/local/bin/backup.sh
 docker compose exec app ls -lh storage/backups
 ```
 
+### Backup desde el panel
+
+El propietario (o un rol con el permiso `backups.manage`) puede generar,
+descargar y eliminar copias de la base en **Configuración → Copias de
+seguridad** (`/admin/settings/backups`). Usa `mysqldump` y deja el archivo en
+la misma carpeta privada `storage/backups`, con el mismo formato
+`db_<base>_<fecha>.sql.gz`, así que se restaura igual que abajo. Restaurar desde
+la web no está permitido a propósito.
+
+En Laragon (Windows) `mysqldump.exe` se detecta solo; si no, indicar la ruta en
+`.env` con `MYSQLDUMP_PATH`.
+
 ### Copiar los backups fuera del servidor
 
 ```bash

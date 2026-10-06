@@ -31,6 +31,7 @@ import { useCart } from '@/composables/useCart';
 import { useReveal } from '@/composables/useReveal';
 import { useTranslations } from '@/composables/useTranslations';
 import { useWishlist } from '@/composables/useWishlist';
+import { formatRate } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 import { login, logout } from '@/routes';
 
@@ -145,7 +146,7 @@ const updateSecondaryNav = () => {
 
     if (y > 140 && showSecondaryNav.value) {
         showSecondaryNav.value = false;
-    } else if (y < 60 && ! showSecondaryNav.value) {
+    } else if (y < 60 && !showSecondaryNav.value) {
         showSecondaryNav.value = true;
     }
 };
@@ -210,7 +211,7 @@ useReveal();
     >
         <!-- Topbar de contacto -->
         <div
-            v-if="store.whatsapp || store.email"
+            v-if="store.whatsapp || store.email || store.exchange_rate"
             class="hidden bg-[hsl(222_33%_13%)] text-[12px] text-white/80 md:block"
         >
             <div
@@ -231,6 +232,23 @@ useReveal();
                     </span>
                 </div>
                 <div class="flex items-center gap-4">
+                    <!-- Los precios se publican en bolivianos al tipo de cambio
+                         del día: decir cuál es evita la pregunta de por qué el
+                         mismo producto costaba otra cosa la semana pasada. -->
+                    <span
+                        v-if="store.exchange_rate"
+                        class="inline-flex items-center gap-1 opacity-90"
+                        :title="
+                            store.exchange_rate_source === 'bcb'
+                                ? `Cotización oficial del BCB${store.exchange_rate_updated_at ? ` · actualizada el ${store.exchange_rate_updated_at}` : ''}`
+                                : 'Cotización cargada por la tienda'
+                        "
+                    >
+                        Tipo de cambio:
+                        <strong class="font-semibold text-white">
+                            {{ formatRate(store.exchange_rate) }} Bs
+                        </strong>
+                    </span>
                     <a
                         v-if="store.whatsapp"
                         :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
@@ -256,51 +274,53 @@ useReveal();
                 class="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-6 md:gap-6 lg:px-8"
             >
                 <div class="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
-                <Link href="/" class="flex shrink-0 items-center gap-2.5">
-                    <img
-                        v-if="store.logo_url"
-                        :src="store.logo_url"
-                        :alt="store.name"
-                        class="h-9 w-auto max-w-[160px] object-contain"
-                    />
-                    <template v-else>
-                        <span
-                            class="grid size-9 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
-                        >
-                            {{ (store.name || 'M').charAt(0).toUpperCase() }}
-                        </span>
-                        <span
-                            class="font-display text-lg font-bold tracking-tight"
-                        >
-                            {{ store.name }}
-                        </span>
-                    </template>
-                </Link>
+                    <Link href="/" class="flex shrink-0 items-center gap-2.5">
+                        <img
+                            v-if="store.logo_url"
+                            :src="store.logo_url"
+                            :alt="store.name"
+                            class="h-9 w-auto max-w-[160px] object-contain"
+                        />
+                        <template v-else>
+                            <span
+                                class="grid size-9 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
+                            >
+                                {{
+                                    (store.name || 'M').charAt(0).toUpperCase()
+                                }}
+                            </span>
+                            <span
+                                class="font-display text-lg font-bold tracking-tight"
+                            >
+                                {{ store.name }}
+                            </span>
+                        </template>
+                    </Link>
 
-                <nav class="ml-2 hidden gap-1 md:flex">
-                    <Link
-                        href="/"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition"
-                        :class="
-                            currentPath === '/'
-                                ? 'text-primary'
-                                : 'text-muted-foreground hover:text-foreground'
-                        "
-                    >
-                        {{ t('home') }}
-                    </Link>
-                    <Link
-                        href="/catalogo"
-                        class="rounded-md px-3 py-2 text-sm font-medium transition"
-                        :class="
-                            currentPath.startsWith('/catalogo')
-                                ? 'text-primary'
-                                : 'text-muted-foreground hover:text-foreground'
-                        "
-                    >
-                        {{ t('catalog') }}
-                    </Link>
-                </nav>
+                    <nav class="ml-2 hidden gap-1 md:flex">
+                        <Link
+                            href="/"
+                            class="rounded-md px-3 py-2 text-sm font-medium transition"
+                            :class="
+                                currentPath === '/'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                        >
+                            {{ t('home') }}
+                        </Link>
+                        <Link
+                            href="/catalogo"
+                            class="rounded-md px-3 py-2 text-sm font-medium transition"
+                            :class="
+                                currentPath.startsWith('/catalogo')
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                        >
+                            {{ t('catalog') }}
+                        </Link>
+                    </nav>
                 </div>
 
                 <form
@@ -317,7 +337,9 @@ useReveal();
                     />
                 </form>
 
-                <div class="flex flex-1 items-center justify-end gap-1 md:gap-2">
+                <div
+                    class="flex flex-1 items-center justify-end gap-1 md:gap-2"
+                >
                     <Button
                         variant="ghost"
                         size="icon"
@@ -464,7 +486,7 @@ useReveal();
                             v-for="item in secondaryNavItems"
                             :key="item.label"
                             :href="item.href"
-                            class="inline-flex h-full items-center gap-2 whitespace-nowrap border-b-2 border-transparent transition hover:border-brand-foreground hover:text-brand-foreground"
+                            class="inline-flex h-full items-center gap-2 border-b-2 border-transparent whitespace-nowrap transition hover:border-brand-foreground hover:text-brand-foreground"
                             :class="{
                                 'border-brand-foreground text-brand-foreground':
                                     item.active,
@@ -479,7 +501,7 @@ useReveal();
                             :href="whatsappHref"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex h-full items-center whitespace-nowrap border-b-2 border-transparent text-brand-foreground/85 transition hover:border-brand-foreground hover:text-brand-foreground"
+                            class="inline-flex h-full items-center border-b-2 border-transparent whitespace-nowrap text-brand-foreground/85 transition hover:border-brand-foreground hover:text-brand-foreground"
                         >
                             Contactos
                         </a>
@@ -590,9 +612,13 @@ useReveal();
             </Link>
         </nav>
 
-        <footer class="mt-16 bg-[hsl(222_33%_13%)] text-white">
+        <footer
+            class="bg-[hsl(222_33%_13%)] text-white"
+            :class="currentPath === '/' ? 'mt-0' : 'mt-16'"
+        >
             <div
-                class="mx-auto grid max-w-[1400px] gap-10 px-6 py-14 text-sm md:grid-cols-4 lg:px-8"
+                class="mx-auto grid max-w-[1400px] gap-8 px-6 text-sm md:grid-cols-4 lg:px-8"
+                :class="currentPath === '/' ? 'py-10' : 'py-14'"
             >
                 <div class="md:col-span-2">
                     <h4 class="mb-2 font-display text-xl font-bold">

@@ -42,7 +42,8 @@ const props = defineProps<{
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
-const cur = (n: string) => formatPrice(n, store.value.currency_symbol);
+// Compras y costos se manejan en dólares, igual que la lista de precios.
+const cur = (n: string) => formatPrice(n, 'USD');
 
 const q = ref(props.filters.q ?? '');
 const status = ref(props.filters.status ?? '');

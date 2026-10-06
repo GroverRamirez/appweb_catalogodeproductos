@@ -203,14 +203,39 @@ test('catalog index sets noindex when search filter is active', function () {
         );
 });
 
-test('catalog index sets noindex when category filter is active', function () {
-    $cat = Category::factory()->create();
+test('catalog index indexes a plain category landing with its own title and canonical', function () {
+    $cat = Category::factory()->create(['nombre' => 'Cámaras de Seguridad']);
     Cache::flush();
 
     $this->get(route('catalog.index', ['category' => $cat->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
+            ->where('seo.noindex', false)
+            ->where('seo.title', 'Cámaras de Seguridad')
+            ->where('seo.canonical', url('/catalogo').'?category='.$cat->slug)
+        );
+});
+
+test('catalog index sets noindex when the category is combined with another filter', function () {
+    $cat = Category::factory()->create();
+    Cache::flush();
+
+    $this->get(route('catalog.index', ['category' => $cat->slug, 'sort' => 'price_asc']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
             ->where('seo.noindex', true)
+            ->where('seo.canonical', url('/catalogo'))
+        );
+});
+
+test('catalog index sets noindex when the category slug does not exist', function () {
+    Cache::flush();
+
+    $this->get(route('catalog.index', ['category' => 'categoria-inexistente']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('seo.noindex', true)
+            ->where('seo.title', 'Catálogo')
         );
 });
 

@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\AdjustStockRequest;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\ProductAttribute;
 use App\Models\ProductImage;
 use App\Services\ImageProcessor;
+use App\Services\InventoryLedger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +62,24 @@ class ProductController extends Controller
         $data = $request->validated();
 
         DB::transaction(function () use ($data, $request) {
-            $product = Product::create(collect($data)->except(['images', 'attributes'])->all());
+            // El producto nace en 0 y el stock inicial entra como movimiento:
+            // si se escribiera directo en la columna, el kardex arrancaría
+            // debiendo unidades que nadie registró.
+            $initialStock = (int) ($data['stock'] ?? 0);
+
+            $product = Product::create(
+                collect($data)->except(['images', 'attributes', 'stock'])->all()
+            );
+
+            if ($initialStock !== 0) {
+                InventoryLedger::record(
+                    $product,
+                    $initialStock,
+                    InventoryMovement::TYPE_ADJUSTMENT,
+                    null,
+                    'Carga inicial del producto',
+                );
+            }
 
             $this->syncAttributes($product, $data['attributes'] ?? []);
             $this->syncImages($product, $request);
@@ -107,6 +127,56 @@ class ProductController extends Controller
         });
 
         return to_route('admin.products.index')->with('success', 'Producto actualizado.');
+    }
+
+    /**
+     * Kardex del producto: el saldo de hoy y de dónde salió.
+     */
+    public function inventory(Product $product): Response
+    {
+        return Inertia::render('admin/products/Inventory', [
+            'product' => $product->only(['id', 'name', 'code', 'stock', 'min_stock', 'unit']),
+            'movements' => InventoryMovement::query()
+                ->forProduct($product->id)
+                ->with('author:id,name')
+                ->orderByDesc('id')
+                ->paginate(30)
+                ->through(fn (InventoryMovement $m) => [
+                    'id' => $m->id,
+                    'type' => $m->type,
+                    'quantity' => $m->quantity,
+                    'previous_stock' => $m->previous_stock,
+                    'resulting_stock' => $m->resulting_stock,
+                    'reason' => $m->reason,
+                    'author' => $m->author?->name,
+                    'created_at' => $m->created_at?->toIso8601String(),
+                ]),
+        ]);
+    }
+
+    /**
+     * Ajuste manual: lleva el stock al valor contado y deja el movimiento con
+     * su motivo y su autor.
+     */
+    public function adjust(AdjustStockRequest $request, Product $product): RedirectResponse
+    {
+        $data = $request->validated();
+
+        $movement = DB::transaction(function () use ($data, $product) {
+            // Se relee con la fila bloqueada: entre que se cargó el formulario
+            // y se guardó pudo entrar una venta, y el ajuste tiene que partir
+            // del stock de este momento, no del que mostraba la pantalla.
+            $locked = Product::query()->whereKey($product->getKey())->lockForUpdate()->first();
+
+            return InventoryLedger::adjustTo($locked, (int) $data['new_stock'], $data['reason']);
+        });
+
+        return to_route('admin.products.inventory', $product)->with(
+            'success',
+            $movement === null
+                ? 'El stock contado es el que ya estaba: no se registró ningún movimiento.'
+                : 'Stock ajustado y movimiento registrado.',
+        );
     }
 
     public function destroy(Product $product): RedirectResponse

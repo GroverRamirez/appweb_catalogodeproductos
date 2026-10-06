@@ -16,6 +16,8 @@ Spatie Permission, Pest v4.
 - `TAREAS.md` — roadmap de desarrollo; tomar la siguiente tarea sin marcar
 - `SETUP_CATALOGO.md` — setup local e historial de iteraciones
 - `DEPLOY.md` — despliegue a producción, checklist go-live, backups
+- `docs/REPORTES.md` — módulo de reportes (PDF/Excel) y panel de indicadores
+- `docs/TIPO_DE_CAMBIO.md` — precios en dólares, cobro en bolivianos
 
 ## Comandos
 
@@ -38,6 +40,10 @@ corriendo). Para previews usar otro puerto (`.claude/launch.json` usa 8010).
   admin exige su permiso en `routes/admin.php`.
 - Precios y totales SIEMPRE se calculan en el servidor desde la BD, nunca se
   confía en montos del cliente.
+- Doble moneda: la lista (`productos.precio`, `precio_oferta`, `costo`) y las
+  compras están en USD; consultas, ventas y lo que ve el cliente, en Bs. La
+  conversión va siempre por `App\Services\ExchangeRate`, y cada consulta/venta
+  congela su `tipo_cambio`. Ver `docs/TIPO_DE_CAMBIO.md`.
 - Imágenes subidas siempre pasan por `App\Services\ImageProcessor` (WebP, sin EXIF).
 - En `<script setup>` de archivos .vue nunca escribir la secuencia literal de
   cierre de script en comentarios (rompe el parser SFC).

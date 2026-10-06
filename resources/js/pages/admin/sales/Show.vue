@@ -114,6 +114,10 @@ const PRINT_CSS = `
         border-radius: 0 !important;
         box-shadow: none !important;
     }
+    /* El comprobante vive oculto en la pantalla y solo aparece al imprimir.
+       Va con !important para no depender del orden en que Tailwind emita
+       'hidden' y 'print:block'. */
+    #print-receipt { display: block !important; }
 }`;
 
 onMounted(() => {
@@ -149,7 +153,10 @@ const voidSale = () => {
 <template>
     <Head :title="`Venta ${receiptNumber(sale.receipt_number)}`" />
 
-    <div class="mx-auto max-w-4xl space-y-4 p-3 md:p-4">
+    <!-- print:p-0 — en impresión el viewport son los 80 mm del rollo, así que
+         este padding se suma al margen del @page y recorta el ancho útil del
+         ticket: sin esto se imprimía en ~65 mm de los 72 disponibles. -->
+    <div class="mx-auto max-w-4xl space-y-4 p-3 print:p-0 md:p-4">
         <div class="flex items-center justify-between gap-2 print:hidden">
             <div class="flex items-center gap-2">
                 <Button variant="ghost" size="icon-sm" as-child>
@@ -329,9 +336,13 @@ const voidSale = () => {
             </CardContent>
         </Card>
 
+        <!-- El comprobante no se muestra en pantalla: la pantalla ya tiene los
+             datos de la venta arriba, y repetirlos abajo en formato ticket solo
+             alargaba el detalle. Aparece únicamente al imprimir (botón
+             Imprimir), que es cuando el formato de tira de 80 mm tiene sentido. -->
         <section
             id="print-receipt"
-            class="mx-auto w-full max-w-[360px] rounded-lg border border-border bg-card px-4 py-5 font-mono text-[11px] leading-relaxed text-foreground shadow-sm print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none"
+            class="mx-auto hidden w-full max-w-[360px] rounded-lg border border-border bg-card px-4 py-5 font-mono text-[11px] leading-relaxed text-foreground shadow-sm print:block print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none"
         >
             <div class="text-center">
                 <img
@@ -358,30 +369,34 @@ const voidSale = () => {
                 N.o {{ receiptNumber(sale.receipt_number) }}
             </p>
 
+            <!-- La columna de etiquetas se angosta al imprimir: 28 (112px) es
+                 casi la mitad del ancho útil de un rollo de 80 mm. Y los valores
+                 se parten en varias líneas en vez de cortarse: en un ticket,
+                 media palabra con puntos suspensivos no sirve. -->
             <div class="mt-2 space-y-0.5">
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0">Fecha:</span>
+                    <span class="w-28 shrink-0 print:w-20">Fecha:</span>
                     <span>{{ fmtDate(sale.created_at) }}</span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0">Cliente:</span>
-                    <span class="min-w-0 flex-1 truncate">
+                    <span class="w-28 shrink-0 print:w-20">Cliente:</span>
+                    <span class="min-w-0 flex-1 break-words">
                         {{ sale.customer_name ?? 'Consumidor final' }}
                     </span>
                 </div>
                 <div v-if="sale.customer_phone" class="flex gap-2">
-                    <span class="w-28 shrink-0">Teléfono:</span>
-                    <span class="min-w-0 flex-1 truncate">
+                    <span class="w-28 shrink-0 print:w-20">Teléfono:</span>
+                    <span class="min-w-0 flex-1 break-words">
                         {{ sale.customer_phone }}
                     </span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0">Pago:</span>
+                    <span class="w-28 shrink-0 print:w-20">Pago:</span>
                     <span>{{ paymentLabel }}</span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0">Atendió:</span>
-                    <span class="min-w-0 flex-1 truncate">
+                    <span class="w-28 shrink-0 print:w-20">Atendió:</span>
+                    <span class="min-w-0 flex-1 break-words">
                         {{ sale.creator?.name ?? '—' }}
                     </span>
                 </div>
@@ -391,26 +406,31 @@ const voidSale = () => {
                 class="my-2 border-t border-dashed border-border print:border-black"
             />
 
-            <table class="w-full tabular-nums">
-                <thead>
-                    <tr>
-                        <th class="text-left font-bold">Producto</th>
-                        <th class="text-right font-bold">Cant</th>
-                        <th class="text-right font-bold">P.Unit</th>
-                        <th class="text-right font-bold">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="item in sale.items" :key="item.id">
-                        <td class="max-w-0 truncate pr-2">
+            <!-- Cada ítem ocupa dos líneas, como en cualquier ticket: el nombre
+                 usa el ancho completo del rollo y abajo va el cálculo. En cuatro
+                 columnas el nombre se quedaba con ~130px de los 272 del rollo y
+                 salía cortado con puntos suspensivos, que en un comprobante es
+                 el peor lugar para ahorrar espacio. -->
+            <div class="tabular-nums">
+                <div class="flex justify-between gap-2 font-bold">
+                    <span>Detalle</span>
+                    <span>Importe</span>
+                </div>
+
+                <div class="mt-1 space-y-1.5">
+                    <div v-for="item in sale.items" :key="item.id">
+                        <p class="break-words">
                             {{ item.product_name_snapshot }}
-                        </td>
-                        <td class="text-right">{{ item.quantity }}</td>
-                        <td class="text-right">{{ item.unit_price }}</td>
-                        <td class="text-right">{{ num(item.subtotal) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+                        </p>
+                        <div class="flex justify-between gap-2">
+                            <span>
+                                {{ item.quantity }} × {{ num(item.unit_price) }}
+                            </span>
+                            <span>{{ num(item.subtotal) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div
                 class="my-2 border-t border-dashed border-border print:border-black"

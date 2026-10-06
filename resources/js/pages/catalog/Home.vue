@@ -26,6 +26,9 @@ type Category = {
     name: string;
     slug: string;
     image: string | null;
+    /** Foto de uno de sus productos, cuando la categoría no tiene imagen propia. */
+    product_image: string | null;
+    products_count: number;
 };
 type Banner = {
     id: number;
@@ -54,6 +57,13 @@ defineProps<{
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
 const { t } = useTranslations();
+
+/**
+ * Foto de la tarjeta: manda la imagen de la categoría y, si no hay, se usa la
+ * de uno de sus productos. Si tampoco hay, la tarjeta cae en el ícono.
+ */
+const categoryImage = (category: Category): string | null =>
+    imageUrl(category.image) ?? imageUrl(category.product_image);
 
 const perks = [
     {
@@ -132,7 +142,7 @@ const perks = [
         <!-- Perks / value props -->
         <section class="border-b border-border bg-card">
             <div
-                class="mx-auto grid max-w-[1400px] gap-x-8 gap-y-6 px-6 py-10 sm:grid-cols-2 lg:grid-cols-4 lg:px-8"
+                class="mx-auto grid max-w-[1400px] gap-x-8 gap-y-5 px-6 py-7 sm:grid-cols-2 md:py-8 lg:grid-cols-4 lg:px-8"
             >
                 <div
                     v-for="p in perks"
@@ -159,46 +169,94 @@ const perks = [
         </section>
 
         <!-- Categorías -->
-        <section v-if="categories.length" class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
-            <div class="mb-6 flex items-end justify-between gap-3">
-                <h2
-                    class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+        <section
+            v-if="categories.length"
+            class="border-b border-border/70 bg-gradient-to-b from-background via-muted/20 to-background"
+        >
+            <div class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8 lg:py-12">
+                <div
+                    class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
                 >
-                    {{ t('categories') }}
-                </h2>
-                <Link
-                    href="/catalogo"
-                    class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-                >
-                    {{ t('see_all') }}
-                    <ArrowRight class="size-3.5" />
-                </Link>
-            </div>
-            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                <Link
-                    v-for="c in categories"
-                    :key="c.id"
-                    :href="`/catalogo?category=${c.slug}`"
-                    class="group flex min-h-32 flex-col items-center justify-center gap-3 rounded-lg border border-border bg-card p-5 text-center transition-colors hover:border-primary/40 hover:bg-accent/40"
-                >
-                    <img
-                        v-if="imageUrl(c.image)"
-                        :src="imageUrl(c.image)!"
-                        :alt="c.name"
-                        class="size-12 rounded-md border border-border object-cover"
-                    />
-                    <div
-                        v-else
-                        class="grid size-12 place-items-center rounded-md bg-accent text-primary"
-                    >
-                        <component :is="categoryIcon(c.slug)" class="size-6" />
+                    <div class="max-w-2xl">
+                        <span
+                            class="mb-2 inline-flex rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold tracking-wide text-primary uppercase"
+                        >
+                            Explora el catálogo
+                        </span>
+                        <h2
+                            class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                        >
+                            Compra por categoría
+                        </h2>
+                        <p
+                            class="mt-2 text-sm leading-relaxed text-muted-foreground md:text-base"
+                        >
+                            Encuentra rápidamente los productos que necesitas
+                            para tu hogar, oficina o negocio.
+                        </p>
                     </div>
-                    <span
-                        class="text-sm leading-tight font-medium text-foreground"
+                    <Link
+                        href="/catalogo"
+                        class="group inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/30 hover:text-primary hover:shadow-md"
                     >
-                        {{ c.name }}
-                    </span>
-                </Link>
+                        {{ t('see_all') }}
+                        <ArrowRight
+                            class="size-4 transition-transform group-hover:translate-x-0.5"
+                        />
+                    </Link>
+                </div>
+
+                <div
+                    class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6"
+                >
+                    <Link
+                        v-for="c in categories"
+                        :key="c.id"
+                        :href="`/catalogo?category=${c.slug}`"
+                        class="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/5 sm:min-h-52 sm:p-4"
+                    >
+                        <div
+                            class="relative grid min-h-28 flex-1 place-items-center overflow-hidden rounded-xl p-4 sm:min-h-32"
+                        >
+                            <span
+                                class="absolute top-2 right-2 z-20 grid size-8 place-items-center rounded-full border border-white/70 bg-white/80 text-muted-foreground shadow-sm backdrop-blur transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground dark:border-white/10 dark:bg-background/70"
+                                aria-hidden="true"
+                            >
+                                <ArrowRight
+                                    class="size-3.5 transition-transform group-hover:translate-x-0.5"
+                                />
+                            </span>
+                            <img
+                                v-if="categoryImage(c)"
+                                :src="categoryImage(c)!"
+                                :alt="c.name"
+                                loading="lazy"
+                                class="relative z-10 h-24 w-full object-contain transition-transform duration-300 group-hover:scale-110 sm:h-28"
+                            />
+                            <component
+                                v-else
+                                :is="categoryIcon(c.slug)"
+                                class="relative z-10 size-20 p-3 text-primary/55 transition-transform duration-300 group-hover:scale-110"
+                            />
+                        </div>
+
+                        <div class="px-1 pt-3">
+                            <h3
+                                class="line-clamp-2 text-sm leading-tight font-bold text-foreground sm:text-base"
+                            >
+                                {{ c.name }}
+                            </h3>
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ c.products_count }}
+                                {{
+                                    c.products_count === 1
+                                        ? 'producto'
+                                        : 'productos'
+                                }}
+                            </p>
+                        </div>
+                    </Link>
+                </div>
             </div>
         </section>
 
@@ -207,8 +265,8 @@ const perks = [
             v-if="featured.length"
             class="border-t border-border bg-muted/40"
         >
-            <div class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
-                <div class="mb-6 flex items-end justify-between gap-3">
+            <div class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8">
+                <div class="mb-4 flex items-end justify-between gap-3">
                     <h2
                         class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
                     >
@@ -223,7 +281,7 @@ const perks = [
                     </Link>
                 </div>
                 <div
-                    class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                    class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                 >
                     <ProductCard
                         v-for="p in featured"
@@ -235,8 +293,11 @@ const perks = [
         </section>
 
         <!-- Nuevos -->
-        <section v-if="newest.length" class="mx-auto max-w-[1400px] px-6 py-14 lg:px-8">
-            <div class="mb-6 flex items-end justify-between gap-3">
+        <section
+            v-if="newest.length"
+            class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8"
+        >
+            <div class="mb-4 flex items-end justify-between gap-3">
                 <h2
                     class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
                 >
@@ -250,7 +311,9 @@ const perks = [
                     <ArrowRight class="size-3.5" />
                 </Link>
             </div>
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            <div
+                class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+            >
                 <ProductCard v-for="p in newest" :key="p.id" :product="p" />
             </div>
         </section>
@@ -260,7 +323,7 @@ const perks = [
             class="border-t border-border bg-[hsl(222_33%_13%)] text-white"
         >
             <div
-                class="mx-auto flex max-w-5xl flex-col items-center gap-5 px-4 py-16 text-center"
+                class="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-10 text-center md:py-12"
             >
                 <h2
                     class="max-w-2xl font-display text-2xl leading-tight font-bold md:text-3xl"

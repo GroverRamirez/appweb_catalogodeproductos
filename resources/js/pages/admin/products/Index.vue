@@ -320,7 +320,7 @@ async function runImport() {
                             <th class="px-3 py-2">Producto</th>
                             <th class="px-3 py-2">Categoría</th>
                             <th class="px-3 py-2">Marca</th>
-                            <th class="px-3 py-2 text-right">Precio</th>
+                            <th class="px-3 py-2 text-right">Precio (USD)</th>
                             <th class="px-3 py-2 text-right">Stock</th>
                             <th class="px-3 py-2">Estado</th>
                             <th class="px-3 py-2"></th>

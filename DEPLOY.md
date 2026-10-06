@@ -82,12 +82,24 @@ Ejemplo mínimo con Caddy en el host:
 
 ```
 tu-dominio.com {
-    reverse_proxy localhost:80
+    reverse_proxy localhost:8080
 }
 ```
 
+Con `APP_PORT=127.0.0.1:8080` el contenedor solo escucha en el host y el
+proxy se queda con los puertos 80 y 443 (los necesita para el certificado).
+
 Con `APP_URL=https://...` y `URL::forceScheme('https')` (ya activo en
 producción), Laravel genera todas las URLs en https.
+
+**Proxies de confianza.** `TRUSTED_PROXIES` (ver `config/trustedproxy.php`)
+le dice a Laravel que crea en las cabeceras `X-Forwarded-*` del proxy. Sin
+ella, todos los visitantes comparten la IP del proxy (los límites de login y
+checkout se vuelven uno solo para todos), no se envía HSTS y la página de
+gracias del checkout, que usa una URL firmada, no valida. Con el proxy en el
+host y Docker, `TRUSTED_PROXIES=172.16.0.0/12`; usa `*` solo si el puerto de
+la app no es accesible desde internet. Agrega también
+`SESSION_SECURE_COOKIE=true`.
 
 ---
 
@@ -108,6 +120,7 @@ producción), Laravel genera todas las URLs en https.
 - [ ] Workers de cola activos (`docker compose exec app supervisorctl status`)
 - [ ] Backup manual probado y restaurable (ver §6)
 - [ ] Reverse proxy con TLS en marcha (candado en el navegador)
+- [ ] `TRUSTED_PROXIES` y `SESSION_SECURE_COOKIE=true` configurados (la respuesta trae `Strict-Transport-Security`)
 - [ ] DNS apuntando correctamente
 
 ### Verificación rápida post-deploy

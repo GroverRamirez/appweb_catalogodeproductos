@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import ProductCombobox from '@/components/admin/ProductCombobox.vue';
@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/catalog';
-import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({
     layout: () => ({
@@ -40,8 +39,6 @@ const supplierOptions = computed<ComboOption[]>(() =>
     })),
 );
 
-const page = usePage();
-const store = computed(() => page.props.store as StoreSettings);
 // Compras y costos se manejan en dólares, igual que la lista de precios.
 const cur = (n: number) => formatPrice(n, 'USD');
 

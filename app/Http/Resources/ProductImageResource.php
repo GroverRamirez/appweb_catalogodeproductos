@@ -17,13 +17,13 @@ class ProductImageResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'         => $this->id,
-            'path'       => $this->path,
+            'id' => $this->id,
+            'path' => $this->path,
             'thumb_path' => $this->thumb_path,
-            'url'        => $this->url,         // getUrlAttribute()
-            'thumb_url'  => $this->thumbnail_url, // getThumbnailUrlAttribute() con fallback
-            'is_main'    => (bool) $this->is_main,
-            'alt'        => $this->alt,
+            'url' => $this->url,         // getUrlAttribute()
+            'thumb_url' => $this->thumbnail_url, // getThumbnailUrlAttribute() con fallback
+            'is_main' => (bool) $this->is_main,
+            'alt' => $this->alt,
             'sort_order' => (int) $this->sort_order,
         ];
     }

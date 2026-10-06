@@ -111,7 +111,7 @@ watch([q, status], () => {
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
                 >
                     <tr>
-                        <th class="px-3 py-2">Referencia</th>
+                        <th class="px-3 py-2">N.º compra</th>
                         <th class="px-3 py-2">Proveedor</th>
                         <th class="px-3 py-2">Fecha</th>
                         <th class="px-3 py-2 text-right">Productos</th>
@@ -126,8 +126,14 @@ watch([q, status], () => {
                         :key="p.id"
                         class="hover:bg-muted/30"
                     >
-                        <td class="px-3 py-2 font-medium">
-                            {{ p.reference_number ?? `#${p.id}` }}
+                        <td class="px-3 py-2">
+                            <div class="font-medium">#{{ p.id }}</div>
+                            <div
+                                v-if="p.reference_number"
+                                class="text-xs text-muted-foreground"
+                            >
+                                Ref. prov.: {{ p.reference_number }}
+                            </div>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
                             <template v-if="p.supplier">

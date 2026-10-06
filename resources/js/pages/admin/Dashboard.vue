@@ -505,7 +505,7 @@ const statusColor = (s: string) => {
                                         :href="`/admin/purchases/${p.id}`"
                                         class="font-medium hover:text-primary hover:underline"
                                     >
-                                        {{ p.reference_number ?? `#${p.id}` }}
+                                        #{{ p.id }}
                                     </Link>
                                     <span
                                         class="block text-xs text-muted-foreground"

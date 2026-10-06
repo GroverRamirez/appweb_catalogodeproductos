@@ -137,12 +137,12 @@ const voidPurchase = () => {
 </script>
 
 <template>
-    <Head :title="`Compra ${purchase.reference_number ?? `#${purchase.id}`}`" />
+    <Head :title="`Compra #${purchase.id}`" />
 
     <!-- print:p-0 — en impresión el viewport son los 80 mm del rollo, así que
          este padding se suma al margen del @page y recorta el ancho útil del
          ticket: sin esto se imprimía en ~65 mm de los 72 disponibles. -->
-    <div class="mx-auto max-w-4xl space-y-4 p-3 print:p-0 md:p-4">
+    <div class="mx-auto max-w-4xl space-y-4 p-3 md:p-4 print:p-0">
         <div class="flex items-center justify-between gap-2 print:hidden">
             <div class="flex items-center gap-2">
                 <Button variant="ghost" size="icon-sm" as-child>
@@ -150,9 +150,7 @@ const voidPurchase = () => {
                         ><ArrowLeft class="size-4"
                     /></Link>
                 </Button>
-                <h1 class="text-xl font-semibold">
-                    {{ purchase.reference_number ?? `Compra #${purchase.id}` }}
-                </h1>
+                <h1 class="text-xl font-semibold">Compra #{{ purchase.id }}</h1>
                 <Badge
                     :variant="
                         purchase.status === 'confirmada'

@@ -25,7 +25,11 @@ type PurchaseRow = {
     total_cost: string;
     items_count: number;
     created_at: string;
-    supplier: { id: number; name: string } | null;
+    supplier: {
+        id: number;
+        name: string;
+        contact_name: string | null;
+    } | null;
 };
 
 const props = defineProps<{
@@ -126,7 +130,16 @@ watch([q, status], () => {
                             {{ p.reference_number ?? `#${p.id}` }}
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
-                            {{ p.supplier?.name ?? '—' }}
+                            <template v-if="p.supplier">
+                                <div>{{ p.supplier.name }}</div>
+                                <div
+                                    v-if="p.supplier.contact_name"
+                                    class="text-xs"
+                                >
+                                    {{ p.supplier.contact_name }}
+                                </div>
+                            </template>
+                            <template v-else>—</template>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
                             {{ new Date(p.created_at).toLocaleDateString() }}

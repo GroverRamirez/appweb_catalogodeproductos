@@ -22,7 +22,7 @@ class PurchaseController extends Controller
     public function index(Request $request): Response
     {
         $purchases = Purchase::query()
-            ->with('supplier:id,nombre')
+            ->with('supplier:id,nombre,contacto_nombre')
             ->withCount('items')
             ->when($request->string('q')->toString(), function ($q, $term) {
                 // El OR va agrupado: sin el where() envolvente, SQL lo lee como

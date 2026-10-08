@@ -472,21 +472,21 @@ useReveal();
             >
                 <nav
                     v-show="showSecondaryNav"
-                    class="hidden border-t border-border/60 md:block"
+                    class="hidden bg-primary text-primary-foreground md:block"
                     aria-label="Navegación secundaria"
                 >
                     <div
-                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-1 px-6 text-sm font-medium lg:px-8"
+                        class="mx-auto flex h-12 max-w-[1400px] items-stretch gap-1 px-6 text-[13px] font-bold tracking-wide uppercase lg:px-8"
                     >
                         <Link
                             v-for="item in secondaryNavItems"
                             :key="item.label"
                             :href="item.href"
-                            class="inline-flex h-8 items-center gap-2 rounded-full px-3.5 whitespace-nowrap transition"
+                            class="inline-flex items-center gap-2 border-b-[3px] px-3.5 pt-[3px] whitespace-nowrap transition"
                             :class="
                                 item.active
-                                    ? 'bg-accent text-accent-foreground'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    ? 'border-white text-white'
+                                    : 'border-transparent text-white/85 hover:bg-white/10 hover:text-white'
                             "
                         >
                             <component
@@ -501,7 +501,7 @@ useReveal();
                             :href="whatsappHref"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ml-auto inline-flex h-8 items-center gap-2 rounded-full px-3.5 whitespace-nowrap text-muted-foreground transition hover:bg-emerald-50 hover:text-emerald-700"
+                            class="ml-auto inline-flex items-center gap-2 border-b-[3px] border-transparent px-3.5 pt-[3px] whitespace-nowrap text-white/85 transition hover:bg-white/10 hover:text-white"
                         >
                             <MessageCircle class="size-4" />
                             Contactos

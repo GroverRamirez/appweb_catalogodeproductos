@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
+    CircleCheck,
+    Clock,
+    Flame,
     Heart,
     Home,
     LayoutDashboard,
@@ -10,9 +13,11 @@ import {
     Mail,
     MapPin,
     Menu,
+    MessageCircle,
     Phone,
     Search,
     ShoppingCart,
+    Sparkles,
     User,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -50,36 +55,41 @@ const whatsappHref = computed(() => {
 });
 const secondaryNavItems = computed(() => [
     {
-        label: 'Categorías',
-        href: '/catalogo',
-        active: false,
-        withIcon: true,
+        label: 'Inicio',
+        href: '/',
+        active: currentPath.value === '/',
+        icon: Home,
     },
     {
-        label: 'Marcas',
+        label: 'Todo el catálogo',
         href: '/catalogo',
-        active: false,
-        withIcon: false,
+        active:
+            currentPath.value.startsWith('/catalogo') &&
+            !page.url.includes('sort='),
+        icon: LayoutGrid,
     },
     {
         label: 'Novedades',
         href: '/catalogo?sort=newest',
         active: page.url.includes('sort=newest'),
-        withIcon: false,
+        icon: Sparkles,
     },
     {
         label: 'Ofertas',
         href: '/catalogo?sort=discount',
         active: page.url.includes('sort=discount'),
-        withIcon: false,
+        icon: Flame,
     },
     {
-        label: 'Catálogo',
-        href: '/catalogo',
-        active: currentPath.value.startsWith('/catalogo'),
-        withIcon: false,
+        label: 'Favoritos',
+        href: '/favoritos',
+        active: currentPath.value === '/favoritos',
+        icon: Heart,
     },
 ]);
+const mobileMenuItems = computed(() =>
+    secondaryNavItems.value.map(({ label, href }) => ({ label, href })),
+);
 // Destino/ícono/etiqueta del último tab de la barra móvil: staff va al panel,
 // cliente logueado a su cuenta, invitado al login.
 const accountHref = computed(() => {
@@ -193,16 +203,6 @@ useReveal();
 
 <template>
     <Head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-            rel="preconnect"
-            href="https://fonts.gstatic.com"
-            crossorigin=""
-        />
-        <link
-            rel="stylesheet"
-            href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-        />
         <link v-if="store.favicon_url" rel="icon" :href="store.favicon_url" />
     </Head>
 
@@ -212,40 +212,43 @@ useReveal();
         <!-- Topbar de contacto -->
         <div
             v-if="store.whatsapp || store.email || store.exchange_rate"
-            class="hidden bg-[hsl(222_33%_13%)] text-[12px] text-white/80 md:block"
+            class="hidden border-b border-border/70 bg-muted/60 text-[12px] text-muted-foreground md:block"
         >
             <div
-                class="mx-auto flex max-w-[1400px] items-center justify-between gap-4 px-6 py-1.5 lg:px-8"
+                class="mx-auto flex h-9 max-w-[1400px] items-center justify-between gap-4 px-6 lg:px-8"
             >
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-5">
                     <span
                         v-if="store.address"
-                        class="inline-flex items-center gap-1 opacity-90"
+                        class="inline-flex items-center gap-1.5"
                     >
-                        <MapPin class="size-3" /> {{ store.address }}
+                        <MapPin class="size-3.5" /> {{ store.address }}
                     </span>
                     <span
                         v-if="store.hours"
-                        class="inline-flex items-center gap-1 opacity-70"
+                        class="inline-flex items-center gap-1.5"
                     >
-                        {{ store.hours }}
+                        <Clock class="size-3.5" /> {{ store.hours }}
                     </span>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-5">
                     <!-- Los precios se publican en bolivianos al tipo de cambio
                          del día: decir cuál es evita la pregunta de por qué el
                          mismo producto costaba otra cosa la semana pasada. -->
                     <span
                         v-if="store.exchange_rate"
-                        class="inline-flex items-center gap-1 opacity-90"
+                        class="inline-flex items-center gap-1.5 rounded-full bg-card px-2.5 py-0.5 ring-1 ring-border"
                         :title="
                             store.exchange_rate_source === 'bcb'
                                 ? `Cotización oficial del BCB${store.exchange_rate_updated_at ? ` · actualizada el ${store.exchange_rate_updated_at}` : ''}`
                                 : 'Cotización cargada por la tienda'
                         "
                     >
+                        <span
+                            class="size-1.5 rounded-full bg-emerald-500"
+                        ></span>
                         Tipo de cambio:
-                        <strong class="font-semibold text-white">
+                        <strong class="tabular font-semibold text-foreground">
                             {{ formatRate(store.exchange_rate) }} Bs
                         </strong>
                     </span>
@@ -253,105 +256,90 @@ useReveal();
                         v-if="store.whatsapp"
                         :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
                         target="_blank"
-                        class="inline-flex items-center gap-1 transition hover:text-white"
+                        class="inline-flex items-center gap-1.5 transition hover:text-foreground"
                     >
-                        <Phone class="size-3" /> {{ store.whatsapp }}
+                        <Phone class="size-3.5" /> {{ store.whatsapp }}
                     </a>
                     <a
                         v-if="store.email"
                         :href="`mailto:${store.email}`"
-                        class="inline-flex items-center gap-1 transition hover:text-white"
+                        class="inline-flex items-center gap-1.5 transition hover:text-foreground"
                     >
-                        <Mail class="size-3" /> {{ store.email }}
+                        <Mail class="size-3.5" /> {{ store.email }}
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Header -->
-        <header class="sticky top-0 z-30 border-b border-primary/15 bg-accent">
+        <header
+            class="sticky top-0 z-30 border-b border-border/80 bg-card"
+            :class="showSecondaryNav ? '' : 'elev-1'"
+        >
             <div
-                class="mx-auto flex h-16 max-w-[1400px] items-center gap-3 px-6 md:gap-6 lg:px-8"
+                class="mx-auto flex h-[68px] max-w-[1400px] items-center gap-3 px-4 sm:px-6 md:gap-8 lg:px-8"
             >
-                <div class="flex min-w-0 flex-1 items-center gap-2 md:gap-4">
-                    <Link href="/" class="flex shrink-0 items-center gap-2.5">
-                        <img
-                            v-if="store.logo_url"
-                            :src="store.logo_url"
-                            :alt="store.name"
-                            class="h-9 w-auto max-w-[160px] object-contain"
-                        />
-                        <template v-else>
-                            <span
-                                class="grid size-9 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground"
-                            >
-                                {{
-                                    (store.name || 'M').charAt(0).toUpperCase()
-                                }}
-                            </span>
-                            <span
-                                class="font-display text-lg font-bold tracking-tight"
-                            >
-                                {{ store.name }}
-                            </span>
-                        </template>
-                    </Link>
-
-                    <nav class="ml-2 hidden gap-1 md:flex">
-                        <Link
-                            href="/"
-                            class="rounded-md px-3 py-2 text-sm font-medium transition"
-                            :class="
-                                currentPath === '/'
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            "
+                <Link
+                    href="/"
+                    class="flex min-w-0 shrink-0 items-center gap-2.5"
+                >
+                    <img
+                        v-if="store.logo_url"
+                        :src="store.logo_url"
+                        :alt="store.name"
+                        class="h-9 w-auto max-w-[160px] object-contain"
+                    />
+                    <template v-else>
+                        <span
+                            class="grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-extrabold text-primary-foreground"
                         >
-                            {{ t('home') }}
-                        </Link>
-                        <Link
-                            href="/catalogo"
-                            class="rounded-md px-3 py-2 text-sm font-medium transition"
-                            :class="
-                                currentPath.startsWith('/catalogo')
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            "
+                            {{ (store.name || 'M').charAt(0).toUpperCase() }}
+                        </span>
+                        <span
+                            class="truncate font-display text-lg font-extrabold tracking-tight"
                         >
-                            {{ t('catalog') }}
-                        </Link>
-                    </nav>
-                </div>
+                            {{ store.name }}
+                        </span>
+                    </template>
+                </Link>
 
                 <form
                     @submit.prevent="doSearch"
-                    class="relative hidden max-w-xl flex-1 md:block"
+                    class="relative hidden max-w-2xl flex-1 md:block"
+                    role="search"
                 >
                     <Search
-                        class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+                        class="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
                         v-model="q"
                         :placeholder="t('search_placeholder')"
-                        class="h-10 w-full rounded-md border-input bg-card pl-10 focus-visible:border-ring"
+                        class="h-11 w-full rounded-full border-transparent bg-muted pr-28 pl-11 shadow-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:bg-card"
                     />
+                    <Button
+                        type="submit"
+                        size="sm"
+                        class="absolute top-1/2 right-1.5 h-8 -translate-y-1/2 rounded-full px-4 shadow-none"
+                    >
+                        Buscar
+                    </Button>
                 </form>
 
                 <div
-                    class="flex flex-1 items-center justify-end gap-1 md:gap-2"
+                    class="flex flex-1 items-center justify-end gap-1 md:flex-none md:gap-1.5"
                 >
                     <Button
                         variant="ghost"
                         size="icon"
                         as-child
-                        class="relative rounded-md hover:bg-muted"
+                        class="relative rounded-full hover:bg-muted"
                         aria-label="Favoritos"
                     >
                         <Link href="/favoritos">
                             <Heart class="size-5" />
                             <span
                                 v-if="mounted && wishlistCount > 0"
-                                class="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground"
+                                class="absolute -top-0.5 -right-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground ring-2 ring-card"
                             >
                                 {{ wishlistCount }}
                             </span>
@@ -360,22 +348,26 @@ useReveal();
                     <Button
                         variant="ghost"
                         size="icon"
-                        class="relative rounded-md hover:bg-muted"
+                        class="relative rounded-full hover:bg-muted"
                         @click="openCart"
                         aria-label="Carrito"
                     >
                         <ShoppingCart class="size-5" />
                         <span
                             v-if="mounted && cartCount > 0"
-                            class="absolute -top-1 -right-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground"
+                            class="absolute -top-0.5 -right-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] leading-none font-bold text-primary-foreground ring-2 ring-card"
                         >
                             {{ cartCount }}
                         </span>
                     </Button>
 
+                    <span
+                        class="mx-1.5 hidden h-6 w-px bg-border sm:block"
+                    ></span>
+
                     <template v-if="user">
                         <span
-                            class="hidden max-w-32 truncate text-sm font-medium text-muted-foreground sm:inline"
+                            class="hidden max-w-32 truncate text-sm font-medium text-muted-foreground lg:inline"
                         >
                             Hola, {{ user.name.split(' ')[0] }}
                         </span>
@@ -384,7 +376,7 @@ useReveal();
                             variant="outline"
                             size="sm"
                             as-child
-                            class="rounded-md font-medium"
+                            class="rounded-full font-medium"
                         >
                             <Link href="/admin">
                                 <LayoutDashboard class="size-4" />
@@ -396,7 +388,7 @@ useReveal();
                         <Button
                             variant="ghost"
                             size="sm"
-                            class="rounded-md hover:bg-muted"
+                            class="rounded-full hover:bg-muted"
                             @click="handleLogout"
                         >
                             <LogOut class="size-4" />
@@ -410,7 +402,7 @@ useReveal();
                         variant="default"
                         size="sm"
                         as-child
-                        class="hidden rounded-md sm:inline-flex"
+                        class="hidden h-9 rounded-full px-4 sm:inline-flex"
                     >
                         <Link :href="login()">
                             <LogIn class="size-4" />
@@ -423,7 +415,8 @@ useReveal();
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                class="rounded-md md:hidden"
+                                class="rounded-full md:hidden"
+                                aria-label="Menú"
                             >
                                 <Menu class="size-5" />
                             </Button>
@@ -442,32 +435,45 @@ useReveal();
                                 class="relative mb-4"
                             >
                                 <Search
-                                    class="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
+                                    class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                                 />
                                 <Input
                                     v-model="q"
                                     :placeholder="t('search_placeholder')"
-                                    class="pl-8"
+                                    class="h-10 rounded-full bg-muted pl-9"
                                 />
                             </form>
                             <nav class="flex flex-col gap-1">
                                 <Link
-                                    href="/"
-                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+                                    v-for="item in mobileMenuItems"
+                                    :key="item.label"
+                                    :href="item.href"
+                                    class="rounded-lg px-3 py-2.5 text-sm font-medium hover:bg-muted"
                                 >
-                                    {{ t('home') }}
-                                </Link>
-                                <Link
-                                    href="/catalogo"
-                                    class="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
-                                >
-                                    {{ t('catalog') }}
+                                    {{ item.label }}
                                 </Link>
                             </nav>
                         </SheetContent>
                     </Sheet>
                 </div>
             </div>
+
+            <!-- Búsqueda visible en móvil, debajo del logo -->
+            <form
+                @submit.prevent="doSearch"
+                class="relative mx-4 mb-3 sm:mx-6 md:hidden"
+                role="search"
+            >
+                <Search
+                    class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                />
+                <Input
+                    v-model="q"
+                    :placeholder="t('search_placeholder')"
+                    class="h-10 w-full rounded-full border-transparent bg-muted pl-10 shadow-none"
+                />
+            </form>
+
             <Transition
                 enter-active-class="transition-opacity duration-100 ease-out"
                 enter-from-class="opacity-0"
@@ -476,24 +482,28 @@ useReveal();
             >
                 <nav
                     v-show="showSecondaryNav"
-                    class="hidden bg-brand text-brand-foreground shadow-sm shadow-primary/10 md:block"
+                    class="hidden border-t border-border/60 md:block"
                     aria-label="Navegación secundaria"
                 >
                     <div
-                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-8 px-6 text-sm font-bold uppercase lg:px-8"
+                        class="mx-auto flex h-12 max-w-[1400px] items-center gap-1 px-6 text-sm font-medium lg:px-8"
                     >
                         <Link
                             v-for="item in secondaryNavItems"
                             :key="item.label"
                             :href="item.href"
-                            class="inline-flex h-full items-center gap-2 border-b-2 border-transparent whitespace-nowrap transition hover:border-brand-foreground hover:text-brand-foreground"
-                            :class="{
-                                'border-brand-foreground text-brand-foreground':
-                                    item.active,
-                                'text-brand-foreground/85': !item.active,
-                            }"
+                            class="inline-flex h-8 items-center gap-2 rounded-full px-3.5 whitespace-nowrap transition"
+                            :class="
+                                item.active
+                                    ? 'bg-accent text-accent-foreground'
+                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                            "
                         >
-                            <Menu v-if="item.withIcon" class="size-4" />
+                            <component
+                                :is="item.icon"
+                                v-if="item.icon"
+                                class="size-4"
+                            />
                             <span>{{ item.label }}</span>
                         </Link>
                         <a
@@ -501,8 +511,9 @@ useReveal();
                             :href="whatsappHref"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex h-full items-center border-b-2 border-transparent whitespace-nowrap text-brand-foreground/85 transition hover:border-brand-foreground hover:text-brand-foreground"
+                            class="ml-auto inline-flex h-8 items-center gap-2 rounded-full px-3.5 whitespace-nowrap text-muted-foreground transition hover:bg-emerald-50 hover:text-emerald-700"
                         >
+                            <MessageCircle class="size-4" />
                             Contactos
                         </a>
                     </div>
@@ -518,11 +529,12 @@ useReveal();
         >
             <div
                 v-if="showFlash && flash.success"
-                class="sticky top-20 z-20 mx-auto max-w-[1400px] px-6 pt-3 lg:px-8"
+                class="sticky top-20 z-20 mx-auto w-full max-w-[1400px] px-6 pt-3 lg:px-8"
             >
                 <div
-                    class="rounded-md border border-primary/30 bg-accent px-4 py-3 text-sm font-medium text-accent-foreground"
+                    class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-card px-4 py-3 text-sm font-medium text-foreground elev-2"
                 >
+                    <CircleCheck class="size-4 shrink-0 text-emerald-600" />
                     {{ flash.success }}
                 </div>
             </div>
@@ -542,33 +554,21 @@ useReveal();
         >
             <Link
                 href="/"
-                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
-                :class="
-                    currentPath === '/'
-                        ? 'text-primary'
-                        : 'text-muted-foreground'
-                "
+                class="mobile-tab"
+                :class="{ 'is-active': currentPath === '/' }"
             >
                 <Home class="size-5" />
                 {{ t('home') }}
             </Link>
             <Link
                 href="/catalogo"
-                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
-                :class="
-                    currentPath.startsWith('/catalogo')
-                        ? 'text-primary'
-                        : 'text-muted-foreground'
-                "
+                class="mobile-tab"
+                :class="{ 'is-active': currentPath.startsWith('/catalogo') }"
             >
                 <LayoutGrid class="size-5" />
                 {{ t('categories') }}
             </Link>
-            <button
-                type="button"
-                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium text-muted-foreground"
-                @click="openCart"
-            >
+            <button type="button" class="mobile-tab" @click="openCart">
                 <span class="relative">
                     <ShoppingCart class="size-5" />
                     <span
@@ -582,12 +582,8 @@ useReveal();
             </button>
             <Link
                 href="/favoritos"
-                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
-                :class="
-                    currentPath === '/favoritos'
-                        ? 'text-primary'
-                        : 'text-muted-foreground'
-                "
+                class="mobile-tab"
+                :class="{ 'is-active': currentPath === '/favoritos' }"
             >
                 <span class="relative">
                     <Heart class="size-5" />
@@ -602,10 +598,8 @@ useReveal();
             </Link>
             <Link
                 :href="accountHref"
-                class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-medium"
-                :class="
-                    accountActive ? 'text-primary' : 'text-muted-foreground'
-                "
+                class="mobile-tab"
+                :class="{ 'is-active': accountActive }"
             >
                 <component :is="accountIcon" class="size-5" />
                 {{ user ? (isStaff ? t('panel') : t('account')) : t('login') }}
@@ -613,28 +607,44 @@ useReveal();
         </nav>
 
         <footer
-            class="bg-[hsl(222_33%_13%)] text-white"
+            class="bg-[hsl(224_36%_10%)] text-white"
             :class="currentPath === '/' ? 'mt-0' : 'mt-16'"
         >
             <div
-                class="mx-auto grid max-w-[1400px] gap-8 px-6 text-sm md:grid-cols-4 lg:px-8"
-                :class="currentPath === '/' ? 'py-10' : 'py-14'"
+                class="mx-auto grid max-w-[1400px] gap-10 px-6 py-14 text-sm md:grid-cols-4 lg:px-8"
             >
                 <div class="md:col-span-2">
-                    <h4 class="mb-2 font-display text-xl font-bold">
-                        {{ store.name }}
-                    </h4>
-                    <p class="max-w-md text-white/60">
+                    <div class="mb-3 flex items-center gap-2.5">
+                        <span
+                            class="grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-extrabold text-primary-foreground"
+                        >
+                            {{ (store.name || 'M').charAt(0).toUpperCase() }}
+                        </span>
+                        <h4 class="font-display text-xl font-extrabold">
+                            {{ store.name }}
+                        </h4>
+                    </div>
+                    <p class="max-w-md leading-relaxed text-white/60">
                         {{ store.tagline }}
                     </p>
+                    <a
+                        v-if="whatsappHref"
+                        :href="whatsappHref"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mt-5 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-medium text-white transition hover:bg-white/15"
+                    >
+                        <MessageCircle class="size-4" />
+                        {{ t('contact_whatsapp') }}
+                    </a>
                 </div>
                 <div>
                     <h4
-                        class="mb-3 text-xs font-semibold tracking-wider text-white/50 uppercase"
+                        class="mb-4 text-xs font-semibold tracking-wider text-white/45 uppercase"
                     >
                         {{ t('contact') }}
                     </h4>
-                    <ul class="space-y-2 text-white/75">
+                    <ul class="space-y-2.5 text-white/75">
                         <li
                             v-if="store.whatsapp"
                             class="flex items-center gap-2"
@@ -652,19 +662,20 @@ useReveal();
                         </li>
                         <li
                             v-if="store.hours"
-                            class="flex items-center gap-2 text-white/50"
+                            class="flex items-center gap-2 text-white/60"
                         >
-                            {{ t('hours') }}: {{ store.hours }}
+                            <Clock class="size-4 text-white/40" />
+                            {{ store.hours }}
                         </li>
                     </ul>
                 </div>
                 <div>
                     <h4
-                        class="mb-3 text-xs font-semibold tracking-wider text-white/50 uppercase"
+                        class="mb-4 text-xs font-semibold tracking-wider text-white/45 uppercase"
                     >
                         {{ t('navigation') }}
                     </h4>
-                    <ul class="space-y-2 text-white/75">
+                    <ul class="space-y-2.5 text-white/75">
                         <li>
                             <Link href="/" class="transition hover:text-white">
                                 {{ t('home') }}
@@ -678,14 +689,38 @@ useReveal();
                                 {{ t('catalog') }}
                             </Link>
                         </li>
+                        <li>
+                            <Link
+                                href="/catalogo?sort=discount"
+                                class="transition hover:text-white"
+                            >
+                                Ofertas
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                href="/favoritos"
+                                class="transition hover:text-white"
+                            >
+                                {{ t('favorites') }}
+                            </Link>
+                        </li>
                     </ul>
                 </div>
             </div>
-            <div
-                class="border-t border-white/10 py-3 text-center text-xs text-white/40"
-            >
-                © {{ new Date().getFullYear() }} {{ store.name }}.
-                {{ t('rights_reserved') }}
+            <div class="border-t border-white/10">
+                <div
+                    class="mx-auto flex max-w-[1400px] flex-wrap items-center justify-between gap-2 px-6 py-4 text-xs text-white/40 lg:px-8"
+                >
+                    <span>
+                        © {{ new Date().getFullYear() }} {{ store.name }}.
+                        {{ t('rights_reserved') }}
+                    </span>
+                    <span v-if="store.exchange_rate" class="tabular">
+                        Precios en Bs · TC
+                        {{ formatRate(store.exchange_rate) }}
+                    </span>
+                </div>
             </div>
         </footer>
     </div>
@@ -696,26 +731,59 @@ useReveal();
    oscuro o el sistema en dark. Redefinimos los tokens claros en el contenedor;
    por herencia de variables CSS, todo el subárbol del storefront los usa. */
 .storefront {
-    --background: hsl(0 0% 100%);
-    --foreground: hsl(222 33% 14%);
+    --background: hsl(220 23% 98%);
+    --foreground: hsl(224 32% 12%);
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(222 33% 14%);
+    --card-foreground: hsl(224 32% 12%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(222 33% 14%);
-    --primary: hsl(218 79% 42%);
+    --popover-foreground: hsl(224 32% 12%);
+    --primary: hsl(221 83% 50%);
     --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(220 16% 95%);
-    --secondary-foreground: hsl(222 30% 20%);
-    --muted: hsl(220 16% 96%);
-    --muted-foreground: hsl(220 9% 43%);
-    --accent: hsl(218 60% 96%);
-    --accent-foreground: hsl(218 79% 32%);
-    --brand: hsl(218 79% 42%);
+    --secondary: hsl(220 20% 94%);
+    --secondary-foreground: hsl(224 30% 18%);
+    --muted: hsl(220 20% 96%);
+    --muted-foreground: hsl(220 9% 44%);
+    --accent: hsl(221 85% 96%);
+    --accent-foreground: hsl(221 83% 38%);
+    --brand: hsl(221 83% 50%);
     --brand-foreground: hsl(0 0% 100%);
-    --destructive: hsl(0 70% 45%);
+    --destructive: hsl(0 72% 50%);
     --destructive-foreground: hsl(0 0% 100%);
-    --border: hsl(220 15% 90%);
-    --input: hsl(220 15% 86%);
-    --ring: hsl(218 79% 42%);
+    --border: hsl(220 16% 91%);
+    --input: hsl(220 14% 86%);
+    --ring: hsl(221 83% 50%);
+    --shadow-soft:
+        0 1px 2px hsl(224 32% 12% / 0.04),
+        0 2px 8px -2px hsl(224 32% 12% / 0.06);
+    --shadow-lift:
+        0 2px 4px hsl(224 32% 12% / 0.04),
+        0 16px 32px -12px hsl(224 32% 12% / 0.16);
+}
+
+.storefront .mobile-tab {
+    display: flex;
+    flex: 1 1 0%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.125rem;
+    padding: 0.5rem 0;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted-foreground);
+    position: relative;
+}
+.storefront .mobile-tab.is-active {
+    color: var(--primary);
+}
+.storefront .mobile-tab.is-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 30%;
+    right: 30%;
+    height: 2px;
+    border-radius: 0 0 2px 2px;
+    background: var(--primary);
 }
 </style>

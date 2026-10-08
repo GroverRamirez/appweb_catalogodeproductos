@@ -102,20 +102,27 @@ const perks = [
         <HeroCarousel v-if="banners.length" :banners="banners" />
 
         <!-- Hero fallback cuando no hay banners -->
-        <section v-else class="border-b border-border bg-muted/40">
+        <section
+            v-else
+            class="mx-auto max-w-[1400px] px-4 pt-4 sm:px-6 md:pt-6 lg:px-8"
+        >
             <div
-                class="mx-auto flex max-w-[1400px] flex-col items-start gap-5 px-6 py-20 md:py-24 lg:px-8"
+                class="flex flex-col items-start gap-5 rounded-2xl bg-[hsl(224_36%_10%)] px-6 py-16 text-white sm:px-10 md:rounded-3xl md:px-14 md:py-24"
             >
                 <h1
-                    class="max-w-3xl font-display text-4xl leading-[1.1] font-bold tracking-tight md:text-5xl"
+                    class="max-w-3xl font-display text-4xl leading-[1.05] font-extrabold tracking-tight md:text-6xl"
                 >
                     {{ store.name }}
                 </h1>
-                <p class="max-w-2xl text-base text-muted-foreground md:text-lg">
+                <p class="max-w-2xl text-base text-white/70 md:text-lg">
                     {{ store.tagline }}
                 </p>
                 <div class="mt-1 flex flex-wrap gap-3">
-                    <Button as-child size="lg" class="rounded-md">
+                    <Button
+                        as-child
+                        size="lg"
+                        class="h-11 rounded-full bg-white px-6 text-[hsl(224_36%_10%)] shadow-none hover:bg-white/90"
+                    >
                         <Link href="/catalogo">
                             {{ t('view_catalog') }}
                             <ArrowRight class="size-4" />
@@ -125,7 +132,7 @@ const perks = [
                         v-if="store.whatsapp"
                         as-child
                         size="lg"
-                        class="rounded-md bg-[#25D366] text-white shadow-sm shadow-[#25D366]/25 hover:bg-[#128C7E] hover:text-white"
+                        class="h-11 rounded-full bg-[#25D366] px-6 text-white shadow-none hover:bg-[#128C7E] hover:text-white"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"
@@ -140,17 +147,15 @@ const perks = [
         </section>
 
         <!-- Perks / value props -->
-        <section class="border-b border-border bg-card">
-            <div
-                class="mx-auto grid max-w-[1400px] gap-x-8 gap-y-5 px-6 py-7 sm:grid-cols-2 md:py-8 lg:grid-cols-4 lg:px-8"
-            >
+        <section class="mx-auto max-w-[1400px] px-4 pt-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-4">
                 <div
                     v-for="p in perks"
                     :key="p.title"
-                    class="flex items-start gap-3"
+                    class="flex items-center gap-3 rounded-2xl bg-card p-3 ring-1 ring-border/70 sm:items-start sm:p-4"
                 >
                     <span
-                        class="grid size-10 shrink-0 place-items-center rounded-md bg-accent text-primary"
+                        class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"
                     >
                         <component :is="p.icon" class="size-5" />
                     </span>
@@ -159,7 +164,7 @@ const perks = [
                             {{ p.title }}
                         </h3>
                         <p
-                            class="mt-0.5 text-xs leading-relaxed text-muted-foreground"
+                            class="mt-0.5 hidden text-xs leading-relaxed text-muted-foreground sm:block"
                         >
                             {{ p.text }}
                         </p>
@@ -169,22 +174,19 @@ const perks = [
         </section>
 
         <!-- Categorías -->
-        <section
-            v-if="categories.length"
-            class="border-b border-border/70 bg-gradient-to-b from-background via-muted/20 to-background"
-        >
-            <div class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8 lg:py-12">
+        <section v-if="categories.length">
+            <div
+                class="mx-auto max-w-[1400px] px-4 py-10 sm:px-6 lg:px-8 lg:py-14"
+            >
                 <div
                     class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"
                 >
                     <div class="max-w-2xl">
-                        <span
-                            class="mb-2 inline-flex rounded-full border border-primary/15 bg-primary/5 px-3 py-1 text-xs font-semibold tracking-wide text-primary uppercase"
-                        >
+                        <p class="mb-1 text-sm font-semibold text-primary">
                             Explora el catálogo
-                        </span>
+                        </p>
                         <h2
-                            class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                            class="font-display text-2xl font-extrabold tracking-tight text-foreground md:text-3xl"
                         >
                             Compra por categoría
                         </h2>
@@ -197,7 +199,7 @@ const perks = [
                     </div>
                     <Link
                         href="/catalogo"
-                        class="group inline-flex w-fit items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-semibold text-foreground shadow-sm transition hover:border-primary/30 hover:text-primary hover:shadow-md"
+                        class="group inline-flex w-fit items-center gap-2 rounded-full bg-card px-4 py-2 text-sm font-semibold text-foreground ring-1 ring-border transition hover:text-primary hover:ring-primary/30"
                     >
                         {{ t('see_all') }}
                         <ArrowRight
@@ -213,10 +215,10 @@ const perks = [
                         v-for="c in categories"
                         :key="c.id"
                         :href="`/catalogo?category=${c.slug}`"
-                        class="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card p-3 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-xl hover:shadow-primary/5 sm:min-h-52 sm:p-4"
+                        class="group relative flex min-h-44 flex-col overflow-hidden rounded-2xl bg-card p-2 ring-1 elev-1 ring-border/70 transition duration-300 hover:-translate-y-0.5 hover:[box-shadow:var(--shadow-lift)] hover:ring-primary/30 sm:min-h-52"
                     >
                         <div
-                            class="relative grid min-h-28 flex-1 place-items-center overflow-hidden rounded-xl p-4 sm:min-h-32"
+                            class="relative grid min-h-28 flex-1 place-items-center overflow-hidden rounded-xl bg-muted/70 p-4 sm:min-h-32"
                         >
                             <span
                                 class="absolute top-2 right-2 z-20 grid size-8 place-items-center rounded-full border border-white/70 bg-white/80 text-muted-foreground shadow-sm backdrop-blur transition group-hover:border-primary group-hover:bg-primary group-hover:text-primary-foreground dark:border-white/10 dark:bg-background/70"
@@ -240,7 +242,7 @@ const perks = [
                             />
                         </div>
 
-                        <div class="px-1 pt-3">
+                        <div class="px-2 pt-3 pb-1.5">
                             <h3
                                 class="line-clamp-2 text-sm leading-tight font-bold text-foreground sm:text-base"
                             >
@@ -261,27 +263,26 @@ const perks = [
         </section>
 
         <!-- Destacados -->
-        <section
-            v-if="featured.length"
-            class="border-t border-border bg-muted/40"
-        >
-            <div class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8">
-                <div class="mb-4 flex items-end justify-between gap-3">
+        <section v-if="featured.length">
+            <div
+                class="mx-auto max-w-[1400px] px-4 pb-10 sm:px-6 lg:px-8 lg:pb-14"
+            >
+                <div class="mb-5 flex items-end justify-between gap-3">
                     <h2
-                        class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                        class="font-display text-2xl font-extrabold tracking-tight text-foreground md:text-3xl"
                     >
                         {{ t('featured_products') }}
                     </h2>
                     <Link
                         href="/catalogo?sort=newest"
-                        class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                        class="group inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-primary transition hover:bg-accent"
                     >
                         {{ t('see_more') }}
                         <ArrowRight class="size-3.5" />
                     </Link>
                 </div>
                 <div
-                    class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                    class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
                 >
                     <ProductCard
                         v-for="p in featured"
@@ -295,46 +296,48 @@ const perks = [
         <!-- Nuevos -->
         <section
             v-if="newest.length"
-            class="mx-auto max-w-[1400px] px-6 py-10 lg:px-8"
+            class="mx-auto max-w-[1400px] px-4 pb-12 sm:px-6 lg:px-8 lg:pb-16"
         >
-            <div class="mb-4 flex items-end justify-between gap-3">
+            <div class="mb-5 flex items-end justify-between gap-3">
                 <h2
-                    class="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl"
+                    class="font-display text-2xl font-extrabold tracking-tight text-foreground md:text-3xl"
                 >
                     {{ t('newest') }}
                 </h2>
                 <Link
                     href="/catalogo?sort=newest"
-                    class="group inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                    class="group inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-semibold whitespace-nowrap text-primary transition hover:bg-accent"
                 >
                     {{ t('see_more') }}
                     <ArrowRight class="size-3.5" />
                 </Link>
             </div>
             <div
-                class="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
             >
                 <ProductCard v-for="p in newest" :key="p.id" :product="p" />
             </div>
         </section>
 
         <!-- CTA final -->
-        <section
-            class="border-t border-border bg-[hsl(222_33%_13%)] text-white"
-        >
+        <section class="mx-auto max-w-[1400px] px-4 pb-14 sm:px-6 lg:px-8">
             <div
-                class="mx-auto flex max-w-5xl flex-col items-center gap-3 px-4 py-10 text-center md:py-12"
+                class="flex flex-col items-center gap-3 rounded-2xl bg-primary px-6 py-12 text-center text-primary-foreground md:rounded-3xl md:py-16"
             >
                 <h2
-                    class="max-w-2xl font-display text-2xl leading-tight font-bold md:text-3xl"
+                    class="max-w-2xl font-display text-2xl leading-tight font-extrabold tracking-tight md:text-4xl"
                 >
                     ¿Listo para encontrar lo que buscas?
                 </h2>
-                <p class="max-w-xl text-white/60">
+                <p class="max-w-xl text-primary-foreground/80">
                     Explora nuestro catálogo o escríbenos por WhatsApp.
                 </p>
-                <div class="flex flex-wrap justify-center gap-3">
-                    <Button as-child size="lg" class="rounded-md">
+                <div class="mt-2 flex flex-wrap justify-center gap-3">
+                    <Button
+                        as-child
+                        size="lg"
+                        class="h-11 rounded-full bg-white px-6 text-primary shadow-none hover:bg-white/90"
+                    >
                         <Link href="/catalogo">
                             {{ t('view_catalog') }}
                             <ArrowRight class="size-4" />
@@ -344,7 +347,7 @@ const perks = [
                         v-if="store.whatsapp"
                         as-child
                         size="lg"
-                        class="rounded-md bg-[#25D366] text-white shadow-sm shadow-[#25D366]/25 hover:bg-[#128C7E] hover:text-white"
+                        class="h-11 rounded-full bg-[#25D366] px-6 text-white shadow-none hover:bg-[#128C7E] hover:text-white"
                     >
                         <a
                             :href="`https://wa.me/${store.whatsapp.replace(/[^0-9]/g, '')}`"

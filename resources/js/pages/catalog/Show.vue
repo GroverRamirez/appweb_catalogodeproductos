@@ -3,6 +3,7 @@ import { Link, useForm, usePage } from '@inertiajs/vue3';
 import {
     Check,
     ChevronDown,
+    ChevronRight,
     Heart,
     MessageCircle,
     Minus,
@@ -131,7 +132,9 @@ onMounted(() => (mounted.value = true));
 const showLeadForm = ref(false);
 
 const { has: inWishlist, toggle: toggleWishlist } = useWishlist();
-const isFavorite = computed(() => mounted.value && inWishlist(props.product.id));
+const isFavorite = computed(
+    () => mounted.value && inWishlist(props.product.id),
+);
 const toggleCurrentFavorite = () => {
     const mainImg =
         props.product.images.find((i) => i.is_main) ?? props.product.images[0];
@@ -187,32 +190,38 @@ const sendWhatsApp = () => {
         :json-ld="seo.json_ld ?? undefined"
     />
 
-    <div class="mx-auto max-w-[1200px] px-4 py-6">
+    <div class="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
         <nav
-            class="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
+            class="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
         >
-            <Link href="/" class="hover:underline">Inicio</Link>
-            <span>/</span>
-            <Link href="/catalogo" class="hover:underline">Catálogo</Link>
+            <Link href="/" class="transition hover:text-foreground"
+                >Inicio</Link
+            >
+            <ChevronRight class="size-3.5 opacity-60" />
+            <Link href="/catalogo" class="transition hover:text-foreground"
+                >Catálogo</Link
+            >
             <template v-if="product.category">
-                <span>/</span>
+                <ChevronRight class="size-3.5 opacity-60" />
                 <Link
                     :href="`/catalogo?category=${product.category.slug}`"
-                    class="hover:underline"
+                    class="transition hover:text-foreground"
                 >
                     {{ product.category.name }}
                 </Link>
             </template>
-            <span>/</span>
-            <span class="text-foreground">{{ product.name }}</span>
+            <ChevronRight class="size-3.5 opacity-60" />
+            <span class="line-clamp-1 font-medium text-foreground">{{
+                product.name
+            }}</span>
         </nav>
 
-        <div class="grid gap-8 lg:grid-cols-[minmax(0,460px)_1fr]">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,560px)_1fr] lg:gap-12">
             <!-- Galería -->
             <div class="space-y-3 lg:sticky lg:top-24 lg:self-start">
                 <div
-                    class="relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                    class="relative aspect-square overflow-hidden rounded-3xl bg-card ring-1 ring-border/70"
                 >
                     <img
                         v-if="product.images[mainImageIdx]"
@@ -236,11 +245,11 @@ const sendWhatsApp = () => {
                         :key="img.id"
                         type="button"
                         @click="mainImageIdx = i"
-                        class="aspect-square overflow-hidden rounded border-2 transition"
+                        class="aspect-square overflow-hidden rounded-xl ring-2 ring-offset-2 ring-offset-background transition"
                         :class="
                             i === mainImageIdx
-                                ? 'border-primary'
-                                : 'border-transparent hover:border-muted-foreground/40'
+                                ? 'ring-primary'
+                                : 'opacity-80 ring-transparent hover:opacity-100 hover:ring-border'
                         "
                     >
                         <img
@@ -257,11 +266,13 @@ const sendWhatsApp = () => {
                 <div>
                     <p
                         v-if="product.brand"
-                        class="mb-1 text-sm text-muted-foreground"
+                        class="mb-2 inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground"
                     >
                         {{ product.brand.name }}
                     </p>
-                    <h1 class="text-2xl font-bold md:text-3xl">
+                    <h1
+                        class="font-display text-2xl leading-tight font-extrabold tracking-tight md:text-4xl"
+                    >
                         {{ product.name }}
                     </h1>
                     <p class="mt-1 text-sm text-muted-foreground">
@@ -270,7 +281,10 @@ const sendWhatsApp = () => {
                 </div>
 
                 <div v-if="store.show_prices" class="flex items-baseline gap-3">
-                    <span class="text-3xl font-bold">
+                    <span
+                        class="tabular font-display text-3xl font-extrabold tracking-tight md:text-4xl"
+                        :class="showSale ? 'text-destructive' : ''"
+                    >
                         {{
                             formatPrice(
                                 product.sale_price ?? product.price,
@@ -288,7 +302,11 @@ const sendWhatsApp = () => {
                 </div>
 
                 <div v-if="store.show_stock">
-                    <Badge v-if="inStock" variant="default" class="gap-1">
+                    <Badge
+                        v-if="inStock"
+                        variant="outline"
+                        class="gap-1 rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700"
+                    >
                         <Check class="size-3" /> En stock ({{ product.stock }}
                         {{ product.unit }})
                     </Badge>
@@ -303,15 +321,20 @@ const sendWhatsApp = () => {
                 </p>
 
                 <!-- Selector cantidad + acciones -->
-                <Card>
-                    <CardContent class="space-y-3 pt-5">
+                <Card
+                    class="rounded-2xl py-5 shadow-none ring-1 ring-border/50"
+                >
+                    <CardContent class="space-y-3">
                         <div class="flex items-center gap-3">
                             <Label>Cantidad</Label>
-                            <div class="flex items-center rounded-md border">
+                            <div
+                                class="flex items-center rounded-full border bg-card p-0.5"
+                            >
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
+                                    class="rounded-full"
                                     @click="decQ"
                                 >
                                     <Minus class="size-3" />
@@ -324,6 +347,7 @@ const sendWhatsApp = () => {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
+                                    class="rounded-full"
                                     @click="incQ"
                                 >
                                     <Plus class="size-3" />
@@ -350,7 +374,7 @@ const sendWhatsApp = () => {
                                 v-if="inStock"
                                 type="button"
                                 size="lg"
-                                class="flex-1"
+                                class="h-12 flex-1 rounded-full text-base"
                                 @click="addCurrentToCart"
                             >
                                 <ShoppingCart class="size-4" />
@@ -360,7 +384,10 @@ const sendWhatsApp = () => {
                                 type="button"
                                 size="lg"
                                 variant="outline"
-                                :class="inStock ? '' : 'w-full'"
+                                :class="[
+                                    'h-12 rounded-full',
+                                    inStock ? 'w-12 px-0' : 'w-full',
+                                ]"
                                 :aria-label="
                                     isFavorite
                                         ? 'Quitar de favoritos'
@@ -377,7 +404,9 @@ const sendWhatsApp = () => {
                                             : ''
                                     "
                                 />
-                                <span v-if="!inStock">Guardar en favoritos</span>
+                                <span v-if="!inStock"
+                                    >Guardar en favoritos</span
+                                >
                             </Button>
                         </div>
 
@@ -386,7 +415,7 @@ const sendWhatsApp = () => {
                             type="button"
                             size="lg"
                             variant="outline"
-                            class="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                            class="h-12 w-full rounded-full border-emerald-600/60 text-emerald-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800"
                             @click="sendWhatsApp"
                         >
                             <MessageCircle class="size-4" />
@@ -477,7 +506,7 @@ const sendWhatsApp = () => {
         <!-- Descripción y características -->
         <div class="mt-10 grid gap-8 lg:grid-cols-3">
             <div class="lg:col-span-2">
-                <h2 class="mb-3 text-lg font-semibold">Descripción</h2>
+                <h2 class="mb-3 font-display text-lg font-bold">Descripción</h2>
                 <p
                     v-if="product.description"
                     class="text-sm leading-relaxed whitespace-pre-line text-muted-foreground"
@@ -490,12 +519,16 @@ const sendWhatsApp = () => {
             </div>
 
             <div v-if="product.attributes.length">
-                <h2 class="mb-3 text-lg font-semibold">Características</h2>
-                <dl class="divide-y rounded-lg border bg-card text-sm">
+                <h2 class="mb-3 font-display text-lg font-bold">
+                    Características
+                </h2>
+                <dl
+                    class="divide-y overflow-hidden rounded-2xl bg-card text-sm ring-1 ring-border/70"
+                >
                     <div
                         v-for="a in product.attributes"
                         :key="a.id"
-                        class="flex justify-between gap-3 px-3 py-2"
+                        class="flex justify-between gap-3 px-4 py-2.5"
                     >
                         <dt class="text-muted-foreground">{{ a.key }}</dt>
                         <dd class="font-medium">{{ a.value }}</dd>
@@ -506,21 +539,27 @@ const sendWhatsApp = () => {
 
         <!-- Relacionados -->
         <div v-if="related.length" class="mt-12">
-            <h2 class="mb-4 text-xl font-semibold">Productos relacionados</h2>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <h2 class="mb-4 font-display text-xl font-extrabold tracking-tight">
+                Productos relacionados
+            </h2>
+            <div
+                class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+            >
                 <ProductCard v-for="p in related" :key="p.id" :product="p" />
             </div>
         </div>
 
         <!-- También te puede interesar -->
         <div v-if="alsoViewed && alsoViewed.length" class="mt-12">
-            <h2 class="mb-4 text-xl font-semibold">
+            <h2 class="mb-4 font-display text-xl font-extrabold tracking-tight">
                 También te puede interesar
             </h2>
             <p class="mb-3 text-sm text-muted-foreground">
                 Lo más visto en esta categoría últimamente.
             </p>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div
+                class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+            >
                 <ProductCard v-for="p in alsoViewed" :key="p.id" :product="p" />
             </div>
         </div>

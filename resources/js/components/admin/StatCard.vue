@@ -28,47 +28,35 @@ const cardBorder: Record<string, string> = {
 
 <template>
     <div
-        class="admin-card group relative min-h-36 overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg xl:p-5"
+        class="admin-card group relative min-h-36 overflow-hidden rounded-2xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:[box-shadow:var(--shadow-lift)] xl:p-5"
         :class="cardBorder[tone ?? 'default']"
     >
-        <!-- Glow decorativo en hover -->
-        <div
-            aria-hidden="true"
-            class="pointer-events-none absolute -top-12 -right-12 size-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
-            :class="{
-                'bg-primary/20': !tone || tone === 'default',
-                'bg-amber-500/24': tone === 'warn',
-                'bg-red-600/20': tone === 'danger',
-                'bg-emerald-600/20': tone === 'success',
-            }"
-        ></div>
-
-        <div class="relative flex items-start justify-between gap-3">
-            <div class="min-w-0">
-                <p
-                    class="text-xs font-bold tracking-wider text-muted-foreground uppercase"
-                >
-                    {{ label }}
-                </p>
-                <p
-                    class="mt-2 font-display text-[clamp(1.55rem,2vw,2.25rem)] leading-tight font-semibold tracking-tight whitespace-nowrap text-foreground tabular-nums"
-                >
-                    {{ value }}
-                </p>
-                <p
-                    v-if="hint"
-                    class="mt-1 text-sm leading-relaxed text-muted-foreground"
-                >
-                    {{ hint }}
-                </p>
-            </div>
+        <div class="flex items-center justify-between gap-3">
+            <p
+                class="min-w-0 truncate text-xs font-semibold tracking-wide text-muted-foreground uppercase"
+            >
+                {{ label }}
+            </p>
             <span
                 v-if="icon"
-                class="grid size-10 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-105 xl:size-11"
+                class="grid size-9 shrink-0 place-items-center rounded-xl transition-transform duration-200 group-hover:scale-105"
                 :class="toneClasses[tone ?? 'default']"
             >
-                <component :is="icon" class="size-5" />
+                <component :is="icon" class="size-[18px]" />
             </span>
         </div>
+        <!-- El valor ocupa todo el ancho: los montos grandes en Bs ya no
+             chocan con el ícono. -->
+        <p
+            class="mt-2 font-display text-[clamp(1.35rem,1.75vw,2rem)] leading-tight font-extrabold tracking-tight whitespace-nowrap text-foreground tabular-nums"
+        >
+            {{ value }}
+        </p>
+        <p
+            v-if="hint"
+            class="mt-1 text-sm leading-relaxed text-muted-foreground"
+        >
+            {{ hint }}
+        </p>
     </div>
 </template>

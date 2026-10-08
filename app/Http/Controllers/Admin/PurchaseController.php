@@ -84,7 +84,7 @@ class PurchaseController extends Controller
     {
         $data = $request->validated();
 
-        DB::transaction(function () use ($data) {
+        $purchase = DB::transaction(function () use ($data) {
             $purchase = Purchase::create([
                 'supplier_id' => $data['supplier_id'] ?? null,
                 'reference_number' => $data['reference_number'] ?? null,
@@ -135,9 +135,19 @@ class PurchaseController extends Controller
             }
 
             $purchase->update(['total_cost' => $total]);
+
+            return $purchase;
         });
 
-        return to_route('admin.purchases.index')->with('success', 'Compra registrada y stock actualizado.');
+        $units = (int) collect($data['items'])->sum('quantity');
+
+        return to_route('admin.purchases.index')->with('success', [
+            'message' => $purchase->supplier
+                ? "Compra a {$purchase->supplier->name} registrada"
+                : 'Compra registrada',
+            'description' => "Ingresaron {$units} ".($units === 1 ? 'unidad' : 'unidades').
+                ' al stock. Total: USD '.number_format((float) $purchase->total_cost, 2, ',', '.').'.',
+        ]);
     }
 
     public function show(Purchase $purchase): Response

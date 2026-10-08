@@ -5,10 +5,13 @@ namespace App\Http\Middleware;
 use App\Models\Inquiry;
 use App\Models\Setting;
 use App\Services\ExchangeRate;
+use App\Support\Toast;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -29,6 +32,18 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         return parent::version($request);
+    }
+
+    /**
+     * Antes de responder, los avisos que los controladores dejaron en la sesión
+     * con ->with('success'|'error'|'warning'|'info', ...) pasan al canal flash de
+     * Inertia, que el front muestra como notificación (resources/js/lib/flashToast.ts).
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        Toast::fromSession($request);
+
+        return parent::handle($request, $next);
     }
 
     protected function assetUrl(mixed $path): ?string
@@ -67,12 +82,6 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'locale' => App::getLocale(),
             'translations' => fn () => trans('catalog'),
-            'flash' => [
-                // Durante el renderizado de errores (p. ej. un 404) la sesión puede no
-                // estar disponible; guardamos contra ello para no degradar el 404 a un 500.
-                'success' => fn () => $request->hasSession() ? $request->session()->get('success') : null,
-                'error' => fn () => $request->hasSession() ? $request->session()->get('error') : null,
-            ],
             'store' => fn () => [
                 'name' => Setting::get('store_name', 'Mi Catálogo'),
                 'tagline' => Setting::get('store_tagline', ''),

@@ -33,10 +33,10 @@ class GoogleAuthController extends Controller
             $googleUser = Socialite::driver('google')->user();
         } catch (InvalidStateException) {
             return redirect()->route('login')
-                ->with('error', 'El enlace de Google expiró o no es válido. Probá de nuevo.');
+                ->with('error', 'El enlace de Google expiró o no es válido. Prueba de nuevo.');
         } catch (\Throwable) {
             return redirect()->route('login')
-                ->with('error', 'No se pudo completar el ingreso con Google. Probá de nuevo.');
+                ->with('error', 'No se pudo completar el ingreso con Google. Prueba de nuevo.');
         }
 
         $user = User::where('google_id', $googleUser->getId())->first()
@@ -46,7 +46,7 @@ class GoogleAuthController extends Controller
         // siempre entra con su contraseña, nunca por este camino.
         if ($user && AdminGuard::canAccessAdmin($user)) {
             return redirect()->route('login')
-                ->with('error', 'Esta cuenta es de staff: iniciá sesión con tu contraseña.');
+                ->with('error', 'Esta cuenta es de staff: inicia sesión con tu contraseña.');
         }
 
         if ($user) {

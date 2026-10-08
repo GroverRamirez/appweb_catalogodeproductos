@@ -171,12 +171,17 @@ class ProductController extends Controller
             return InventoryLedger::adjustTo($locked, (int) $data['new_stock'], $data['reason']);
         });
 
-        return to_route('admin.products.inventory', $product)->with(
-            'success',
-            $movement === null
-                ? 'El stock contado es el que ya estaba: no se registró ningún movimiento.'
-                : 'Stock ajustado y movimiento registrado.',
-        );
+        if ($movement === null) {
+            return to_route('admin.products.inventory', $product)->with(
+                'info',
+                'El stock contado es el que ya estaba: no se registró ningún movimiento.',
+            );
+        }
+
+        return to_route('admin.products.inventory', $product)->with('success', [
+            'message' => 'Stock ajustado',
+            'description' => "{$product->name}: ahora hay {$data['new_stock']} en stock. El movimiento quedó en el kardex.",
+        ]);
     }
 
     /**

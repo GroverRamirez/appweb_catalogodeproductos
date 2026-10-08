@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { Form, Head, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Form, Head } from '@inertiajs/vue3';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -16,9 +15,6 @@ type Props = {
 } & ManagePasskeysProps;
 
 const props = defineProps<Props>();
-
-const page = usePage();
-const flashError = computed(() => page.props.flash?.error ?? null);
 
 defineOptions({
     layout: {
@@ -38,13 +34,6 @@ defineOptions({
     <h1 class="sr-only">Configuración de seguridad</h1>
 
     <div class="space-y-6">
-        <div
-            v-if="flashError"
-            class="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive"
-        >
-            {{ flashError }}
-        </div>
-
         <Heading
             variant="small"
             title="Actualizar contraseña"

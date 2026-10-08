@@ -9,6 +9,7 @@ use App\Models\InventoryMovement;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\SaleItem;
+use App\Models\Setting;
 use App\Services\ExchangeRate;
 use App\Services\InventoryLedger;
 use Illuminate\Http\JsonResponse;
@@ -158,7 +159,11 @@ class SaleController extends Controller
 
         static::warnAboutNegativeStock($negatives);
 
-        return to_route('admin.sales.show', $sale)->with('success', 'Venta registrada y stock actualizado.');
+        return to_route('admin.sales.show', $sale)->with('success', [
+            'message' => 'Venta N° '.str_pad((string) $sale->receipt_number, 6, '0', STR_PAD_LEFT).' registrada',
+            'description' => 'Total: '.Setting::get('currency_symbol', 'Bs').' '.number_format((float) $sale->total, 2, ',', '.').
+                '. El stock se actualizó.',
+        ]);
     }
 
     public function show(Sale $sale): Response
@@ -300,7 +305,7 @@ class SaleController extends Controller
         Inertia::flash('toast', [
             'type' => 'warning',
             'message' => 'Stock negativo en: '.implode(', ', $negatives).
-                '. Revisá el inventario de esos productos.',
+                '. Revisa el inventario de esos productos.',
         ]);
     }
 }

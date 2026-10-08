@@ -93,7 +93,7 @@ class InquiryController extends Controller
             Inertia::flash('toast', [
                 'type' => 'warning',
                 'message' => 'Stock negativo en: '.implode(', ', $negatives).
-                    '. Revisá el inventario de esos productos.',
+                    '. Revisa el inventario de esos productos.',
             ]);
         }
 

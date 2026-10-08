@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
-    CircleCheck,
     Clock,
     Flame,
     Heart,
@@ -20,7 +19,7 @@ import {
     Sparkles,
     User,
 } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
 import WhatsAppFab from '@/components/catalog/WhatsAppFab.vue';
 import { Button } from '@/components/ui/button';
@@ -112,10 +111,6 @@ const accountActive = computed(() =>
         : currentPath.value.startsWith('/settings'),
 );
 
-const flash = computed(
-    () => (page.props.flash ?? {}) as { success?: string; error?: string },
-);
-
 const q = ref(
     new URLSearchParams(
         typeof window !== 'undefined' ? window.location.search : '',
@@ -184,18 +179,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
     window.removeEventListener('scroll', onScroll);
 });
-
-const showFlash = ref(false);
-watch(
-    () => flash.value.success,
-    (v) => {
-        if (v) {
-            showFlash.value = true;
-            setTimeout(() => (showFlash.value = false), 4000);
-        }
-    },
-    { immediate: true },
-);
 
 // scroll-reveal en todas las páginas envueltas en PublicLayout
 useReveal();
@@ -527,25 +510,6 @@ useReveal();
                 </nav>
             </Transition>
         </header>
-
-        <transition
-            enter-active-class="transition duration-300"
-            enter-from-class="-translate-y-2 opacity-0"
-            leave-active-class="transition duration-300"
-            leave-to-class="-translate-y-2 opacity-0"
-        >
-            <div
-                v-if="showFlash && flash.success"
-                class="sticky top-20 z-20 mx-auto w-full max-w-[1400px] px-6 pt-3 lg:px-8"
-            >
-                <div
-                    class="flex items-center gap-2 rounded-xl border border-emerald-200 bg-card px-4 py-3 text-sm font-medium text-foreground elev-2"
-                >
-                    <CircleCheck class="size-4 shrink-0 text-emerald-600" />
-                    {{ flash.success }}
-                </div>
-            </div>
-        </transition>
 
         <main class="flex-1">
             <slot />

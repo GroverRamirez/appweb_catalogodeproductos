@@ -64,9 +64,6 @@ const props = defineProps<{
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
-const flash = computed(
-    () => (page.props.flash ?? {}) as { success?: string; error?: string },
-);
 
 const mainImageIdx = ref(
     props.product.images.findIndex((i) => i.is_main) >= 0
@@ -482,12 +479,6 @@ const sendWhatsApp = () => {
                                 class="text-xs text-destructive"
                             >
                                 {{ form.errors.customer_phone }}
-                            </p>
-                            <p
-                                v-if="flash.success"
-                                class="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
-                            >
-                                {{ flash.success }}
                             </p>
                         </form>
 

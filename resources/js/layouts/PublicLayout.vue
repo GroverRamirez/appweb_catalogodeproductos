@@ -279,33 +279,40 @@ useReveal();
             <div
                 class="mx-auto flex h-[68px] max-w-[1400px] items-center gap-3 px-4 sm:px-6 md:gap-8 lg:px-8"
             >
-                <Link
-                    href="/"
-                    class="flex min-w-0 shrink-0 items-center gap-2.5"
-                >
-                    <img
-                        v-if="store.logo_url"
-                        :src="store.logo_url"
-                        :alt="store.name"
-                        class="h-9 w-auto max-w-[160px] object-contain"
-                    />
-                    <template v-else>
-                        <span
-                            class="grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-extrabold text-primary-foreground"
-                        >
-                            {{ (store.name || 'M').charAt(0).toUpperCase() }}
-                        </span>
-                        <span
-                            class="truncate font-display text-lg font-extrabold tracking-tight"
-                        >
-                            {{ store.name }}
-                        </span>
-                    </template>
-                </Link>
+                <!-- Tres columnas como en Digicorp: logo a la izquierda, buscador
+                     al centro y acciones a la derecha, ocupando todo el ancho
+                     del contenedor (las columnas laterales crecen por igual). -->
+                <div class="flex min-w-0 flex-1 basis-0 items-center">
+                    <Link
+                        href="/"
+                        class="flex min-w-0 shrink-0 items-center gap-2.5"
+                    >
+                        <img
+                            v-if="store.logo_url"
+                            :src="store.logo_url"
+                            :alt="store.name"
+                            class="h-9 w-auto max-w-[160px] object-contain"
+                        />
+                        <template v-else>
+                            <span
+                                class="grid size-9 place-items-center rounded-xl bg-primary font-display text-base font-extrabold text-primary-foreground"
+                            >
+                                {{
+                                    (store.name || 'M').charAt(0).toUpperCase()
+                                }}
+                            </span>
+                            <span
+                                class="truncate font-display text-lg font-extrabold tracking-tight"
+                            >
+                                {{ store.name }}
+                            </span>
+                        </template>
+                    </Link>
+                </div>
 
                 <form
                     @submit.prevent="doSearch"
-                    class="relative hidden max-w-2xl flex-1 md:block"
+                    class="relative hidden w-full max-w-2xl flex-[2] md:block"
                     role="search"
                 >
                     <Search
@@ -326,7 +333,7 @@ useReveal();
                 </form>
 
                 <div
-                    class="flex flex-1 items-center justify-end gap-1 md:flex-none md:gap-1.5"
+                    class="flex flex-1 basis-0 items-center justify-end gap-1 md:gap-1.5"
                 >
                     <Button
                         variant="ghost"

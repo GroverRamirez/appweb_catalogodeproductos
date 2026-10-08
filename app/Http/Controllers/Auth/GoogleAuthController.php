@@ -19,6 +19,11 @@ class GoogleAuthController extends Controller
 {
     public function redirect(): RedirectResponse
     {
+        // Sin credenciales, Socialite fallaría con un error 500.
+        if (blank(config('services.google.client_id')) || blank(config('services.google.client_secret'))) {
+            return redirect()->route('login');
+        }
+
         return Socialite::driver('google')->redirect();
     }
 

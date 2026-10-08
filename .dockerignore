@@ -2,8 +2,12 @@
 .git
 .gitignore
 
-# Node
+# Dependencias: se instalan limpias dentro de la imagen
 node_modules
+vendor
+public/build
+public/hot
+public/storage
 
 # Dev / test
 .env
@@ -32,7 +36,26 @@ Thumbs.db
 *.md
 docs
 
-# Docker files themselves (already in image)
+# Docker files themselves (docker/ si viaja: el Dockerfile copia de ahi
+# php.ini, nginx.conf, supervisord.conf, entrypoint.sh y backup.sh)
 Dockerfile
 docker-compose*.yml
-docker/
+
+# Datos y salidas locales que nunca van a la imagen: volcados con datos de
+# clientes, bases SQLite, el instalador de Windows y archivos sueltos.
+storage/backups
+*.sql
+*.sql.gz
+*.sqlite
+*.tgz
+database/*.sqlite*
+dist
+instalador
+Claude outputs
+test_out.txt
+.claude
+.codex
+.cursor
+.gemini
+.kiro
+.agents

@@ -27,8 +27,14 @@ export default defineConfig({
                 },
             },
         }),
-        wayfinder({
-            formVariants: true,
-        }),
+        // En Docker las rutas se generan en la etapa de PHP: la de Node no
+        // tiene PHP para correr `artisan wayfinder:generate`.
+        ...(process.env.SKIP_WAYFINDER
+            ? []
+            : [
+                  wayfinder({
+                      formVariants: true,
+                  }),
+              ]),
     ],
 });

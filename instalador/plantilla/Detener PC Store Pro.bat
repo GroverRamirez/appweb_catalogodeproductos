@@ -1,16 +1,10 @@
 @echo off
 title Detener PC Store Pro
 
-echo.
-echo   Deteniendo PC Store Pro...
-echo.
-echo   Nota: esto cierra todos los procesos PHP de la computadora.
-echo   En una PC de prueba no hay otros; en una PC de desarrollo,
-echo   mejor cerra la ventana negra de la tienda en vez de usar esto.
-echo.
-pause
+rem Cierra solo el PHP de esta carpeta: si en la PC hay otros programas con
+rem PHP (por ejemplo Laragon), no se tocan.
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-Process php -ErrorAction SilentlyContinue | Where-Object { $_.Path -like '%~dp0*' } | Stop-Process -Force"
 
-taskkill /F /IM php.exe >nul 2>&1
-
-echo   Listo.
+echo.
+echo   PC Store Pro se detuvo.
 timeout /t 2 /nobreak >nul

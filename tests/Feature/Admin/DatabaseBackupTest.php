@@ -3,6 +3,7 @@
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Process\PendingProcess;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 
@@ -114,3 +115,39 @@ test('staff without the permission cannot touch backups', function (string $role
 
     expect(File::exists($this->dir.'/'.$name))->toBeTrue();
 })->with(['encargado', 'vendedor']);
+
+test('with sqlite the owner gets a compressed copy of the database file', function () {
+    $file = storage_path('framework/testing/backup-origen.sqlite');
+    File::ensureDirectoryExists(dirname($file));
+    File::put($file, '');
+    config([
+        'database.connections.origen' => ['driver' => 'sqlite', 'database' => $file, 'prefix' => '', 'foreign_key_constraints' => true],
+        'backup.connection' => 'origen',
+    ]);
+    DB::connection('origen')->statement('create table productos (id integer, nombre text)');
+    DB::connection('origen')->table('productos')->insert(['id' => 1, 'nombre' => 'Monitor']);
+
+    $this->actingAs($this->owner)
+        ->post(route('admin.backups.store'))
+        ->assertSessionHas('success');
+
+    $files = File::files($this->dir);
+    expect($files)->toHaveCount(1)
+        ->and($files[0]->getFilename())->toMatch('/^db_backup-origen_\d{8}_\d{6}\.sqlite\.gz$/');
+
+    // La copia es una base SQLite que se abre y tiene los datos.
+    $restored = $this->dir.'/restaurada.sqlite';
+    File::put($restored, gzdecode(File::get($files[0]->getPathname())));
+    config(['database.connections.restaurada' => ['driver' => 'sqlite', 'database' => $restored, 'prefix' => '']]);
+    expect(DB::connection('restaurada')->table('productos')->value('nombre'))->toBe('Monitor');
+
+    DB::purge('origen');
+    DB::purge('restaurada');
+    File::delete($file);
+
+    // El panel la lista; el archivo descomprimido de la prueba no cuenta.
+    $this->actingAs($this->owner)
+        ->get(route('admin.backups.index'))
+        ->assertInertia(fn ($page) => $page->has('backups', 1)
+            ->where('backups.0.name', $files[0]->getFilename()));
+});

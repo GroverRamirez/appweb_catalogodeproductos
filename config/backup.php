@@ -16,7 +16,7 @@ return [
 
     'path' => env('BACKUP_PATH', storage_path('backups')),
 
-    // Conexion a respaldar (debe ser mysql o mariadb).
+    // Conexion a respaldar (mysql, mariadb o sqlite).
     'connection' => env('BACKUP_DB_CONNECTION', env('DB_CONNECTION', 'mysql')),
 
     // Ruta a mysqldump. Vacio = se busca en el PATH y, en Laragon, en

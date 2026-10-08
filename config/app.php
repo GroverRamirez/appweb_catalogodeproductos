@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Forzar HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | En producción todas las URLs se generan con https. Solo se apaga en la
+    | versión instalable para Windows, que se sirve en http://127.0.0.1.
+    |
+    */
+
+    'force_https' => (bool) env('APP_FORCE_HTTPS', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

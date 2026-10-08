@@ -187,7 +187,8 @@ const formatDate = (iso: string): string =>
             <p>
                 La restauración no se hace desde el panel a propósito: reemplaza
                 todos los datos y conviene hacerla con la tienda detenida. Los
-                pasos están en DEPLOY.md, sección 6.
+                pasos están en DEPLOY.md, sección 6 (en la versión instalada en
+                Windows, en el LEEME de su carpeta).
             </p>
         </div>
     </div>

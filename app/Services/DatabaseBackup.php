@@ -4,23 +4,28 @@ namespace App\Services;
 
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use RuntimeException;
 use Throwable;
 
 /**
- * Copias de seguridad de la base de datos MySQL/MariaDB con mysqldump.
+ * Copias de seguridad de la base de datos.
  *
- * Genera `db_<base>_<AAAAMMDD_HHMMSS>.sql.gz`, el mismo formato que el backup
- * diario de Docker (docker/backup.sh), asi que ambas copias se restauran igual
- * (ver DEPLOY.md §6). La restauracion NO se hace desde la web a proposito: es
- * una operacion destructiva que conviene hacer a mano y con la app detenida.
+ * Con MySQL/MariaDB genera `db_<base>_<AAAAMMDD_HHMMSS>.sql.gz` con mysqldump,
+ * el mismo formato que el backup diario de Docker (docker/backup.sh), asi que
+ * ambas copias se restauran igual (ver DEPLOY.md §6). Con SQLite (la version
+ * instalable para Windows) genera `db_<base>_<AAAAMMDD_HHMMSS>.sqlite.gz`: el
+ * archivo de la base entero, que se restaura descomprimiendolo en su lugar.
+ *
+ * La restauracion NO se hace desde la web a proposito: es una operacion
+ * destructiva que conviene hacer a mano y con la app detenida.
  */
 class DatabaseBackup
 {
     /** Solo se aceptan nombres con este formato: evita salir de la carpeta. */
-    public const FILENAME_PATTERN = '/^db_[A-Za-z0-9_\-]+_\d{8}_\d{6}\.sql\.gz$/';
+    public const FILENAME_PATTERN = '/^db_[A-Za-z0-9_\-]+_\d{8}_\d{6}\.(sql|sqlite)\.gz$/';
 
     /** Carpeta donde viven las copias (privada, fuera de public). */
     public function directory(): string
@@ -72,21 +77,26 @@ class DatabaseBackup
     /**
      * Vuelca la base y devuelve el nombre del archivo generado.
      *
-     * @throws RuntimeException si la conexion no es MySQL o mysqldump falla
+     * @throws RuntimeException si la conexion no es MySQL, MariaDB o SQLite, o el volcado falla
      */
     public function create(): string
     {
         $connection = config('backup.connection');
         $db = config("database.connections.{$connection}");
+        $driver = is_array($db) ? ($db['driver'] ?? null) : null;
 
-        if (! is_array($db) || ! in_array($db['driver'] ?? null, ['mysql', 'mariadb'], true)) {
-            throw new RuntimeException('Las copias desde el panel solo funcionan con MySQL o MariaDB.');
+        if ($driver === 'sqlite') {
+            return $this->createSqlite($connection, (string) $db['database']);
+        }
+
+        if (! in_array($driver, ['mysql', 'mariadb'], true)) {
+            throw new RuntimeException('Las copias desde el panel solo funcionan con MySQL, MariaDB o SQLite.');
         }
 
         File::ensureDirectoryExists($this->directory());
 
         $database = (string) $db['database'];
-        $name = 'db_'.preg_replace('/[^A-Za-z0-9_\-]/', '_', $database).'_'.now()->format('Ymd_His').'.sql.gz';
+        $name = $this->newName($database, 'sql');
         $target = $this->directory().DIRECTORY_SEPARATOR.$name;
         $sql = $target.'.tmp';
 
@@ -132,6 +142,41 @@ class DatabaseBackup
         }
 
         return $name;
+    }
+
+    /**
+     * Copia la base SQLite con VACUUM INTO: sale una foto consistente aunque
+     * la tienda este escribiendo, cosa que copiar el archivo no garantiza.
+     */
+    private function createSqlite(string $connection, string $database): string
+    {
+        if ($database === '' || $database === ':memory:') {
+            throw new RuntimeException('La base SQLite en memoria no se puede copiar.');
+        }
+
+        File::ensureDirectoryExists($this->directory());
+
+        $name = $this->newName(pathinfo($database, PATHINFO_FILENAME), 'sqlite');
+        $target = $this->directory().DIRECTORY_SEPARATOR.$name;
+        $copy = $target.'.tmp';
+
+        try {
+            DB::connection($connection)->statement('VACUUM INTO ?', [$copy]);
+            $this->gzip($copy, $target);
+        } catch (Throwable $e) {
+            File::delete($target);
+
+            throw new RuntimeException('No se pudo copiar la base SQLite: '.$e->getMessage(), previous: $e);
+        } finally {
+            File::delete($copy);
+        }
+
+        return $name;
+    }
+
+    private function newName(string $database, string $extension): string
+    {
+        return 'db_'.preg_replace('/[^A-Za-z0-9_\-]/', '_', $database).'_'.now()->format('Ymd_His').".{$extension}.gz";
     }
 
     public function isValidName(string $name): bool

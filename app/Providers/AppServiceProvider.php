@@ -59,8 +59,10 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         // Forzar HTTPS en todas las URLs generadas (url(), route(), asset(), etc.)
-        // Solo en producción para no romper el entorno local ni los tests.
-        if (app()->isProduction()) {
+        // Solo en producción para no romper el entorno local ni los tests. La
+        // versión instalable para Windows corre en producción pero sobre
+        // http://127.0.0.1, y la apaga con APP_FORCE_HTTPS=false.
+        if (app()->isProduction() && config('app.force_https')) {
             URL::forceScheme('https');
         }
 

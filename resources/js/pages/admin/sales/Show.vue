@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Ban, Printer } from 'lucide-vue-next';
-import { computed, onBeforeUnmount, onMounted } from 'vue';
+import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { usePermissions } from '@/composables/usePermissions';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 import { PAYMENT_METHOD_LABELS, receiptNumber } from '@/lib/sales';
+import { useThermalPrint } from '@/lib/thermalPrint';
 
 defineOptions({
     layout: () => ({
@@ -96,46 +97,7 @@ const phone = computed(() => {
     return raw.startsWith('+') ? raw : `+${raw}`;
 });
 
-// Las reglas de impresion (incluido @page con el ancho de 80 mm) se inyectan
-// al montar y se quitan al salir. Si vivieran en un bloque <style> del SFC
-// serian globales y persistirian: al ser una SPA, el chunk CSS no se
-// descarga, y despues de visitar este detalle cualquier otra pantalla del
-// panel se imprimiria en una tira de 80 mm.
-const PRINT_STYLE_ID = 'comprobante-venta-print';
-
-const PRINT_CSS = `
-@page { size: 80mm auto; margin: 4mm; }
-@media print {
-    body { background: #fff !important; }
-    [data-slot='sidebar'] { display: none !important; }
-    [data-slot='sidebar-inset'] {
-        margin: 0 !important;
-        border: 0 !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-    }
-    /* El comprobante vive oculto en la pantalla y solo aparece al imprimir.
-       Va con !important para no depender del orden en que Tailwind emita
-       'hidden' y 'print:block'. */
-    #print-receipt { display: block !important; }
-}`;
-
-onMounted(() => {
-    if (document.getElementById(PRINT_STYLE_ID)) {
-        return;
-    }
-
-    const style = document.createElement('style');
-    style.id = PRINT_STYLE_ID;
-    style.textContent = PRINT_CSS;
-    document.head.appendChild(style);
-});
-
-onBeforeUnmount(() => {
-    document.getElementById(PRINT_STYLE_ID)?.remove();
-});
-
-const printView = () => window.print();
+const printView = useThermalPrint('comprobante-venta-print');
 
 const voidSale = () => {
     if (

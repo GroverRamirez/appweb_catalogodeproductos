@@ -8,9 +8,10 @@ import {
     LayoutGrid,
     Pencil,
     Plus,
+    Power,
+    PowerOff,
     Search,
     Star,
-    Trash2,
     XCircle,
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -105,12 +106,21 @@ watch([q, category, brand, status, lowStock, noCost], () => {
     }, 300);
 });
 
-const destroy = (p: Product) => {
-    if (!confirm(`¿Eliminar "${p.name}"?`)) {
+const toggleActive = (p: Product) => {
+    if (
+        p.is_active &&
+        !confirm(
+            `¿Desactivar "${p.name}"? Dejará de verse en el catálogo, pero no se borra nada.`,
+        )
+    ) {
         return;
     }
 
-    router.delete(`/admin/products/${p.id}`, { preserveScroll: true });
+    router.patch(
+        `/admin/products/${p.id}/activo`,
+        {},
+        { preserveScroll: true },
+    );
 };
 
 const imageUrl = (p: Product) => {
@@ -412,11 +422,26 @@ async function runImport() {
                                     </Link>
                                 </Button>
                                 <Button
+                                    v-if="can('products.update')"
                                     variant="ghost"
                                     size="icon-sm"
-                                    @click="destroy(p)"
+                                    :title="
+                                        p.is_active
+                                            ? 'Desactivar producto'
+                                            : 'Activar producto'
+                                    "
+                                    :aria-label="
+                                        p.is_active
+                                            ? 'Desactivar producto'
+                                            : 'Activar producto'
+                                    "
+                                    @click="toggleActive(p)"
                                 >
-                                    <Trash2 class="size-4 text-destructive" />
+                                    <PowerOff
+                                        v-if="p.is_active"
+                                        class="size-4 text-muted-foreground"
+                                    />
+                                    <Power v-else class="size-4 text-primary" />
                                 </Button>
                             </td>
                         </tr>

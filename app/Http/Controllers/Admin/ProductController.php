@@ -179,16 +179,16 @@ class ProductController extends Controller
         );
     }
 
-    public function destroy(Product $product): RedirectResponse
+    /**
+     * Activa o desactiva el producto. Los productos no se eliminan: uno
+     * inactivo desaparece del catálogo público pero conserva sus fotos,
+     * su código y su historial de ventas, compras e inventario.
+     */
+    public function toggleActive(Product $product): RedirectResponse
     {
-        // Eliminar todas las imágenes del producto (principal + thumbnails)
-        foreach ($product->images as $img) {
-            $this->images->delete($img->path ?? '', $img->thumb_path);
-        }
+        $product->update(['is_active' => ! $product->is_active]);
 
-        $product->delete();
-
-        return to_route('admin.products.index')->with('success', 'Producto eliminado.');
+        return back()->with('success', $product->is_active ? 'Producto activado.' : 'Producto desactivado.');
     }
 
     protected function syncAttributes(Product $product, array $attributes): void

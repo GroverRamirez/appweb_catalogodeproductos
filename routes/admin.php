@@ -62,12 +62,16 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middleware('permission:inventory.adjust')
             ->name('products.adjust');
 
+        Route::patch('products/{product}/activo', [ProductController::class, 'toggleActive'])
+            ->middleware('permission:products.update')
+            ->name('products.toggle-active');
+
+        // Sin destroy: un producto se desactiva, no se elimina.
         Route::resource('products', ProductController::class)
-            ->except(['show'])
+            ->except(['show', 'destroy'])
             ->middlewareFor('index', 'permission:products.view')
             ->middlewareFor(['create', 'store'], 'permission:products.create')
-            ->middlewareFor(['edit', 'update'], 'permission:products.update')
-            ->middlewareFor('destroy', 'permission:products.delete');
+            ->middlewareFor(['edit', 'update'], 'permission:products.update');
 
         Route::resource('suppliers', SupplierController::class)
             ->except(['show'])

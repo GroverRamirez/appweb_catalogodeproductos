@@ -146,3 +146,33 @@ test('sale price cannot exceed the regular price', function () {
         'codigo' => 'TEST-INVALID-SALE',
     ]);
 });
+
+test('a product can be deactivated and activated again from the list', function () {
+    $product = Product::factory()->create(['is_active' => true]);
+
+    $this->actingAs($this->owner)
+        ->patch(route('admin.products.toggle-active', $product))
+        ->assertRedirect()
+        ->assertSessionHas('success', 'Producto desactivado.');
+
+    expect($product->fresh()->is_active)->toBeFalse()
+        ->and($product->fresh()->trashed())->toBeFalse();
+
+    $this->actingAs($this->owner)
+        ->patch(route('admin.products.toggle-active', $product))
+        ->assertSessionHas('success', 'Producto activado.');
+
+    expect($product->fresh()->is_active)->toBeTrue();
+});
+
+test('toggling a product requires the update permission', function () {
+    $viewer = User::factory()->create();
+    $viewer->givePermissionTo('products.view');
+    $product = Product::factory()->create(['is_active' => true]);
+
+    $this->actingAs($viewer)
+        ->patch(route('admin.products.toggle-active', $product))
+        ->assertForbidden();
+
+    expect($product->fresh()->is_active)->toBeTrue();
+});

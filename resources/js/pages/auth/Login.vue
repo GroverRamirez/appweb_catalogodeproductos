@@ -17,7 +17,7 @@ import { request } from '@/routes/password';
 defineOptions({
     layout: {
         title: 'Iniciar sesión',
-        description: 'Accede al panel de Mi Catálogo.',
+        description: 'Ingresa tus credenciales para continuar.',
         variant: 'split',
     },
 });
@@ -34,15 +34,15 @@ defineProps<{
 
         <div
             v-if="status"
-            class="mb-6 rounded-md border border-border bg-accent px-4 py-3 text-center text-sm font-medium text-accent-foreground"
+            class="mb-5 rounded-lg border border-primary/15 bg-accent px-4 py-3 text-center text-sm font-medium text-accent-foreground"
         >
             {{ status }}
         </div>
 
-        <div class="mb-6 grid gap-2.5">
+        <div class="grid gap-2.5">
             <a
                 href="/login/google"
-                class="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-card text-sm font-medium shadow-xs transition-colors hover:bg-accent"
+                class="flex h-12 w-full items-center justify-center gap-2.5 rounded-lg border border-border bg-card text-sm font-semibold shadow-xs transition hover:border-primary/25 hover:bg-accent focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none"
             >
                 <svg class="size-4.5" viewBox="0 0 48 48" aria-hidden="true">
                     <path
@@ -66,12 +66,14 @@ defineProps<{
             </a>
         </div>
 
-        <div class="relative my-6">
+        <div class="relative my-5">
             <div class="absolute inset-0 flex items-center">
                 <Separator class="w-full" />
             </div>
             <div class="relative flex justify-center text-xs uppercase">
-                <span class="bg-background px-2 text-muted-foreground">
+                <span
+                    class="bg-card px-3 text-[11px] font-medium text-muted-foreground"
+                >
                     O usá tu correo y contraseña
                 </span>
             </div>
@@ -81,10 +83,10 @@ defineProps<{
             v-bind="store.form()"
             :reset-on-success="['password']"
             v-slot="{ errors, processing }"
-            class="flex flex-col gap-5"
+            class="flex flex-col gap-4"
         >
-            <div class="grid gap-5">
-                <div class="grid gap-2.5">
+            <div class="grid gap-4">
+                <div class="grid gap-2">
                     <Label for="email">Correo electrónico</Label>
                     <div class="relative">
                         <Mail
@@ -99,19 +101,19 @@ defineProps<{
                             :tabindex="1"
                             autocomplete="email"
                             placeholder="correo@ejemplo.com"
-                            class="h-12 bg-card pl-10"
+                            class="h-12 rounded-lg bg-background/50 pl-10 transition-colors focus-visible:bg-card"
                         />
                     </div>
                     <InputError :message="errors.email" />
                 </div>
 
-                <div class="grid gap-2.5">
+                <div class="grid gap-2">
                     <div class="flex items-center justify-between">
                         <Label for="password">Contraseña</Label>
                         <TextLink
                             v-if="canResetPassword"
                             :href="request()"
-                            class="text-sm"
+                            class="text-xs font-medium sm:text-sm"
                             :tabindex="5"
                         >
                             ¿Olvidaste tu contraseña?
@@ -128,7 +130,7 @@ defineProps<{
                             :tabindex="2"
                             autocomplete="current-password"
                             placeholder="Contraseña"
-                            class="h-12 bg-card pl-10"
+                            class="h-12 rounded-lg bg-background/50 pl-10 transition-colors focus-visible:bg-card"
                         />
                     </div>
                     <InputError :message="errors.password" />
@@ -136,7 +138,7 @@ defineProps<{
 
                 <Label
                     for="remember"
-                    class="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-muted-foreground"
+                    class="flex w-fit cursor-pointer items-center gap-2.5 py-1 text-sm text-muted-foreground"
                 >
                     <Checkbox id="remember" name="remember" :tabindex="3" />
                     Recordarme en este dispositivo
@@ -144,7 +146,7 @@ defineProps<{
 
                 <Button
                     type="submit"
-                    class="gradient-brand glow-brand mt-1 h-12 w-full font-semibold text-white hover:opacity-95"
+                    class="glow-brand mt-1 h-12 w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
                     :tabindex="4"
                     :disabled="processing"
                     data-test="login-button"
@@ -157,7 +159,7 @@ defineProps<{
 
         <TextLink
             :href="home()"
-            class="mt-8 inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+            class="mt-6 inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary"
             :tabindex="6"
         >
             <ArrowLeft class="size-4" />

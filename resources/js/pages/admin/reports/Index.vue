@@ -15,7 +15,7 @@ import {
     ShoppingCart,
     TrendingUp,
 } from 'lucide-vue-next';
-import { computed, reactive, watch } from 'vue';
+import { computed, reactive } from 'vue';
 import ChartCanvas from '@/components/admin/ChartCanvas.vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import StatCard from '@/components/admin/StatCard.vue';
@@ -88,24 +88,47 @@ const cur = (n: number) => formatPrice(n, store.value.currency_symbol);
 
 const filters = reactive({ from: props.range.from, to: props.range.to });
 
-let timer: ReturnType<typeof setTimeout> | null = null;
-watch(filters, () => {
-    if (timer) {
-        clearTimeout(timer);
+const rangeIsValid = computed(
+    () => Boolean(filters.from && filters.to) && filters.from <= filters.to,
+);
+const hasPendingRange = computed(
+    () => filters.from !== props.range.from || filters.to !== props.range.to,
+);
+const canExport = computed(() => rangeIsValid.value && !hasPendingRange.value);
+
+const dateFormatter = new Intl.DateTimeFormat('es-BO', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+});
+const displayDate = (value: string) =>
+    dateFormatter.format(new Date(`${value}T00:00:00Z`));
+const appliedRangeLabel = computed(
+    () =>
+        `Del ${displayDate(props.range.from)} al ${displayDate(props.range.to)}`,
+);
+const pendingRangeLabel = computed(() =>
+    rangeIsValid.value
+        ? `Del ${displayDate(filters.from)} al ${displayDate(filters.to)}`
+        : 'La fecha inicial debe ser anterior o igual a la fecha final.',
+);
+
+const applyRange = () => {
+    if (!rangeIsValid.value || !hasPendingRange.value) {
+        return;
     }
 
-    timer = setTimeout(() => {
-        router.get(
-            '/admin/reportes',
-            { ...filters },
-            { preserveState: true, replace: true },
-        );
-    }, 400);
-});
+    router.get(
+        '/admin/reportes',
+        { ...filters },
+        { preserveState: true, replace: true },
+    );
+};
 
 /** Las tres exportaciones salen del mismo rango que se ve en pantalla. */
 const exportUrl = (extension: string) =>
-    `/admin/reportes/export.${extension}?from=${filters.from}&to=${filters.to}`;
+    `/admin/reportes/export.${extension}?from=${props.range.from}&to=${props.range.to}`;
 
 const { palette } = useChartTheme();
 
@@ -247,7 +270,9 @@ const statusChart = computed<ChartConfiguration<'doughnut'>>(() => ({
                 data: props.statusBreakdown.map((slice) => slice.total),
                 backgroundColor: props.statusBreakdown.map(
                     (_, index) =>
-                        palette.value.series[index % palette.value.series.length],
+                        palette.value.series[
+                            index % palette.value.series.length
+                        ],
                 ),
                 // Separacion de 2px entre porciones: sin ella, dos colores
                 // contiguos se leen como una sola porcion.
@@ -351,97 +376,233 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
 <template>
     <Head title="Reportes" />
 
-    <div class="space-y-6 p-4 md:p-6">
-        <PageHeader
-            :icon="BarChart3"
-            eyebrow="Inteligencia"
-            title="Reportes"
-            description="Consultas, ventas e ingresos reales del rango seleccionado."
+    <div class="space-y-6 p-4 md:p-6 xl:p-8">
+        <div
+            class="rounded-2xl border border-primary/15 bg-card p-5 shadow-sm md:p-6"
         >
-            <template #actions>
-                <div class="flex flex-wrap items-end gap-3">
-                    <div>
-                        <Label for="from" class="text-xs">Desde</Label>
-                        <Input id="from" type="date" v-model="filters.from" />
-                    </div>
-                    <div>
-                        <Label for="to" class="text-xs">Hasta</Label>
-                        <Input id="to" type="date" v-model="filters.to" />
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <Button variant="outline" as-child class="rounded-full">
-                            <a :href="exportUrl('pdf')">
-                                <FileText class="size-4" /> PDF
-                            </a>
-                        </Button>
-                        <Button variant="outline" as-child class="rounded-full">
-                            <a :href="exportUrl('xlsx')">
-                                <FileSpreadsheet class="size-4" /> Excel
-                            </a>
-                        </Button>
-                        <Button variant="outline" as-child class="rounded-full">
-                            <a :href="exportUrl('csv')">
-                                <Download class="size-4" /> CSV
-                            </a>
-                        </Button>
-                    </div>
-                </div>
-            </template>
-        </PageHeader>
-
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-                label="Consultas totales"
-                :value="kpis.total_inquiries"
-                :icon="MessageSquare"
-            />
-            <StatCard
-                label="Vendidas"
-                :value="kpis.sold"
-                tone="success"
+            <PageHeader
                 :icon="BarChart3"
-            />
-            <StatCard
-                label="Conversión"
-                :value="`${kpis.conversion_rate}%`"
-                hint="vendidas / totales"
-                :icon="Percent"
-            />
-            <StatCard
-                label="Ingresos"
-                :value="cur(kpis.revenue)"
-                hint="ventas confirmadas del rango"
-                tone="success"
-                :icon="DollarSign"
-            />
-            <StatCard
-                label="Ventas"
-                :value="kpis.sales_count"
-                :icon="ShoppingCart"
-            />
-            <StatCard
-                label="Ticket promedio"
-                :value="cur(kpis.average_ticket)"
-                hint="ingresos / ventas"
-                :icon="Receipt"
-            />
-            <StatCard
-                label="Margen"
-                :value="cur(kpis.margin)"
-                hint="precio menos costo, descuentos incluidos"
-                :tone="kpis.margin >= 0 ? 'success' : 'warn'"
-                :icon="TrendingUp"
-            />
-            <StatCard
-                label="Pendientes"
-                :value="kpis.pending"
-                tone="warn"
-                :icon="MessageSquare"
-            />
-            <StatCard label="Cerradas" :value="kpis.closed" :icon="Calendar" />
+                eyebrow="Inteligencia"
+                title="Reportes"
+                description="Analiza consultas, ventas e ingresos del período seleccionado."
+                class="border-0 pb-0"
+            >
+                <template #actions>
+                    <form
+                        class="grid w-full gap-3 sm:grid-cols-2 xl:w-auto xl:grid-cols-[minmax(9rem,1fr)_minmax(9rem,1fr)_auto_auto] xl:items-end"
+                        @submit.prevent="applyRange"
+                    >
+                        <div class="grid gap-1.5">
+                            <Label for="from" class="text-xs">
+                                Desde (día/mes/año)
+                            </Label>
+                            <Input
+                                id="from"
+                                v-model="filters.from"
+                                type="date"
+                                lang="es-BO"
+                                class="bg-background"
+                            />
+                        </div>
+                        <div class="grid gap-1.5">
+                            <Label for="to" class="text-xs">
+                                Hasta (día/mes/año)
+                            </Label>
+                            <Input
+                                id="to"
+                                v-model="filters.to"
+                                type="date"
+                                lang="es-BO"
+                                class="bg-background"
+                            />
+                        </div>
+                        <div class="grid gap-1.5">
+                            <span
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Actualizar
+                            </span>
+                            <Button
+                                type="submit"
+                                :disabled="!rangeIsValid || !hasPendingRange"
+                            >
+                                Aplicar rango
+                            </Button>
+                        </div>
+                        <div class="grid gap-1.5">
+                            <span
+                                class="text-xs font-medium text-muted-foreground"
+                            >
+                                Exportar
+                            </span>
+                            <div class="grid grid-cols-3 gap-2">
+                                <Button
+                                    variant="outline"
+                                    as-child
+                                    :class="{
+                                        'pointer-events-none opacity-50':
+                                            !canExport,
+                                    }"
+                                >
+                                    <a
+                                        :href="exportUrl('pdf')"
+                                        :aria-disabled="!canExport"
+                                        :tabindex="canExport ? undefined : -1"
+                                    >
+                                        <FileText class="size-4" /> PDF
+                                    </a>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    as-child
+                                    :class="{
+                                        'pointer-events-none opacity-50':
+                                            !canExport,
+                                    }"
+                                >
+                                    <a
+                                        :href="exportUrl('xlsx')"
+                                        :aria-disabled="!canExport"
+                                        :tabindex="canExport ? undefined : -1"
+                                    >
+                                        <FileSpreadsheet class="size-4" />
+                                        Excel
+                                    </a>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    as-child
+                                    :class="{
+                                        'pointer-events-none opacity-50':
+                                            !canExport,
+                                    }"
+                                >
+                                    <a
+                                        :href="exportUrl('csv')"
+                                        :aria-disabled="!canExport"
+                                        :tabindex="canExport ? undefined : -1"
+                                    >
+                                        <Download class="size-4" /> CSV
+                                    </a>
+                                </Button>
+                            </div>
+                        </div>
+                        <div
+                            id="range-status"
+                            class="sm:col-span-2 xl:col-span-4"
+                            aria-live="polite"
+                        >
+                            <p
+                                v-if="hasPendingRange"
+                                class="text-xs font-medium"
+                                :class="
+                                    rangeIsValid
+                                        ? 'text-amber-700 dark:text-amber-300'
+                                        : 'text-destructive'
+                                "
+                            >
+                                Nuevo rango: {{ pendingRangeLabel }}. Presiona
+                                “Aplicar rango” antes de exportar.
+                            </p>
+                            <p v-else class="text-xs text-muted-foreground">
+                                Período aplicado:
+                                <strong class="font-medium text-foreground">
+                                    {{ appliedRangeLabel }}
+                                </strong>
+                            </p>
+                        </div>
+                    </form>
+                </template>
+            </PageHeader>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-2">
+        <section class="grid gap-3" aria-labelledby="sales-summary-title">
+            <div class="flex items-end justify-between gap-4">
+                <div>
+                    <h2 id="sales-summary-title" class="font-semibold">
+                        Rendimiento de ventas
+                    </h2>
+                    <p class="text-sm text-muted-foreground">
+                        Resultados económicos del período seleccionado.
+                    </p>
+                </div>
+                <span class="hidden text-xs text-muted-foreground sm:block">
+                    {{ appliedRangeLabel }}
+                </span>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <StatCard
+                    label="Ventas"
+                    :value="kpis.sales_count"
+                    :icon="ShoppingCart"
+                />
+                <StatCard
+                    label="Ingresos"
+                    :value="cur(kpis.revenue)"
+                    hint="ventas confirmadas del rango"
+                    tone="success"
+                    :icon="DollarSign"
+                />
+                <StatCard
+                    label="Ticket promedio"
+                    :value="cur(kpis.average_ticket)"
+                    hint="ingresos / ventas"
+                    :icon="Receipt"
+                />
+                <StatCard
+                    label="Margen"
+                    :value="cur(kpis.margin)"
+                    hint="precio menos costo, descuentos incluidos"
+                    :tone="kpis.margin >= 0 ? 'success' : 'warn'"
+                    :icon="TrendingUp"
+                />
+            </div>
+        </section>
+
+        <section class="grid gap-3" aria-labelledby="inquiries-summary-title">
+            <div>
+                <h2 id="inquiries-summary-title" class="font-semibold">
+                    Seguimiento de consultas
+                </h2>
+                <p class="text-sm text-muted-foreground">
+                    Estado y conversión de la atención comercial.
+                </p>
+            </div>
+            <div
+                class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+            >
+                <StatCard
+                    label="Consultas totales"
+                    :value="kpis.total_inquiries"
+                    :icon="MessageSquare"
+                />
+                <StatCard
+                    label="Vendidas"
+                    :value="kpis.sold"
+                    tone="success"
+                    :icon="BarChart3"
+                />
+                <StatCard
+                    label="Conversión"
+                    :value="`${kpis.conversion_rate}%`"
+                    hint="vendidas / totales"
+                    :icon="Percent"
+                />
+                <StatCard
+                    label="Pendientes"
+                    :value="kpis.pending"
+                    tone="warn"
+                    :icon="MessageSquare"
+                />
+                <StatCard
+                    label="Cerradas"
+                    :value="kpis.closed"
+                    :icon="Calendar"
+                />
+            </div>
+        </section>
+
+        <div class="grid gap-4 lg:grid-cols-2">
             <Card>
                 <CardHeader><CardTitle>Ingresos por día</CardTitle></CardHeader>
                 <CardContent>
@@ -479,7 +640,7 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
             </Card>
         </div>
 
-        <div class="grid gap-6 lg:grid-cols-3">
+        <div class="grid gap-4 lg:grid-cols-3">
             <Card>
                 <CardHeader>
                     <CardTitle>Consultas por estado</CardTitle>
@@ -624,7 +785,7 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
             </CardContent>
         </Card>
 
-        <div class="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
+        <div class="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
             <Card>
                 <CardHeader>
                     <CardTitle>Productos más vendidos</CardTitle>
@@ -641,7 +802,10 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
                             </tr>
                         </thead>
                         <tbody class="divide-y">
-                            <tr v-for="p in topSold" :key="p.product_id ?? p.name">
+                            <tr
+                                v-for="p in topSold"
+                                :key="p.product_id ?? p.name"
+                            >
                                 <td class="py-2">
                                     <div class="font-medium">{{ p.name }}</div>
                                     <div class="text-xs text-muted-foreground">

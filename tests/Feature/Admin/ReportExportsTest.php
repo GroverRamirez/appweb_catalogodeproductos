@@ -71,6 +71,29 @@ test('the pdf report downloads with the filtered range in its name', function ()
     expect(substr($response->getContent(), 0, 4))->toBe('%PDF');
 });
 
+test('an explicitly selected october range is not interpreted as september', function () {
+    $range = [
+        'from' => '2026-10-01',
+        'to' => '2026-10-06',
+    ];
+
+    $this->actingAs($this->owner)
+        ->get(route('admin.reports.index', $range))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('range.from', '2026-10-01')
+            ->where('range.to', '2026-10-06')
+        );
+
+    $response = $this->actingAs($this->owner)
+        ->get(route('admin.reports.pdf', $range));
+
+    $response->assertOk();
+
+    expect($response->headers->get('content-disposition'))
+        ->toContain('reporte-2026-10-01_2026-10-06.pdf');
+});
+
 test('the pdf can be opened inline for a live demo', function () {
     $response = $this->actingAs($this->owner)
         ->get(route('admin.reports.pdf', $this->range + ['inline' => 1]));

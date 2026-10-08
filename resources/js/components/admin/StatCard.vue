@@ -28,7 +28,7 @@ const cardBorder: Record<string, string> = {
 
 <template>
     <div
-        class="admin-card group relative overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg"
+        class="admin-card group relative min-h-36 overflow-hidden rounded-xl border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg xl:p-5"
         :class="cardBorder[tone ?? 'default']"
     >
         <!-- Glow decorativo en hover -->
@@ -43,25 +43,28 @@ const cardBorder: Record<string, string> = {
             }"
         ></div>
 
-        <div class="relative flex items-start justify-between">
-            <div>
+        <div class="relative flex items-start justify-between gap-3">
+            <div class="min-w-0">
                 <p
                     class="text-xs font-bold tracking-wider text-muted-foreground uppercase"
                 >
                     {{ label }}
                 </p>
                 <p
-                    class="mt-2 font-display text-3xl leading-tight font-semibold tracking-tight text-foreground tabular-nums md:text-4xl"
+                    class="mt-2 font-display text-[clamp(1.55rem,2vw,2.25rem)] leading-tight font-semibold tracking-tight whitespace-nowrap text-foreground tabular-nums"
                 >
                     {{ value }}
                 </p>
-                <p v-if="hint" class="mt-1 text-sm text-muted-foreground">
+                <p
+                    v-if="hint"
+                    class="mt-1 text-sm leading-relaxed text-muted-foreground"
+                >
                     {{ hint }}
                 </p>
             </div>
             <span
                 v-if="icon"
-                class="grid size-11 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-105"
+                class="grid size-10 shrink-0 place-items-center rounded-xl transition-transform duration-300 group-hover:scale-105 xl:size-11"
                 :class="toneClasses[tone ?? 'default']"
             >
                 <component :is="icon" class="size-5" />

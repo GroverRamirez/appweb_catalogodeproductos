@@ -87,6 +87,11 @@ const props = defineProps<{
 const { can } = usePermissions();
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
+const firstName = computed(() => {
+    const name = page.props.auth?.user?.name?.trim();
+
+    return name ? name.split(/\s+/)[0] : '';
+});
 const cur = (n: string | number) => formatPrice(n, store.value.currency_symbol);
 
 // Margen potencial: lo que dejaría vender todo el stock al precio de lista,
@@ -124,45 +129,62 @@ const statusColor = (s: string) => {
 <template>
     <Head title="Panel administrativo" />
 
-    <div class="space-y-8 p-4 md:p-8">
+    <div class="space-y-6 p-4 md:p-6 xl:p-8">
         <!-- Hero del panel -->
         <div
-            class="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6"
+            class="relative overflow-hidden rounded-2xl border border-primary/15 bg-card p-5 shadow-sm md:p-6"
         >
-            <div>
-                <p
-                    class="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+            <div
+                class="pointer-events-none absolute top-0 right-0 size-48 translate-x-1/3 -translate-y-1/2 rounded-full bg-primary/[0.07]"
+                aria-hidden="true"
+            />
+            <div
+                class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+            >
+                <div>
+                    <p
+                        class="mb-1 text-xs font-semibold tracking-wide text-primary uppercase"
+                    >
+                        Panel administrativo
+                    </p>
+                    <h1 class="font-display text-2xl font-bold md:text-3xl">
+                        Bienvenido<span v-if="firstName"
+                            >, {{ firstName }}</span
+                        >
+                    </h1>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Resumen general del catálogo, inventario y atención al
+                        cliente.
+                    </p>
+                </div>
+                <div
+                    class="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto"
                 >
-                    Panel administrativo
-                </p>
-                <h1 class="font-display text-2xl font-bold md:text-3xl">
-                    Bienvenido de vuelta
-                </h1>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    Resumen del catálogo, stock y consultas en tiempo real.
-                </p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <Button as-child class="rounded-md px-4">
-                    <Link href="/admin/products/create">
-                        <Package class="size-4" /> Nuevo producto
-                    </Link>
-                </Button>
-                <Button
-                    v-if="can('inventory.adjust')"
-                    as-child
-                    variant="outline"
-                    class="rounded-md px-4"
-                >
-                    <Link href="/admin/purchases/create">
-                        <PackagePlus class="size-4" /> Registrar compra
-                    </Link>
-                </Button>
-                <Button as-child variant="outline" class="rounded-md px-4">
-                    <Link href="/admin/inquiries">
-                        <MessageSquare class="size-4" /> Ver consultas
-                    </Link>
-                </Button>
+                    <Button as-child class="w-full rounded-lg px-4">
+                        <Link href="/admin/products/create">
+                            <Package class="size-4" /> Nuevo producto
+                        </Link>
+                    </Button>
+                    <Button
+                        v-if="can('inventory.adjust')"
+                        as-child
+                        variant="outline"
+                        class="w-full rounded-lg bg-card px-4"
+                    >
+                        <Link href="/admin/purchases/create">
+                            <PackagePlus class="size-4" /> Registrar compra
+                        </Link>
+                    </Button>
+                    <Button
+                        as-child
+                        variant="outline"
+                        class="w-full rounded-lg bg-card px-4"
+                    >
+                        <Link href="/admin/inquiries">
+                            <MessageSquare class="size-4" /> Ver consultas
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </div>
 
@@ -192,72 +214,91 @@ const statusColor = (s: string) => {
         </Link>
 
         <!-- KPIs de dinero -->
-        <div
-            v-if="can('inventory.view')"
-            class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-            <StatCard
-                label="Valor del inventario"
-                :value="cur(stats.inventory_cost)"
-                hint="Stock actual valorizado a costo"
-                :icon="Wallet"
-            />
-            <StatCard
-                label="Compras (30 días)"
-                :value="cur(stats.purchases_spend_30d)"
-                :hint="`${stats.purchases_count_30d} compras registradas`"
-                :icon="ShoppingCart"
-            />
-            <StatCard
-                v-if="can('sales.view')"
-                label="Ventas (30 días)"
-                :value="cur(stats.sales_revenue_30d)"
-                :hint="`${stats.sales_count_30d} ventas confirmadas`"
-                tone="success"
-                :icon="Receipt"
-            />
-            <StatCard
-                label="Margen potencial"
-                :value="cur(potentialMargin)"
-                hint="Si se vendiera todo el stock a precio de lista"
-                tone="success"
-                :icon="TrendingUp"
-            />
-        </div>
+        <section v-if="can('inventory.view')" class="grid gap-3">
+            <div class="flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-primary" />
+                <h2 class="text-sm font-bold tracking-wide text-foreground">
+                    Resumen financiero
+                </h2>
+                <span class="text-xs text-muted-foreground">
+                    últimos 30 días
+                </span>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    label="Valor del inventario"
+                    :value="cur(stats.inventory_cost)"
+                    hint="Stock actual valorizado a costo"
+                    :icon="Wallet"
+                />
+                <StatCard
+                    label="Compras (30 días)"
+                    :value="cur(stats.purchases_spend_30d)"
+                    :hint="`${stats.purchases_count_30d} compras registradas`"
+                    :icon="ShoppingCart"
+                />
+                <StatCard
+                    v-if="can('sales.view')"
+                    label="Ventas (30 días)"
+                    :value="cur(stats.sales_revenue_30d)"
+                    :hint="`${stats.sales_count_30d} ventas confirmadas`"
+                    tone="success"
+                    :icon="Receipt"
+                />
+                <StatCard
+                    label="Margen potencial"
+                    :value="cur(potentialMargin)"
+                    hint="Si se vendiera todo el stock a precio de lista"
+                    tone="success"
+                    :icon="TrendingUp"
+                />
+            </div>
+        </section>
 
         <!-- KPIs de operación -->
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-                label="Productos activos"
-                :value="`${stats.products_active} / ${stats.products_total}`"
-                hint="Visibles en el catálogo"
-                :icon="Package"
-            />
-            <StatCard
-                label="Stock bajo"
-                :value="stats.products_low_stock"
-                hint="Productos por reponer"
-                tone="warn"
-                :icon="AlertTriangle"
-            />
-            <StatCard
-                label="Sin stock"
-                :value="stats.products_out_of_stock"
-                hint="Agotados en el catálogo"
-                tone="danger"
-                :icon="PackageX"
-            />
-            <StatCard
-                label="Consultas pendientes"
-                :value="stats.inquiries_pending"
-                :hint="`${stats.inquiries_total} en total`"
-                tone="warn"
-                :icon="MessageSquare"
-            />
-        </div>
+        <section class="grid gap-3">
+            <div class="flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-emerald-600" />
+                <h2 class="text-sm font-bold tracking-wide text-foreground">
+                    Estado del catálogo
+                </h2>
+                <span class="text-xs text-muted-foreground">
+                    actualización en tiempo real
+                </span>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    label="Productos activos"
+                    :value="`${stats.products_active} / ${stats.products_total}`"
+                    hint="Visibles en el catálogo"
+                    :icon="Package"
+                />
+                <StatCard
+                    label="Stock bajo"
+                    :value="stats.products_low_stock"
+                    hint="Productos por reponer"
+                    tone="warn"
+                    :icon="AlertTriangle"
+                />
+                <StatCard
+                    label="Sin stock"
+                    :value="stats.products_out_of_stock"
+                    hint="Agotados en el catálogo"
+                    tone="danger"
+                    :icon="PackageX"
+                />
+                <StatCard
+                    label="Consultas pendientes"
+                    :value="stats.inquiries_pending"
+                    :hint="`${stats.inquiries_total} en total`"
+                    tone="warn"
+                    :icon="MessageSquare"
+                />
+            </div>
+        </section>
 
         <!-- Gráficos -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2">
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader
                     class="admin-card-header flex flex-row items-center justify-between space-y-0"
@@ -317,7 +358,7 @@ const statusColor = (s: string) => {
         </div>
 
         <!-- Tarjetas inferiores -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2">
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader class="admin-card-header">
                     <CardTitle class="flex items-center gap-2 font-display">

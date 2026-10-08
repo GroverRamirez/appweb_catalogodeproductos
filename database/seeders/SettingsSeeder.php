@@ -10,13 +10,17 @@ class SettingsSeeder extends Seeder
 {
     public function run(): void
     {
+        // Los datos de contacto arrancan vacios a proposito: un numero o un
+        // correo de ejemplo mandaria a los clientes y los avisos de consultas
+        // a ninguna parte. Los carga `app:instalar` o el propietario en
+        // Configuracion; mientras falten, el catalogo no muestra el boton.
         $defaults = [
             ['key' => 'store_name', 'value' => 'Mi Catálogo', 'type' => 'string', 'group' => 'general', 'label' => 'Nombre de la tienda'],
             ['key' => 'store_tagline', 'value' => 'Productos seleccionados para ti', 'type' => 'string', 'group' => 'general', 'label' => 'Frase corta'],
-            ['key' => 'whatsapp_number', 'value' => '+51999999999', 'type' => 'string', 'group' => 'contacto', 'label' => 'Número de WhatsApp (formato internacional)'],
+            ['key' => 'whatsapp_number', 'value' => '', 'type' => 'string', 'group' => 'contacto', 'label' => 'Número de WhatsApp (formato internacional)'],
             ['key' => 'whatsapp_message_template', 'value' => 'Hola, me interesa el producto: {producto} (código {codigo}).', 'type' => 'text', 'group' => 'contacto', 'label' => 'Mensaje base para WhatsApp'],
-            ['key' => 'email_contact', 'value' => 'contacto@catalogo.test', 'type' => 'string', 'group' => 'contacto', 'label' => 'Email de contacto'],
-            ['key' => 'address', 'value' => 'Av. Demo 123, Lima', 'type' => 'string', 'group' => 'contacto', 'label' => 'Dirección'],
+            ['key' => 'email_contact', 'value' => '', 'type' => 'string', 'group' => 'contacto', 'label' => 'Email de contacto'],
+            ['key' => 'address', 'value' => '', 'type' => 'string', 'group' => 'contacto', 'label' => 'Dirección'],
             ['key' => 'business_hours', 'value' => 'Lun-Sáb 9:00-19:00', 'type' => 'string', 'group' => 'contacto', 'label' => 'Horario'],
             ['key' => 'currency', 'value' => 'BOB', 'type' => 'string', 'group' => 'general', 'label' => 'Moneda de cobro (ISO)'],
             ['key' => 'currency_symbol', 'value' => 'Bs', 'type' => 'string', 'group' => 'general', 'label' => 'Símbolo de la moneda de cobro'],

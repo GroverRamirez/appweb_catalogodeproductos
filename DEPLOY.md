@@ -47,30 +47,33 @@ docker compose build
 docker compose up -d
 ```
 
+Construye siempre desde un clon limpio del repositorio en el servidor, no
+desde la carpeta de desarrollo. El build necesita internet: instala las
+dependencias y baja la fuente desde fonts.bunny.net.
+
 El `entrypoint.sh` se encarga automáticamente de:
 cachear config/rutas/vistas/eventos, correr `migrate --force` y `storage:link`.
 
-### Sembrar datos iniciales (solo la primera vez)
+### Primera instalación: roles, configuración y propietario
 
 ```bash
-docker compose exec app php artisan db:seed --force
+docker compose exec -u www-data app php artisan app:instalar
 ```
 
-Crea roles/permisos, settings, categorías, marcas y productos demo. **En una
-tienda real**, en vez del seeder de demo siembra solo lo imprescindible:
+Carga los roles con sus permisos y la configuración inicial, y pregunta los
+datos del propietario (nombre, correo, contraseña), el WhatsApp de la tienda
+y el correo donde llegan los avisos de consultas. La contraseña no se ve al
+escribirla ni queda en el historial. Es seguro repetirlo: si ya hay datos,
+solo aplica las migraciones pendientes y no pisa lo que el propietario
+cambió. Se corre como `www-data` para que los archivos que deja en
+`storage` y `bootstrap/cache` sean del mismo usuario que PHP-FPM.
 
-```bash
-docker compose exec app php artisan db:seed --class=RoleSeeder --force
-docker compose exec app php artisan db:seed --class=SettingsSeeder --force
-```
+> **No uses `db:seed` en producción.** El seeder completo es para
+> desarrollo: carga productos de ejemplo y usuarios de demostración con la
+> contraseña `password` (en producción `AdminUserSeeder` se salta solo).
 
-Luego crea tu usuario admin (Tinker):
-
-```bash
-docker compose exec app php artisan tinker
->>> $u = App\Models\User::create(['name'=>'Admin','email'=>'admin@tudominio.com','password'=>Hash::make('CAMBIA_ESTO')]);
->>> $u->assignRole('admin');
-```
+Después, en **Configuración**, revisa el nombre, la dirección, el logo y los
+datos de contacto antes de abrir la tienda.
 
 ---
 
@@ -113,7 +116,9 @@ la app no es accesible desde internet. Agrega también
 - [ ] SMTP real configurado y probado (consulta de prueba → llega el email)
 - [ ] Migraciones aplicadas (`docker compose exec app php artisan migrate:status`)
 - [ ] `storage:link` hecho (las imágenes de productos cargan en `/storage/...`)
-- [ ] Usuario admin creado y login funciona
+- [ ] Propietario creado con `app:instalar` y login funciona
+- [ ] WhatsApp, correo de contacto y dirección reales en Configuración (una consulta de prueba abre WhatsApp y llega el email)
+- [ ] `APP_TIMEZONE=America/La_Paz` (el "hoy" del panel y la hora de las tareas programadas)
 - [ ] Healthcheck en verde (`docker compose ps` → `healthy`)
 - [ ] `GET /up` responde 200
 - [ ] El catálogo público carga con productos e imágenes

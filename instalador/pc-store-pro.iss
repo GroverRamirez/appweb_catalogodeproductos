@@ -108,6 +108,9 @@ begin
     'Es el nombre que ven los clientes en el catalogo. Lo podes cambiar despues en Configuracion.');
   PaginaTienda.Add('Nombre de la tienda:', False);
   PaginaTienda.Values[0] := 'PC Store Pro';
+  { Opcional: es el boton de WhatsApp del catalogo. Si queda vacio, el boton
+    no aparece hasta que se cargue en Configuracion. }
+  PaginaTienda.Add('WhatsApp de la tienda, con codigo de pais (ej. +59170000000). Opcional:', False);
 
   PaginaPropietario := CreateInputQueryPage(PaginaTienda.ID,
     'Usuario propietario', 'Con este usuario vas a entrar al panel de administracion.',
@@ -128,6 +131,24 @@ begin
     Result := YaInstalada();
 end;
 
+{ Acepta lo mismo que valida app:instalar: un + opcional, digitos y espacios. }
+function WhatsAppValido(S: String): Boolean;
+var
+  I, Digitos: Integer;
+begin
+  Result := True;
+  Digitos := 0;
+  for I := 1 to Length(S) do
+  begin
+    if (S[I] >= '0') and (S[I] <= '9') then
+      Digitos := Digitos + 1
+    else if not ((S[I] = ' ') or ((S[I] = '+') and (I = 1))) then
+      Result := False;
+  end;
+  if Digitos < 7 then
+    Result := False;
+end;
+
 function NextButtonClick(CurPageID: Integer): Boolean;
 var
   Correo: String;
@@ -139,6 +160,11 @@ begin
     if Trim(PaginaTienda.Values[0]) = '' then
     begin
       MsgBox('Escribi el nombre de la tienda.', mbError, MB_OK);
+      Result := False;
+    end
+    else if (Trim(PaginaTienda.Values[1]) <> '') and not WhatsAppValido(Trim(PaginaTienda.Values[1])) then
+    begin
+      MsgBox('El WhatsApp no parece valido. Ejemplo: +59170000000', mbError, MB_OK);
       Result := False;
     end;
   end
@@ -193,6 +219,7 @@ begin
     Datos := ExpandConstant('{app}\app\storage\instalacion.json');
     SetArrayLength(Lineas, 1);
     Lineas[0] := '{"tienda":' + JsonTexto(Trim(PaginaTienda.Values[0])) +
+      ',"whatsapp":' + JsonTexto(Trim(PaginaTienda.Values[1])) +
       ',"nombre":' + JsonTexto(Trim(PaginaPropietario.Values[0])) +
       ',"email":' + JsonTexto(Trim(PaginaPropietario.Values[1])) +
       ',"password":' + JsonTexto(PaginaPropietario.Values[2]) + '}';

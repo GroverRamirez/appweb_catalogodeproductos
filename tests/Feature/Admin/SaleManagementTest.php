@@ -205,8 +205,10 @@ test('the sales index can be filtered by status and searched by receipt', functi
 test('searching by receipt still respects the status filter', function () {
     // Misma regresion que se corrigio en compras: sin agrupar el OR, SQL lee
     // "recibo LIKE ? OR (cliente AND estado = ?)" y el filtro se pierde.
-    Sale::factory()->create(['numero_recibo' => 100, 'estado' => 'confirmada']);
-    $anulada = Sale::factory()->create(['numero_recibo' => 200, 'estado' => 'anulada']);
+    // Telefono fijo: uno al azar como 71008765 tambien contiene "100".
+    $cliente = ['cliente_nombre' => 'Ana', 'cliente_telefono' => '72345678'];
+    Sale::factory()->create(['numero_recibo' => 100, 'estado' => 'confirmada', ...$cliente]);
+    $anulada = Sale::factory()->create(['numero_recibo' => 200, 'estado' => 'anulada', ...$cliente]);
 
     $this->actingAs($this->owner)
         ->get(route('admin.sales.index', ['q' => '100', 'status' => 'anulada']))

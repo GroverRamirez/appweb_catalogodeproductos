@@ -72,12 +72,15 @@ return [
     |--------------------------------------------------------------------------
     |
     | Here you may specify the default timezone for your application, which
-    | will be used by the PHP date and date-time functions. The timezone
-    | is set to "UTC" by default as it is suitable for most use cases.
+    | will be used by the PHP date and date-time functions.
+    |
+    | La tienda opera en Bolivia: el "hoy" del panel, los reportes por fecha y
+    | la hora de las tareas programadas (cotizacion del BCB, copia diaria)
+    | dependen de esta zona. Bolivia no tiene horario de verano.
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => env('APP_TIMEZONE', 'America/La_Paz'),
 
     /*
     |--------------------------------------------------------------------------

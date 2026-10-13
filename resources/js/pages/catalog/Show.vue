@@ -187,7 +187,7 @@ const sendWhatsApp = () => {
         :json-ld="seo.json_ld ?? undefined"
     />
 
-    <div class="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
         <nav
             class="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
@@ -214,11 +214,13 @@ const sendWhatsApp = () => {
             }}</span>
         </nav>
 
-        <div class="grid gap-8 lg:grid-cols-[minmax(0,560px)_1fr] lg:gap-12">
+        <div
+            class="grid gap-8 md:grid-cols-[minmax(0,340px)_1fr] lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-10"
+        >
             <!-- Galería -->
-            <div class="space-y-3 lg:sticky lg:top-24 lg:self-start">
+            <div class="mx-auto w-full max-w-xs space-y-3 sm:max-w-sm md:max-w-none lg:sticky lg:top-24 lg:self-start">
                 <div
-                    class="relative aspect-square overflow-hidden rounded-3xl bg-card ring-1 ring-border/70"
+                    class="relative aspect-square overflow-hidden rounded-2xl bg-card ring-1 ring-border/70"
                 >
                     <img
                         v-if="product.images[mainImageIdx]"
@@ -259,7 +261,7 @@ const sendWhatsApp = () => {
             </div>
 
             <!-- Info -->
-            <div class="space-y-4">
+            <div class="max-w-2xl space-y-3">
                 <div>
                     <p
                         v-if="product.brand"
@@ -268,7 +270,7 @@ const sendWhatsApp = () => {
                         {{ product.brand.name }}
                     </p>
                     <h1
-                        class="font-display text-2xl leading-tight font-extrabold tracking-tight md:text-4xl"
+                        class="font-display text-xl leading-snug font-bold tracking-tight md:text-2xl"
                     >
                         {{ product.name }}
                     </h1>
@@ -279,7 +281,7 @@ const sendWhatsApp = () => {
 
                 <div v-if="store.show_prices" class="flex items-baseline gap-3">
                     <span
-                        class="tabular font-display text-3xl font-extrabold tracking-tight md:text-4xl"
+                        class="tabular font-display text-2xl font-extrabold tracking-tight md:text-[1.75rem]"
                         :class="showSale ? 'text-destructive' : ''"
                     >
                         {{
@@ -371,7 +373,7 @@ const sendWhatsApp = () => {
                                 v-if="inStock"
                                 type="button"
                                 size="lg"
-                                class="h-12 flex-1 rounded-full text-base"
+                                class="h-11 flex-1 rounded-full"
                                 @click="addCurrentToCart"
                             >
                                 <ShoppingCart class="size-4" />
@@ -382,8 +384,8 @@ const sendWhatsApp = () => {
                                 size="lg"
                                 variant="outline"
                                 :class="[
-                                    'h-12 rounded-full',
-                                    inStock ? 'w-12 px-0' : 'w-full',
+                                    'h-11 rounded-full',
+                                    inStock ? 'w-11 px-0' : 'w-full',
                                 ]"
                                 :aria-label="
                                     isFavorite
@@ -412,7 +414,7 @@ const sendWhatsApp = () => {
                             type="button"
                             size="lg"
                             variant="outline"
-                            class="h-12 w-full rounded-full border-emerald-600/60 text-emerald-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800"
+                            class="h-11 w-full rounded-full border-emerald-600/60 text-emerald-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800"
                             @click="sendWhatsApp"
                         >
                             <MessageCircle class="size-4" />

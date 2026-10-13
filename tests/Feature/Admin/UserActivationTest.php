@@ -79,6 +79,19 @@ test('a user deactivated while logged in is signed out on the next request', fun
     $this->assertGuest();
 });
 
+test('a user without the is_active value is not treated as deactivated', function () {
+    // Pasa cuando la migración de is_active todavía no se corrió.
+    $seller = User::factory()->create();
+    $seller->assignRole('vendedor');
+    $seller->offsetUnset('is_active');
+
+    $this->actingAs($seller)
+        ->get('/admin')
+        ->assertOk();
+
+    $this->assertAuthenticatedAs($seller);
+});
+
 test('staff cannot delete their own account from settings', function () {
     $seller = User::factory()->create();
     $seller->assignRole('vendedor');

@@ -17,7 +17,10 @@ class EnsureUserIsActive
     {
         $user = $request->user();
 
-        if ($user && ! $user->is_active) {
+        // Solo una cuenta desactivada a propósito (false). Si la columna aún no
+        // existe porque falta correr la migración, el valor llega null y la
+        // cuenta no debe quedar bloqueada.
+        if ($user && $user->is_active === false) {
             Auth::guard('web')->logout();
 
             $request->session()->invalidate();

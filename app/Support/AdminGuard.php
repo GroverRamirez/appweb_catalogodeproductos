@@ -41,7 +41,7 @@ class AdminGuard
      */
     public static function isLastOwner(User $user): bool
     {
-        if (! $user->hasRole(self::OWNER_ROLE) || ! $user->is_active) {
+        if (! $user->hasRole(self::OWNER_ROLE) || $user->is_active === false) {
             return false;
         }
 

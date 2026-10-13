@@ -67,6 +67,13 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        // En desarrollo la app también se abre desde otros equipos de la WiFi
+        // (http://IP-de-la-PC:8020): las imágenes subidas usan URLs relativas
+        // en vez de APP_URL, que apunta a localhost.
+        if (app()->environment('local') && ! app()->runningInConsole()) {
+            config(['filesystems.disks.public.url' => '/storage']);
+        }
+
         // El frontend (Inertia/Vue) consume colecciones planas (featured.length,
         // products.data/total/links) y paginadores con sus campos al nivel superior.
         // Sin esto, ProductResource::collection() envuelve todo en una clave "data"

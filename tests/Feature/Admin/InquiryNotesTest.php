@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Client;
 use App\Models\Inquiry;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
@@ -150,6 +151,7 @@ test('pending inquiries count is shared with staff for the sidebar badge', funct
 test('pending inquiries count is not exposed to users without permission', function () {
     $cliente = User::factory()->create();
     $cliente->assignRole('cliente');
+    Client::factory()->create(['user_id' => $cliente->id]);
 
     $this->actingAs($cliente)
         ->get(route('home'))

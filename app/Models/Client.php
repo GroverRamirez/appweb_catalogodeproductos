@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 
 class Client extends Model
 {
@@ -209,6 +210,79 @@ class Client extends Model
         }
 
         return static::create([...$attributes, 'phone' => $normalized]);
+    }
+
+    /**
+     * Indica si el cliente con cuenta web ya dio su CI y su teléfono.
+     */
+    public static function profileCompleteFor(User $user): bool
+    {
+        return static::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('carnet_identidad')
+            ->whereNotNull('telefono')
+            ->exists();
+    }
+
+    /**
+     * Guarda el CI y el teléfono que el cliente escribió al completar sus
+     * datos, enlazando su cuenta a la ficha correcta.
+     *
+     * Si ya tenía ficha enlazada, se actualiza esa. Si no, se busca la ficha de
+     * mostrador con ese teléfono o ese CI (alguien que ya compró en la tienda
+     * y ahora se registró) y se le enlaza la cuenta; si no hay ninguna, se crea.
+     * Cuando el teléfono pertenece a una ficha de mostrador distinta de la suya,
+     * las dos son la misma persona: sus ventas y consultas pasan a la ficha de
+     * la cuenta y la otra se da de baja, así no queda duplicado.
+     *
+     * @throws \DomainException si el teléfono ya es de otra cuenta web
+     */
+    public static function completeForUser(User $user, string $idCard, string $phone): self
+    {
+        $idCard = static::normalizeIdCard($idCard);
+        $phone = static::normalizePhone($phone);
+
+        return DB::transaction(function () use ($user, $idCard, $phone) {
+            $phoneOwner = static::withTrashed()->where('telefono', $phone)->lockForUpdate()->first();
+
+            if ($phoneOwner && $phoneOwner->user_id !== null && $phoneOwner->user_id !== $user->id) {
+                throw new \DomainException('El teléfono ya es de otra cuenta.');
+            }
+
+            $client = static::withTrashed()->where('user_id', $user->id)->first()
+                ?? $phoneOwner
+                ?? static::withTrashed()
+                    ->whereNull('user_id')
+                    ->where('carnet_identidad', $idCard)
+                    ->latest('id')
+                    ->first()
+                ?? new static(['name' => $user->name, 'email' => $user->email]);
+
+            if ($phoneOwner && $client->exists && $phoneOwner->id !== $client->id) {
+                Sale::where('cliente_id', $phoneOwner->id)->update(['cliente_id' => $client->id]);
+                Inquiry::where('cliente_id', $phoneOwner->id)->update(['cliente_id' => $client->id]);
+
+                $client->address ??= $phoneOwner->address;
+                $client->email ??= $phoneOwner->email;
+
+                // El teléfono es único aun en las fichas dadas de baja.
+                $phoneOwner->phone = null;
+                $phoneOwner->save();
+                $phoneOwner->delete();
+            }
+
+            if ($client->trashed()) {
+                $client->restore();
+            }
+
+            $client->user_id = $user->id;
+            $client->id_card = $idCard;
+            $client->phone = $phone;
+            $client->email ??= $user->email;
+            $client->save();
+
+            return $client;
+        });
     }
 
     public function user(): BelongsTo

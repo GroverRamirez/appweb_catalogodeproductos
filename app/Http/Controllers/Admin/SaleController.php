@@ -246,8 +246,12 @@ class SaleController extends Controller
                 // compra posterior y consultarlo después daría margen falso.
                 // Se guarda en bolivianos, igual que el precio de la línea: el
                 // costo de lista está en dólares y un margen que reste dólares
-                // a bolivianos no significa nada.
-                'unit_cost' => app(ExchangeRate::class)->toBs($product->cost, (float) $sale->exchange_rate ?: null),
+                // a bolivianos no significa nada. Sin costo cargado queda en
+                // null y no en 0: un costo cero hacía pasar el precio entero
+                // por ganancia en el margen de los reportes.
+                'unit_cost' => $product->cost === null
+                    ? null
+                    : app(ExchangeRate::class)->toBs($product->cost, (float) $sale->exchange_rate ?: null),
             ]);
 
             InventoryLedger::record($product, -$qty, InventoryMovement::TYPE_SALE, $sale);

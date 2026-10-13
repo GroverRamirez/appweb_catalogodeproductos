@@ -150,7 +150,7 @@
                 <td>
                     <div class="etiqueta">Ingresos</div>
                     <div class="valor">{{ $moneda($kpis['revenue']) }}</div>
-                    <div class="pista">margen {{ $moneda($kpis['margin']) }}</div>
+                    <div class="pista">margen {{ $moneda($kpis['margin']) }}@if ($kpis['lines_without_cost'] > 0) (parcial: {{ $kpis['lines_without_cost'] }} lineas sin costo)@endif</div>
                 </td>
             </tr>
         </table>

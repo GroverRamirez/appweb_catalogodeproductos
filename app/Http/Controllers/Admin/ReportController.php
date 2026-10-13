@@ -144,7 +144,7 @@ class ReportController extends Controller
             'direccion' => (string) Setting::get('address', ''),
             'telefono' => (string) Setting::get('whatsapp_number', ''),
             'email' => (string) Setting::get('email_contact', ''),
-            'moneda' => (string) Setting::get('currency_symbol', 'S/'),
+            'moneda' => (string) Setting::get('currency_symbol', 'Bs'),
         ];
     }
 

@@ -47,6 +47,7 @@ type Kpis = {
     sales_count: number;
     average_ticket: number;
     margin: number;
+    lines_without_cost: number;
 };
 type Series = {
     day: string;
@@ -85,6 +86,17 @@ const props = defineProps<{
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
 const cur = (n: number) => formatPrice(n, store.value.currency_symbol);
+
+/** El margen deja afuera las líneas sin costo: se avisa para no leerlo como total. */
+const marginHint = computed(() => {
+    const missing = props.kpis.lines_without_cost;
+
+    if (!missing) {
+        return 'precio menos costo, descuentos incluidos';
+    }
+
+    return `parcial: ${missing} ${missing === 1 ? 'línea vendida sin costo cargado' : 'líneas vendidas sin costo cargado'}`;
+});
 
 const filters = reactive({ from: props.range.from, to: props.range.to });
 
@@ -552,7 +564,7 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
                 <StatCard
                     label="Margen"
                     :value="cur(kpis.margin)"
-                    hint="precio menos costo, descuentos incluidos"
+                    :hint="marginHint"
                     :tone="kpis.margin >= 0 ? 'success' : 'warn'"
                     :icon="TrendingUp"
                 />
@@ -839,7 +851,9 @@ const categoryChart = computed<ChartConfiguration<'bar'>>(() => ({
                             <tr>
                                 <th class="py-2">Producto</th>
                                 <th class="py-2 text-right">Cantidad</th>
-                                <th class="py-2 text-right">Ingresos</th>
+                                <th class="py-2 text-right">
+                                    Valor solicitado
+                                </th>
                             </tr>
                         </thead>
                         <tbody class="divide-y">

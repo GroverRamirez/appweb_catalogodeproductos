@@ -32,23 +32,50 @@ class SalesReport
     ) {}
 
     /**
+     * Rango mas largo que se acepta. La serie diaria recorre el rango dia por
+     * dia, asi que un "desde" mal tipeado (0202 en vez de 2026) armaba cientos
+     * de miles de filas y dejaba colgado el servidor.
+     */
+    public const MAX_DAYS = 731;
+
+    /**
      * Arma el reporte desde los filtros `from` / `to` de la peticion.
      *
-     * El "hasta" se estira al final del dia: `$request->date()` devuelve las
-     * 00:00 de esa fecha y, sin esto, el `whereBetween` dejaba afuera todo lo
-     * que paso ese mismo dia — un reporte de un solo dia daba siempre cero y
-     * "del 1 al 14" se comia el 14 entero.
+     * El "hasta" se estira al final del dia: sin esto el `whereBetween` dejaba
+     * afuera todo lo que paso ese mismo dia — un reporte de un solo dia daba
+     * siempre cero y "del 1 al 14" se comia el 14 entero.
      *
-     * El `CarbonImmutable::parse` no es decorativo: con fechas mutables,
-     * calcular `$start` a partir de `$end` mutaria `$end` y ambos extremos
-     * terminarian en el mismo instante.
+     * Los filtros llegan de la URL y se pueden editar a mano, asi que el rango
+     * se corrige en vez de fallar: una fecha ilegible usa el valor por defecto,
+     * un rango invertido se da vuelta y uno demasiado largo se recorta a los
+     * ultimos `MAX_DAYS` dias. La pantalla muestra el rango que realmente se
+     * uso.
      */
     public static function fromRequest(Request $request): self
     {
-        $end = CarbonImmutable::parse($request->date('to') ?? CarbonImmutable::now())->endOfDay();
-        $start = CarbonImmutable::parse($request->date('from') ?? $end->subDays(29))->startOfDay();
+        $end = (self::parseDate($request->query('to')) ?? CarbonImmutable::now())->endOfDay();
+        $start = (self::parseDate($request->query('from')) ?? $end->subDays(29))->startOfDay();
 
-        return new self($start, $end);
+        if ($start->greaterThan($end)) {
+            [$start, $end] = [$end->startOfDay(), $start->endOfDay()];
+        }
+
+        $earliest = $end->subDays(self::MAX_DAYS - 1)->startOfDay();
+
+        return new self($start->max($earliest), $end);
+    }
+
+    /** Fecha `Y-m-d` valida, o null si viene vacia o no se puede leer. */
+    private static function parseDate(mixed $value): ?CarbonImmutable
+    {
+        if (! is_string($value) || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+            return null;
+        }
+
+        $date = CarbonImmutable::createFromFormat('!Y-m-d', $value);
+
+        // `createFromFormat` acepta el 31/02 y lo pasa a marzo: se descarta.
+        return $date && $date->format('Y-m-d') === $value ? $date : null;
     }
 
     /** @return array{from: string, to: string} */
@@ -116,13 +143,24 @@ class SalesReport
             $salesCount = $this->sales()->count();
 
             // Margen bruto con el costo congelado en cada linea al momento de
-            // vender. El descuento del total no se prorratea por linea: se resta
-            // entero, que es como efectivamente se pierde.
-            $grossMargin = (float) SaleItem::query()
+            // vender. Las lineas sin costo cargado (producto sin costo al
+            // venderse; las ventas viejas lo guardaban como 0) no entran: antes
+            // contaban con costo cero y el precio entero aparecia como
+            // ganancia. Se informan aparte para que se sepa que el margen es
+            // parcial. El descuento del total no se prorratea por linea: se
+            // resta entero, que es como efectivamente se pierde.
+            $lines = SaleItem::query()
                 ->whereHas('sale', fn ($q) => $q->where('estado', 'confirmada')
-                    ->whereBetween('created_at', [$this->start, $this->end]))
-                ->selectRaw('SUM((precio_unitario - COALESCE(costo_unitario, 0)) * cantidad) as margen')
+                    ->whereBetween('created_at', [$this->start, $this->end]));
+
+            $grossMargin = (float) (clone $lines)
+                ->where('costo_unitario', '>', 0)
+                ->selectRaw('SUM((precio_unitario - costo_unitario) * cantidad) as margen')
                 ->value('margen');
+
+            $linesWithoutCost = (clone $lines)
+                ->where(fn ($q) => $q->whereNull('costo_unitario')->orWhere('costo_unitario', '<=', 0))
+                ->count();
 
             $discounts = (float) $this->sales()->sum('descuento_monto');
 
@@ -138,6 +176,7 @@ class SalesReport
                 'sales_count' => $salesCount,
                 'average_ticket' => $salesCount > 0 ? round($revenue / $salesCount, 2) : 0.0,
                 'margin' => $grossMargin - $discounts,
+                'lines_without_cost' => $linesWithoutCost,
             ];
         });
     }
@@ -202,29 +241,11 @@ class SalesReport
      */
     public function topSold(int $limit = 10): array
     {
-        return $this->once('topSold.'.$limit, fn () => SaleItem::query()
-            ->select(
-                'producto_id',
-                'producto_nombre_copia',
-                'producto_codigo_copia',
-                DB::raw('SUM(cantidad) as qty'),
-                DB::raw('SUM(cantidad * precio_unitario) as revenue'),
-            )
-            ->whereHas('sale', fn ($q) => $q->where('estado', 'confirmada')
-                ->whereBetween('created_at', [$this->start, $this->end]))
-            ->groupBy('producto_id', 'producto_nombre_copia', 'producto_codigo_copia')
-            ->orderByDesc('qty')
-            ->take($limit)
-            ->get()
-            ->map(fn ($row) => [
-                'product_id' => $row->producto_id,
-                'name' => (string) $row->producto_nombre_copia,
-                'code' => (string) ($row->producto_codigo_copia ?? ''),
-                'qty' => (int) $row->qty,
-                'revenue' => (float) $row->revenue,
-            ])
-            ->all()
-        );
+        return $this->once('topSold.'.$limit, fn () => $this->rankProducts(
+            SaleItem::query()->whereHas('sale', fn ($q) => $q->where('estado', 'confirmada')
+                ->whereBetween('created_at', [$this->start, $this->end])),
+            $limit,
+        ));
     }
 
     /**
@@ -234,28 +255,49 @@ class SalesReport
      */
     public function topRequested(int $limit = 10): array
     {
-        return $this->once('topRequested.'.$limit, fn () => InquiryItem::query()
+        return $this->once('topRequested.'.$limit, fn () => $this->rankProducts(
+            InquiryItem::query()->whereHas('inquiry', fn ($q) => $q->whereBetween('created_at', [$this->start, $this->end])),
+            $limit,
+        ));
+    }
+
+    /**
+     * Ranking por producto sobre lineas de venta o de consulta.
+     *
+     * Se agrupa por producto y no por el nombre copiado en la linea: si el
+     * producto se renombro, antes aparecia dos veces con la cantidad partida y
+     * podia caerse del ranking. Se muestra el nombre y codigo actuales; las
+     * lineas de un producto que ya no existe se agrupan por el nombre copiado.
+     *
+     * @return array<int, array{product_id: int|null, name: string, code: string, qty: int, revenue: float}>
+     */
+    private function rankProducts(Builder $lines, int $limit): array
+    {
+        $rows = $lines
             ->select(
-                'producto_id',
-                'producto_nombre_copia',
-                'producto_codigo_copia',
+                DB::raw('MAX(producto_id) as producto_id'),
+                DB::raw('MAX(producto_nombre_copia) as nombre'),
+                DB::raw('MAX(producto_codigo_copia) as codigo'),
                 DB::raw('SUM(cantidad) as qty'),
                 DB::raw('SUM(cantidad * precio_unitario) as revenue'),
             )
-            ->whereHas('inquiry', fn ($q) => $q->whereBetween('created_at', [$this->start, $this->end]))
-            ->groupBy('producto_id', 'producto_nombre_copia', 'producto_codigo_copia')
+            ->groupBy(DB::raw('COALESCE(CAST(producto_id AS CHAR), producto_nombre_copia)'))
             ->orderByDesc('qty')
             ->take($limit)
-            ->get()
-            ->map(fn ($row) => [
-                'product_id' => $row->producto_id,
-                'name' => (string) $row->producto_nombre_copia,
-                'code' => (string) ($row->producto_codigo_copia ?? ''),
-                'qty' => (int) $row->qty,
-                'revenue' => (float) $row->revenue,
-            ])
-            ->all()
-        );
+            ->get();
+
+        $products = Product::query()
+            ->whereIn('id', $rows->pluck('producto_id')->filter())
+            ->get(['id', 'nombre', 'codigo'])
+            ->keyBy('id');
+
+        return $rows->map(fn ($row) => [
+            'product_id' => $row->producto_id !== null ? (int) $row->producto_id : null,
+            'name' => (string) ($products[$row->producto_id]->nombre ?? $row->nombre),
+            'code' => (string) ($products[$row->producto_id]->codigo ?? $row->codigo ?? ''),
+            'qty' => (int) $row->qty,
+            'revenue' => (float) $row->revenue,
+        ])->all();
     }
 
     /**

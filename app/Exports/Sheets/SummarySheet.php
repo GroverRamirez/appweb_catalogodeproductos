@@ -51,6 +51,7 @@ class SummarySheet implements FromArray, ShouldAutoSize, WithStyles, WithTitle
             ['Ingresos', $kpis['revenue']],
             ['Ticket promedio', $kpis['average_ticket']],
             ['Margen', $kpis['margin']],
+            ['Lineas vendidas sin costo (fuera del margen)', $kpis['lines_without_cost']],
         ];
     }
 

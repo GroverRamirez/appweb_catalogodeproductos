@@ -153,13 +153,18 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middlewareFor(['edit', 'update'], 'permission:roles.update')
             ->middlewareFor('destroy', 'permission:roles.delete');
 
+        Route::patch('users/{user}/activo', [UserController::class, 'toggleActive'])
+            ->middleware(['role:propietario', 'permission:users.update'])
+            ->name('users.toggle-active');
+
+        // Sin destroy: un usuario se desactiva, no se elimina, para no perder
+        // quién registró cada venta, compra o movimiento.
         Route::resource('users', UserController::class)
-            ->except(['show'])
+            ->except(['show', 'destroy'])
             ->middleware('role:propietario')
             ->middlewareFor('index', 'permission:users.view')
             ->middlewareFor(['create', 'store'], 'permission:users.create')
-            ->middlewareFor(['edit', 'update'], 'permission:users.update')
-            ->middlewareFor('destroy', 'permission:users.delete');
+            ->middlewareFor(['edit', 'update'], 'permission:users.update');
 
         Route::get('reportes', [ReportController::class, 'index'])
             ->middleware('permission:reports.view')

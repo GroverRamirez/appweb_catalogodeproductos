@@ -36,11 +36,12 @@ class AdminGuard
     }
 
     /**
-     * Indica si el usuario es el último con el rol propietario.
+     * Indica si el usuario es el último propietario activo. Un propietario
+     * desactivado no puede entrar, así que no cuenta.
      */
     public static function isLastOwner(User $user): bool
     {
-        if (! $user->hasRole(self::OWNER_ROLE)) {
+        if (! $user->hasRole(self::OWNER_ROLE) || ! $user->is_active) {
             return false;
         }
 
@@ -64,10 +65,10 @@ class AdminGuard
     }
 
     /**
-     * Cuenta de usuarios con el rol propietario.
+     * Cuenta de usuarios activos con el rol propietario.
      */
     public static function ownerCount(): int
     {
-        return User::role(self::OWNER_ROLE)->count();
+        return User::role(self::OWNER_ROLE)->where('is_active', true)->count();
     }
 }

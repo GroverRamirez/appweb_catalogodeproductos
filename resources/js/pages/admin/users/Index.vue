@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus, Search, Trash2, Users } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Pencil, Plus, Power, PowerOff, Search, Users } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { usePermissions } from '@/composables/usePermissions';
 
 defineOptions({
     layout: () => ({
@@ -23,6 +24,7 @@ type Row = {
     email: string;
     created_at: string;
     email_verified_at: string | null;
+    is_active: boolean;
     roles: string[];
 };
 
@@ -56,12 +58,21 @@ watch([q, role], () => {
     }, 300);
 });
 
-const destroy = (u: Row) => {
-    if (!confirm(`¿Eliminar al usuario "${u.name}"?`)) {
+const page = usePage();
+const { can } = usePermissions();
+const currentUserId = computed(() => page.props.auth?.user?.id);
+
+const toggleActive = (u: Row) => {
+    if (
+        u.is_active &&
+        !confirm(
+            `¿Desactivar a "${u.name}"? No podrá iniciar sesión, pero sus ventas y compras se conservan.`,
+        )
+    ) {
         return;
     }
 
-    router.delete(`/admin/users/${u.id}`, { preserveScroll: true });
+    router.patch(`/admin/users/${u.id}/activo`, {}, { preserveScroll: true });
 };
 
 const roleVariant = (r: string) =>
@@ -120,6 +131,7 @@ const roleVariant = (r: string) =>
                         <th class="px-3 py-2">Nombre</th>
                         <th class="px-3 py-2">Correo</th>
                         <th class="px-3 py-2">Roles</th>
+                        <th class="w-28 px-3 py-2">Estado</th>
                         <th class="w-32 px-3 py-2">Registro</th>
                         <th class="w-32 px-3 py-2"></th>
                     </tr>
@@ -157,6 +169,13 @@ const roleVariant = (r: string) =>
                                 — sin rol —
                             </span>
                         </td>
+                        <td class="px-3 py-2">
+                            <Badge
+                                :variant="u.is_active ? 'default' : 'secondary'"
+                            >
+                                {{ u.is_active ? 'Activo' : 'Inactivo' }}
+                            </Badge>
+                        </td>
                         <td class="px-3 py-2 text-xs text-muted-foreground">
                             {{ u.created_at?.substring(0, 10) }}
                         </td>
@@ -167,17 +186,35 @@ const roleVariant = (r: string) =>
                                 </Link>
                             </Button>
                             <Button
+                                v-if="
+                                    can('users.update') &&
+                                    u.id !== currentUserId
+                                "
                                 variant="ghost"
                                 size="icon-sm"
-                                @click="destroy(u)"
+                                :title="
+                                    u.is_active
+                                        ? 'Desactivar usuario'
+                                        : 'Activar usuario'
+                                "
+                                :aria-label="
+                                    u.is_active
+                                        ? 'Desactivar usuario'
+                                        : 'Activar usuario'
+                                "
+                                @click="toggleActive(u)"
                             >
-                                <Trash2 class="size-4 text-destructive" />
+                                <PowerOff
+                                    v-if="u.is_active"
+                                    class="size-4 text-muted-foreground"
+                                />
+                                <Power v-else class="size-4 text-primary" />
                             </Button>
                         </td>
                     </tr>
                     <tr v-if="!users.data.length">
                         <td
-                            colspan="5"
+                            colspan="6"
                             class="px-3 py-6 text-center text-muted-foreground"
                         >
                             Sin usuarios.

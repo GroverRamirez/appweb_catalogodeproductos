@@ -19,7 +19,11 @@ class Sale extends Model
 
     public const STATUSES = ['confirmada', 'anulada'];
 
-    public const PAYMENT_METHODS = ['efectivo', 'qr', 'transferencia', 'tarjeta'];
+    /**
+     * Métodos aceptados en ventas nuevas. 'tarjeta' ya no se ofrece, pero las
+     * ventas antiguas con ese método se siguen mostrando (ver lib/sales.ts).
+     */
+    public const PAYMENT_METHODS = ['efectivo', 'qr', 'transferencia'];
 
     public const ORIGINS = ['mostrador', 'consulta'];
 

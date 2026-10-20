@@ -87,6 +87,27 @@ test('a discount bigger than the subtotal is rejected and nothing is written', f
     expect($product->fresh()->stock)->toBe(10);
 });
 
+test('card is no longer accepted as a payment method but old card sales still show', function () {
+    $product = Product::factory()->create(['stock' => 10, 'precio' => 50]);
+
+    $this->actingAs($this->owner)
+        ->post(route('admin.sales.store'), [
+            'payment_method' => 'tarjeta',
+            'items' => [['product_id' => $product->id, 'quantity' => 1, 'unit_price' => 50]],
+        ])
+        ->assertSessionHasErrors('payment_method');
+
+    expect(Sale::count())->toBe(0);
+
+    // Una venta registrada antes del cambio se sigue abriendo sin problemas.
+    $old = Sale::factory()->create(['metodo_pago' => 'tarjeta']);
+
+    $this->actingAs($this->owner)
+        ->get(route('admin.sales.show', $old))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('sale.payment_method', 'tarjeta'));
+});
+
 test('receipt numbers are correlative and start at one', function () {
     $product = Product::factory()->create(['stock' => 100, 'precio' => 10]);
 

@@ -47,7 +47,6 @@ type Inquiry = {
     source: string;
     status: string;
     total_estimated: string | null;
-    admin_notes: string | null;
     contacted_at: string | null;
     created_at: string;
     items: Item[];
@@ -63,7 +62,6 @@ const props = defineProps<{
 
 const form = useForm({
     status: props.inquiry.status,
-    admin_notes: props.inquiry.admin_notes ?? '',
 });
 
 const submit = () => form.patch(`/admin/inquiries/${props.inquiry.id}`);
@@ -188,15 +186,6 @@ const whatsappLink = (phone: string) =>
                                     {{ s }}
                                 </option>
                             </select>
-                        </div>
-                        <div>
-                            <Label for="admin_notes">Notas internas</Label>
-                            <textarea
-                                id="admin_notes"
-                                v-model="form.admin_notes"
-                                rows="4"
-                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
-                            ></textarea>
                         </div>
                         <Button
                             type="submit"

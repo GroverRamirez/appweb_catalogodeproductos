@@ -4,10 +4,14 @@ namespace App\Http\Middleware;
 
 use App\Models\Inquiry;
 use App\Models\Setting;
+use App\Services\ExchangeRate;
+use App\Support\Toast;
+use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Response;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -28,6 +32,18 @@ class HandleInertiaRequests extends Middleware
     public function version(Request $request): ?string
     {
         return parent::version($request);
+    }
+
+    /**
+     * Antes de responder, los avisos que los controladores dejaron en la sesión
+     * con ->with('success'|'error'|'warning'|'info', ...) pasan al canal flash de
+     * Inertia, que el front muestra como notificación (resources/js/lib/flashToast.ts).
+     */
+    public function handle(Request $request, Closure $next): Response
+    {
+        Toast::fromSession($request);
+
+        return parent::handle($request, $next);
     }
 
     protected function assetUrl(mixed $path): ?string
@@ -66,12 +82,6 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'locale' => App::getLocale(),
             'translations' => fn () => trans('catalog'),
-            'flash' => [
-                // Durante el renderizado de errores (p. ej. un 404) la sesión puede no
-                // estar disponible; guardamos contra ello para no degradar el 404 a un 500.
-                'success' => fn () => $request->hasSession() ? $request->session()->get('success') : null,
-                'error' => fn () => $request->hasSession() ? $request->session()->get('error') : null,
-            ],
             'store' => fn () => [
                 'name' => Setting::get('store_name', 'Mi Catálogo'),
                 'tagline' => Setting::get('store_tagline', ''),
@@ -83,8 +93,14 @@ class HandleInertiaRequests extends Middleware
                 'email' => Setting::get('email_contact', ''),
                 'address' => Setting::get('address', ''),
                 'hours' => Setting::get('business_hours', ''),
-                'currency' => Setting::get('currency', 'PEN'),
-                'currency_symbol' => Setting::get('currency_symbol', 'S/'),
+                'currency' => Setting::get('currency', 'BOB'),
+                'currency_symbol' => Setting::get('currency_symbol', 'Bs'),
+                // La lista de precios esta en dolares y la tienda cobra en
+                // bolivianos: el front necesita la cotizacion para mostrar el
+                // precio del dia sin pedirla en cada pagina.
+                'exchange_rate' => app(ExchangeRate::class)->current(),
+                'exchange_rate_source' => app(ExchangeRate::class)->source(),
+                'exchange_rate_updated_at' => app(ExchangeRate::class)->updatedAt(),
                 'show_prices' => (bool) Setting::get('show_prices', true),
                 'show_stock' => (bool) Setting::get('show_stock', true),
                 'logo_url' => $this->assetUrl(Setting::get('logo_path')),

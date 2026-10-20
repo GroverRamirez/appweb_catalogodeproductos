@@ -1,0 +1,55 @@
+PC STORE PRO
+============
+
+QUE ES
+------
+La tienda completa funcionando en esta computadora: el catalogo que ven los
+clientes y el panel de administracion. No necesita internet para funcionar
+(solo lo usa para actualizar la cotizacion del dolar).
+
+COMO SE USA
+-----------
+1. Doble clic en "PC Store Pro" (en el escritorio o en el menu Inicio).
+2. Se abre una ventana negra: dejala abierta, es la tienda funcionando.
+3. El navegador se abre solo en la tienda. Si no se abre, entra a:
+
+       http://127.0.0.1:8020
+
+4. Para cerrar, cerra la ventana negra (o usa "Detener PC Store Pro").
+
+EL PANEL DE ADMINISTRACION
+--------------------------
+Entra en http://127.0.0.1:8020/login con el correo y la contrasena del
+propietario que elegiste al instalar. Desde el panel podes crear usuarios
+para encargados y vendedores.
+
+COPIAS DE SEGURIDAD
+-------------------
+Todos los datos estan en un solo archivo:
+
+    app\database\database.sqlite
+
+En el panel, Configuracion > Copias de seguridad genera una copia y la
+descarga. Guardala fuera de esta computadora (un pendrive, el correo, la nube).
+
+Para restaurar una copia:
+1. Cerra la tienda.
+2. Descomprimi el archivo .sqlite.gz (con 7-Zip, por ejemplo).
+3. Renombra lo que salga a database.sqlite y reemplaza el que esta en
+   app\database.
+4. Abri la tienda de nuevo.
+
+Las imagenes de los productos estan en app\storage\app\public: copialas
+tambien si queres un respaldo completo.
+
+ACTUALIZAR O DESINSTALAR
+------------------------
+- Para actualizar, corre el instalador nuevo encima: los datos se conservan.
+- Al desinstalar te pregunta si borrar tambien los datos. Si vas a
+  reinstalar, contesta que no.
+
+COSAS PARA SABER
+----------------
+- La tienda solo se ve desde esta computadora.
+- Si al iniciar dice que el puerto 8020 esta ocupado, otro programa lo esta
+  usando: cerralo y volve a abrir la tienda.

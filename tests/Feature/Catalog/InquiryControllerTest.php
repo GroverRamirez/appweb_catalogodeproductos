@@ -4,8 +4,14 @@ use App\Models\Coupon;
 use App\Models\Inquiry;
 use App\Models\InquiryItem;
 use App\Models\Product;
+use App\Services\ExchangeRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+
+beforeEach(function () {
+    // Estos tests verifican la logica en una sola moneda: con cotizacion 1
+    // un dolar vale un boliviano. La conversion la cubre ExchangeRateTest.
+    app(ExchangeRate::class)->store(1.0);
+});
 
 uses(RefreshDatabase::class);
 
@@ -14,27 +20,27 @@ uses(RefreshDatabase::class);
 function validStorePayload(Product $product): array
 {
     return [
-        'customer_name'  => 'Ana García',
+        'customer_name' => 'Ana García',
         'customer_phone' => '51987654321',
         'customer_email' => 'ana@example.com',
-        'message'        => 'Me interesa este producto.',
-        'source'         => 'web',
-        'product_id'     => $product->id,
-        'quantity'       => 2,
+        'message' => 'Me interesa este producto.',
+        'source' => 'web',
+        'product_id' => $product->id,
+        'quantity' => 2,
     ];
 }
 
 function validCheckoutPayload(array $products): array
 {
     return [
-        'customer_name'  => 'Carlos López',
+        'customer_name' => 'Carlos López',
         'customer_phone' => '51912345678',
         'customer_email' => 'carlos@example.com',
-        'message'        => 'Por favor contactarme.',
-        'source'         => 'web',
-        'items'          => collect($products)->map(fn ($p) => [
+        'message' => 'Por favor contactarme.',
+        'source' => 'web',
+        'items' => collect($products)->map(fn ($p) => [
             'product_id' => $p->id,
-            'quantity'   => 1,
+            'quantity' => 1,
         ])->values()->all(),
     ];
 }
@@ -48,9 +54,9 @@ test('store creates an inquiry for a single product', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('consultas', [
-        'cliente_nombre'  => 'Ana García',
+        'cliente_nombre' => 'Ana García',
         'cliente_telefono' => '51987654321',
-        'estado'          => 'pendiente',
+        'estado' => 'pendiente',
     ]);
 });
 
@@ -81,8 +87,8 @@ test('store sets estimated total from product price and quantity', function () {
 
 test('store uses sale_price over regular price for total', function () {
     $product = Product::factory()->create([
-        'activo'        => true,
-        'precio'        => 100.00,
+        'activo' => true,
+        'precio' => 100.00,
         'precio_oferta' => 75.00,
     ]);
 
@@ -142,7 +148,7 @@ test('store fails validation when product_id refers to inactive product', functi
 
 test('store succeeds without a product_id (general inquiry)', function () {
     $this->post(route('public.inquiries.store'), [
-        'customer_name'  => 'Pedro Ruiz',
+        'customer_name' => 'Pedro Ruiz',
         'customer_phone' => '51900000000',
     ])->assertRedirect();
 
@@ -167,7 +173,7 @@ test('checkout calculates total from all items', function () {
     $p2 = Product::factory()->create(['activo' => true, 'precio' => 200.00]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
         'items' => [
             ['product_id' => $p1->id, 'quantity' => 2],
@@ -184,18 +190,18 @@ test('checkout applies a percentage coupon discount', function () {
     $product = Product::factory()->create(['activo' => true, 'precio' => 200.00]);
 
     $coupon = Coupon::create([
-        'code'        => 'DESCUENTO10',
+        'code' => 'DESCUENTO10',
         'description' => '10% de descuento',
-        'type'        => 'percent',
-        'value'       => 10,
-        'is_active'   => true,
+        'type' => 'percent',
+        'value' => 10,
+        'is_active' => true,
     ]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'coupon_code'    => 'DESCUENTO10',
-        'items'          => [['product_id' => $product->id, 'quantity' => 1]],
+        'coupon_code' => 'DESCUENTO10',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
     ]);
 
     $inquiry = Inquiry::first();
@@ -209,17 +215,17 @@ test('checkout applies a fixed coupon discount', function () {
     $product = Product::factory()->create(['activo' => true, 'precio' => 150.00]);
 
     Coupon::create([
-        'code'      => 'FIJO50',
-        'type'      => 'fixed',
-        'value'     => 50,
+        'code' => 'FIJO50',
+        'type' => 'fixed',
+        'value' => 50,
         'is_active' => true,
     ]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'coupon_code'    => 'FIJO50',
-        'items'          => [['product_id' => $product->id, 'quantity' => 1]],
+        'coupon_code' => 'FIJO50',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
     ]);
 
     $inquiry = Inquiry::first();
@@ -230,18 +236,18 @@ test('checkout ignores expired coupon', function () {
     $product = Product::factory()->create(['activo' => true, 'precio' => 200.00]);
 
     Coupon::create([
-        'code'      => 'VENCIDO',
-        'type'      => 'percent',
-        'value'     => 20,
+        'code' => 'VENCIDO',
+        'type' => 'percent',
+        'value' => 20,
         'is_active' => true,
-        'ends_at'   => now()->subDay(),
+        'ends_at' => now()->subDay(),
     ]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'coupon_code'    => 'VENCIDO',
-        'items'          => [['product_id' => $product->id, 'quantity' => 1]],
+        'coupon_code' => 'VENCIDO',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
     ]);
 
     $inquiry = Inquiry::first();
@@ -253,18 +259,18 @@ test('checkout ignores coupon when subtotal is below min_subtotal', function () 
     $product = Product::factory()->create(['activo' => true, 'precio' => 50.00]);
 
     Coupon::create([
-        'code'         => 'MIN500',
-        'type'         => 'fixed',
-        'value'        => 30,
+        'code' => 'MIN500',
+        'type' => 'fixed',
+        'value' => 30,
         'min_subtotal' => 500,
-        'is_active'    => true,
+        'is_active' => true,
     ]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'coupon_code'    => 'MIN500',
-        'items'          => [['product_id' => $product->id, 'quantity' => 1]],
+        'coupon_code' => 'MIN500',
+        'items' => [['product_id' => $product->id, 'quantity' => 1]],
     ]);
 
     $inquiry = Inquiry::first();
@@ -274,9 +280,9 @@ test('checkout ignores coupon when subtotal is below min_subtotal', function () 
 
 test('checkout fails validation when items is empty', function () {
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'items'          => [],
+        'items' => [],
     ])->assertSessionHasErrors('items');
 });
 
@@ -284,9 +290,9 @@ test('checkout fails validation when item refers to inactive product', function 
     $inactive = Product::factory()->create(['activo' => false]);
 
     $this->post(route('public.checkout'), [
-        'customer_name'  => 'Test',
+        'customer_name' => 'Test',
         'customer_phone' => '51900000000',
-        'items'          => [['product_id' => $inactive->id, 'quantity' => 1]],
+        'items' => [['product_id' => $inactive->id, 'quantity' => 1]],
     ])->assertSessionHasErrors('items.0.product_id');
 });
 
@@ -302,54 +308,54 @@ test('checkout redirects to signed cart.thanks url on success', function () {
 
 test('validateCoupon returns valid=true for a usable coupon', function () {
     Coupon::create([
-        'code'      => 'VALIDO20',
-        'type'      => 'percent',
-        'value'     => 20,
+        'code' => 'VALIDO20',
+        'type' => 'percent',
+        'value' => 20,
         'is_active' => true,
     ]);
 
     $this->postJson(route('public.coupons.validate'), [
-        'code'     => 'VALIDO20',
+        'code' => 'VALIDO20',
         'subtotal' => 100.00,
     ])->assertOk()->assertJson([
         'valid' => true,
-        'code'  => 'VALIDO20',
-        'type'  => 'percent',
+        'code' => 'VALIDO20',
+        'type' => 'percent',
     ]);
 });
 
 test('validateCoupon returns valid=false for nonexistent code', function () {
     $this->postJson(route('public.coupons.validate'), [
-        'code'     => 'NOEXISTE',
+        'code' => 'NOEXISTE',
         'subtotal' => 100.00,
     ])->assertOk()->assertJson(['valid' => false]);
 });
 
 test('validateCoupon returns valid=false for expired coupon', function () {
     Coupon::create([
-        'code'      => 'EXPIRADO',
-        'type'      => 'fixed',
-        'value'     => 10,
+        'code' => 'EXPIRADO',
+        'type' => 'fixed',
+        'value' => 10,
         'is_active' => true,
-        'ends_at'   => now()->subDay(),
+        'ends_at' => now()->subDay(),
     ]);
 
     $this->postJson(route('public.coupons.validate'), [
-        'code'     => 'EXPIRADO',
+        'code' => 'EXPIRADO',
         'subtotal' => 100.00,
     ])->assertOk()->assertJson(['valid' => false]);
 });
 
 test('validateCoupon returns discount amount in response', function () {
     Coupon::create([
-        'code'      => 'DESC15',
-        'type'      => 'percent',
-        'value'     => 15,
+        'code' => 'DESC15',
+        'type' => 'percent',
+        'value' => 15,
         'is_active' => true,
     ]);
 
     $this->postJson(route('public.coupons.validate'), [
-        'code'     => 'DESC15',
+        'code' => 'DESC15',
         'subtotal' => 200.00,
     ])->assertOk()->assertJsonFragment(['discount' => 30.0]);
 });
@@ -358,12 +364,12 @@ test('validateCoupon fails validation when code is missing', function () {
     $this->postJson(route('public.coupons.validate'), [
         'subtotal' => 100.00,
     ])->assertUnprocessable()
-      ->assertJsonValidationErrors('code');
+        ->assertJsonValidationErrors('code');
 });
 
 test('validateCoupon fails validation when subtotal is missing', function () {
     $this->postJson(route('public.coupons.validate'), [
         'code' => 'ANY',
     ])->assertUnprocessable()
-      ->assertJsonValidationErrors('subtotal');
+        ->assertJsonValidationErrors('subtotal');
 });

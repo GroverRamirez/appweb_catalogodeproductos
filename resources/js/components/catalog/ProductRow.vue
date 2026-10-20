@@ -37,10 +37,10 @@ const outOfStock = computed(() => props.product.stock <= 0);
 <template>
     <Link
         :href="`/catalogo/${product.slug}`"
-        class="group flex gap-4 rounded-lg border bg-card p-3 transition hover:border-primary/40 hover:shadow-md"
+        class="group flex gap-4 rounded-2xl bg-card p-3 ring-1 elev-1 ring-border/70 transition hover:[box-shadow:var(--shadow-lift)] hover:ring-primary/30"
     >
         <div
-            class="relative size-32 shrink-0 overflow-hidden rounded-md bg-muted sm:size-40"
+            class="relative size-32 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-40"
         >
             <img
                 v-if="image"
@@ -96,7 +96,9 @@ const outOfStock = computed(() => props.product.stock <= 0);
             <div class="mt-auto flex items-end justify-between gap-2 pt-2">
                 <div v-if="store.show_prices">
                     <div class="flex items-baseline gap-2">
-                        <span class="text-lg font-semibold">
+                        <span
+                            class="tabular font-display text-lg font-extrabold tracking-tight"
+                        >
                             {{
                                 formatPrice(
                                     product.sale_price ?? product.price,

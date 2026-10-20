@@ -44,6 +44,7 @@ const moduleLabels: Record<string, string> = {
     roles: 'Roles',
     settings: 'Configuración',
     reports: 'Reportes',
+    backups: 'Copias de seguridad',
 };
 
 const actionLabels: Record<string, string> = {
@@ -52,6 +53,7 @@ const actionLabels: Record<string, string> = {
     update: 'Editar',
     delete: 'Eliminar',
     adjust: 'Ajustar',
+    manage: 'Gestionar',
 };
 
 const permissionLabel = (permission: string): string => {

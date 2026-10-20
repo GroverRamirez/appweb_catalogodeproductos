@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\NewInquiryNotification;
+use App\Services\ExchangeRate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,10 @@ class InquiryController extends Controller
 
         $user = $request->user();
 
-        $inquiry = DB::transaction(function () use ($data, $user) {
+        $rates = app(ExchangeRate::class);
+        $rate = $rates->current();
+
+        $inquiry = DB::transaction(function () use ($data, $user, $rates, $rate) {
             $client = $this->resolveClient($data, $user);
 
             $inquiry = Inquiry::create([
@@ -42,21 +46,28 @@ class InquiryController extends Controller
                 'message' => $data['message'] ?? null,
                 'source' => $data['source'] ?? 'web',
                 'status' => 'pendiente',
+                // Cotizacion con la que se cotizo: lo que el cliente vio es lo
+                // que el staff tiene que poder honrar al contactarlo.
+                'exchange_rate' => $rate,
             ]);
 
             if (! empty($data['product_id'])) {
                 $product = Product::find($data['product_id']);
                 if ($product) {
                     $qty = $data['quantity'] ?? 1;
+                    // Las lineas se guardan en bolivianos, la moneda en la que
+                    // se cobra; el precio de lista en dolares queda en el
+                    // producto.
+                    $unit = $rates->toBs($product->sale_price ?: $product->price, $rate);
                     InquiryItem::create([
                         'inquiry_id' => $inquiry->id,
                         'product_id' => $product->id,
                         'product_name_snapshot' => $product->name,
                         'product_code_snapshot' => $product->code,
                         'quantity' => $qty,
-                        'unit_price' => $product->sale_price ?: $product->price,
+                        'unit_price' => $unit,
                     ]);
-                    $inquiry->update(['total_estimated' => ($product->sale_price ?: $product->price) * $qty]);
+                    $inquiry->update(['total_estimated' => $unit * $qty]);
                 }
             }
 
@@ -77,7 +88,10 @@ class InquiryController extends Controller
 
         $user = $request->user();
 
-        $inquiry = DB::transaction(function () use ($data, $user) {
+        $rates = app(ExchangeRate::class);
+        $rate = $rates->current();
+
+        $inquiry = DB::transaction(function () use ($data, $user, $rates, $rate) {
             $client = $this->resolveClient($data, $user);
 
             $inquiry = Inquiry::create([
@@ -88,6 +102,7 @@ class InquiryController extends Controller
                 'message' => $data['message'] ?? null,
                 'source' => $data['source'] ?? 'web',
                 'status' => 'pendiente',
+                'exchange_rate' => $rate,
             ]);
 
             $total = 0;
@@ -99,7 +114,9 @@ class InquiryController extends Controller
                 if (! $p) {
                     continue;
                 }
-                $unit = (float) ($p->sale_price ?: $p->price);
+                // Precio del dia en bolivianos, calculado en el servidor:
+                // el carrito del navegador puede traer el de ayer.
+                $unit = $rates->toBs($p->sale_price ?: $p->price, $rate);
                 $qty = (int) $row['quantity'];
                 $total += $unit * $qty;
 
@@ -130,6 +147,10 @@ class InquiryController extends Controller
                 'total_estimated' => max(0, $total - $discount),
                 'coupon_code' => $couponCode,
                 'discount_amount' => $discount > 0 ? $discount : null,
+                // El uso ya quedó tomado arriba; la bandera es lo que permite
+                // devolverlo una sola vez si esta consulta se cierra sin vender
+                // o se elimina.
+                'coupon_consumed' => $couponCode !== null,
             ]);
 
             return $inquiry;

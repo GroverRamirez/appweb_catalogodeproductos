@@ -86,9 +86,36 @@ class ClientController extends Controller
 
     public function store(StoreClientRequest $request): RedirectResponse
     {
-        $client = Client::create($request->validated());
+        $data = $request->validated();
 
-        return to_route('admin.clients.show', $client)->with('success', 'Cliente registrado.');
+        // Un teléfono dado de baja sigue ocupando el índice único de MySQL, que
+        // no entiende de soft deletes; la validación, en cambio, los ignora a
+        // propósito. Sin esto, registrar a mano el teléfono de un cliente dado
+        // de baja pasaba la validación y reventaba con un duplicate entry en el
+        // INSERT. resolveByPhone es el mismo camino que ya usa la venta de
+        // mostrador: si ese teléfono tiene ficha, aunque esté dada de baja, la
+        // reactiva en vez de duplicarla.
+        $client = Client::resolveByPhone($data['phone'] ?? null, $data);
+
+        // Sin teléfono no hay con qué identificarlo: se crea sin más.
+        if ($client === null) {
+            $client = Client::create($data);
+        }
+
+        $reactivada = ! $client->wasRecentlyCreated;
+
+        // La ficha ya existía: se le aplican los datos recién cargados, que son
+        // más frescos que los que quedaron cuando se dio de baja.
+        if ($reactivada) {
+            $client->update($data);
+        }
+
+        return to_route('admin.clients.show', $client)->with(
+            'success',
+            $reactivada
+                ? 'Ese teléfono ya tenía una ficha dada de baja: se reactivó con los datos cargados.'
+                : 'Cliente registrado.',
+        );
     }
 
     /**

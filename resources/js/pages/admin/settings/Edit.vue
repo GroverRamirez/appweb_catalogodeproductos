@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { Trash2, Upload } from 'lucide-vue-next';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
+import { DatabaseBackup, Trash2, Upload } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePermissions } from '@/composables/usePermissions';
 
 defineOptions({
     layout: () => ({
@@ -27,6 +28,8 @@ type Setting = {
 };
 
 const props = defineProps<{ settings: Setting[] }>();
+
+const { can } = usePermissions();
 
 const grouped = computed(() => {
     const groups: Record<string, Setting[]> = {};
@@ -116,11 +119,19 @@ const groupTitle = (g: string) => {
     <Head title="Configuración" />
 
     <div class="mx-auto max-w-6xl space-y-3 p-3 md:p-4">
-        <div>
-            <h1 class="text-xl font-semibold">Configuración</h1>
-            <p class="text-sm text-muted-foreground">
-                Datos generales, contacto y opciones del catálogo público.
-            </p>
+        <div class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h1 class="text-xl font-semibold">Configuración</h1>
+                <p class="text-sm text-muted-foreground">
+                    Datos generales, contacto y opciones del catálogo público.
+                </p>
+            </div>
+            <Button v-if="can('backups.manage')" variant="outline" as-child>
+                <Link href="/admin/settings/backups">
+                    <DatabaseBackup class="size-4" />
+                    Copias de seguridad
+                </Link>
+            </Button>
         </div>
 
         <form @submit.prevent="submit" class="space-y-3">

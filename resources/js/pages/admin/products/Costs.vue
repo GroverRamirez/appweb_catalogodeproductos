@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { AlertTriangle, ArrowLeft, Check, Coins } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/composables/usePermissions';
 import { formatPrice } from '@/lib/catalog';
-import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({
     layout: () => ({
@@ -36,9 +35,8 @@ const props = defineProps<{
     totalCount: number;
 }>();
 
-const page = usePage();
-const store = computed(() => page.props.store as StoreSettings);
-const cur = (n: number) => formatPrice(n, store.value.currency_symbol);
+// Compras y costos se manejan en dólares, igual que la lista de precios.
+const cur = (n: number) => formatPrice(n, 'USD');
 const { can } = usePermissions();
 
 // Borradores locales por id. No usamos useForm porque al guardar volvemos con

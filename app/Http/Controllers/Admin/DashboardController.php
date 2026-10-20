@@ -7,6 +7,7 @@ use App\Models\Inquiry;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Services\ExchangeRate;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -68,6 +69,16 @@ class DashboardController extends Controller
                     ->count(),
             ];
         });
+
+        // El valor del inventario y el gasto en compras salen de la lista de
+        // precios, que está en dólares; las ventas ya están en bolivianos. El
+        // panel habla en una sola moneda, así que se convierten acá —fuera del
+        // caché, para que un cambio de cotización se vea enseguida.
+        $rates = app(ExchangeRate::class);
+
+        foreach (['inventory_cost', 'inventory_retail', 'purchases_spend_30d'] as $key) {
+            $stats[$key] = $rates->toBs($stats[$key]);
+        }
 
         $topProducts = Cache::remember('dashboard.top_products.'.self::V, self::CACHE_TTL, fn () => Product::query()
             ->select('id', 'nombre', 'codigo', 'visitas', 'stock')
@@ -134,6 +145,15 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get(['id', 'proveedor_id', 'numero_referencia', 'estado', 'costo_total', 'created_at']);
+
+        // Mismo criterio que las stats: las compras estan en dolares y el
+        // panel habla en bolivianos, asi que se convierten fuera del cache.
+        $spendByMonth = array_map(
+            fn ($row) => ['month' => $row['month'], 'total' => $rates->toBs($row['total'])],
+            $spendByMonth,
+        );
+
+        $recentPurchases->each(fn (Purchase $p) => $p->setAttribute('total_cost', $rates->toBs($p->total_cost)));
 
         return Inertia::render('admin/Dashboard', [
             'stats' => $stats,

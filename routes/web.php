@@ -3,9 +3,11 @@
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CartValidationController;
 use App\Http\Controllers\Catalog\CatalogController;
+use App\Http\Controllers\Catalog\ClientProfileController;
 use App\Http\Controllers\Catalog\InquiryController as PublicInquiryController;
 use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Middleware\EnsureClientProfileComplete;
 use App\Models\Inquiry;
 use App\Support\AuthRedirect;
 use Illuminate\Http\Request;
@@ -15,26 +17,29 @@ use Illuminate\Support\Facades\Route;
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // === Catálogo público ===
-Route::get('/', [CatalogController::class, 'home'])->name('home');
-Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
-Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
+// El cliente con cuenta web sin CI o teléfono va primero a completarlos.
+Route::middleware(EnsureClientProfileComplete::class)->group(function () {
+    Route::get('/', [CatalogController::class, 'home'])->name('home');
+    Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
+    Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
-// Carrito + checkout
-Route::inertia('/carrito', 'catalog/Cart')->name('cart.index');
+    // Carrito + checkout
+    Route::inertia('/carrito', 'catalog/Cart')->name('cart.index');
 
-// Favoritos (la lista vive en el localStorage del navegador)
-Route::inertia('/favoritos', 'catalog/Wishlist')->name('wishlist.index');
-Route::get('/carrito/gracias/{inquiry:public_token}', function (Inquiry $inquiry) {
-    $inquiry->load('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario');
+    // Favoritos (la lista vive en el localStorage del navegador)
+    Route::inertia('/favoritos', 'catalog/Wishlist')->name('wishlist.index');
+    Route::get('/carrito/gracias/{inquiry:public_token}', function (Inquiry $inquiry) {
+        $inquiry->load('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario');
 
-    return inertia('catalog/CartThanks', [
-        'inquiry' => [
-            'id' => $inquiry->id,
-            'total_estimated' => $inquiry->total_estimated,
-            'items' => $inquiry->items,
-        ],
-    ]);
-})->middleware('signed')->name('cart.thanks');
+        return inertia('catalog/CartThanks', [
+            'inquiry' => [
+                'id' => $inquiry->id,
+                'total_estimated' => $inquiry->total_estimated,
+                'items' => $inquiry->items,
+            ],
+        ]);
+    })->middleware('signed')->name('cart.thanks');
+});
 
 // Endpoints públicos para consultas
 Route::post('/consultas', [PublicInquiryController::class, 'store'])
@@ -62,6 +67,14 @@ Route::middleware('guest')->group(function () {
     Route::get('/login/google/callback', [GoogleAuthController::class, 'callback'])
         ->middleware('throttle:20,1')
         ->name('login.google.callback');
+});
+
+// Completar CI y teléfono del cliente (después de Google o del registro)
+Route::middleware('auth')->group(function () {
+    Route::get('/completar-datos', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
+    Route::put('/completar-datos', [ClientProfileController::class, 'update'])
+        ->middleware('throttle:10,1')
+        ->name('client-profile.update');
 });
 
 // Dashboard del starter -> redirige según el rol

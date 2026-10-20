@@ -1,5 +1,35 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Stage 1: Build frontend assets (Vite + Vue 3 + TypeScript)
+# Stage 1: Install PHP dependencies (no dev) and generate Wayfinder routes
+# ─────────────────────────────────────────────────────────────────────────────
+FROM composer:2.8 AS composer-deps
+
+WORKDIR /app
+
+COPY composer.json composer.lock ./
+
+# Sin scripts: el post-autoload-dump corre `artisan`, que todavia no esta.
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-progress \
+    --prefer-dist \
+    --no-scripts \
+    --no-autoloader \
+    --ignore-platform-reqs
+
+COPY . .
+
+# El frontend importa las rutas tipadas que genera Wayfinder desde el codigo
+# PHP. Se generan aca, donde hay PHP y la app completa; la etapa de Node solo
+# las copia (ver SKIP_WAYFINDER en vite.config.ts).
+RUN mkdir -p bootstrap/cache storage/framework/cache/data storage/framework/sessions \
+        storage/framework/views storage/logs \
+    && composer dump-autoload --optimize --no-dev --no-interaction \
+    && php artisan wayfinder:generate --with-form
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Stage 2: Build frontend assets (Vite + Vue 3 + TypeScript)
 # ─────────────────────────────────────────────────────────────────────────────
 FROM node:22-alpine AS frontend
 
@@ -14,29 +44,12 @@ RUN npm ci --prefer-offline
 COPY resources/    resources/
 COPY public/       public/
 COPY vite.config.ts tsconfig.json ./
-# Routes file needed by Wayfinder to generate typed routes
-COPY routes/       routes/
-COPY bootstrap/    bootstrap/
+COPY --from=composer-deps /app/resources/js/actions   resources/js/actions
+COPY --from=composer-deps /app/resources/js/routes    resources/js/routes
+COPY --from=composer-deps /app/resources/js/wayfinder resources/js/wayfinder
 
-RUN npm run build
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Stage 2: Install PHP dependencies (no dev)
-# ─────────────────────────────────────────────────────────────────────────────
-FROM composer:2.8 AS composer-deps
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-progress \
-    --prefer-dist \
-    --optimize-autoloader \
-    --ignore-platform-reqs
+# Necesita internet: el plugin de fuentes baja Instrument Sans de fonts.bunny.net.
+RUN SKIP_WAYFINDER=1 npm run build
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -92,10 +105,10 @@ WORKDIR /var/www/html
 # Copy application source (excluding items in .dockerignore)
 COPY --chown=www-data:www-data . .
 
-# Overwrite vendor with production-only install from stage 2
+# Overwrite vendor with production-only install from stage 1
 COPY --from=composer-deps --chown=www-data:www-data /app/vendor ./vendor
 
-# Overwrite public/build with compiled frontend from stage 1
+# Overwrite public/build with compiled frontend from stage 2
 COPY --from=frontend --chown=www-data:www-data /app/public/build ./public/build
 
 # ── Runtime configuration ────────────────────────────────────────────────────

@@ -186,7 +186,11 @@ export function useCart() {
                 return 0;
             }
 
-            const { removed }: { removed: number[] } = await res.json();
+            const {
+                removed,
+                prices,
+            }: { removed: number[]; prices?: Record<string, number> } =
+                await res.json();
 
             lastValidatedAt = Date.now();
 
@@ -195,6 +199,20 @@ export function useCart() {
                 items.value = items.value.filter(
                     (i) => !removed.includes(i.product_id),
                 );
+            }
+
+            // Los precios del carrito quedaron guardados en el navegador con
+            // la cotización del día en que se agregó el producto. El servidor
+            // manda la de hoy y el carrito la adopta, así el total que el
+            // cliente ve es el que se va a registrar en la consulta.
+            if (prices) {
+                items.value = items.value.map((item) => {
+                    const fresh = prices[String(item.product_id)];
+
+                    return fresh !== undefined && fresh !== item.price
+                        ? { ...item, price: fresh }
+                        : item;
+                });
             }
 
             return removed.length;

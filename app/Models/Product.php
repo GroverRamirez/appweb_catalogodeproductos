@@ -82,6 +82,21 @@ class Product extends Model
             }
         });
 
+        // El alt de cada imagen se guarda como copia del nombre del producto al
+        // subirla. Sin esto, renombrar el producto deja el nombre viejo servido
+        // al público —a lectores de pantalla y a Google— para siempre. Solo se
+        // reescriben los alt que son exactamente el nombre anterior: si alguien
+        // escribió uno a mano, es intencional y no se pisa.
+        static::updated(function (Product $product) {
+            if (! $product->wasChanged('nombre')) {
+                return;
+            }
+
+            ProductImage::where('producto_id', $product->id)
+                ->where('texto_alternativo', $product->getOriginal('nombre'))
+                ->update(['texto_alternativo' => $product->nombre]);
+        });
+
         // Invalidar cache del dashboard cuando cambia el inventario o conteos.
         static::saved(fn () => DashboardController::flushCache());
         static::deleted(fn () => DashboardController::flushCache());

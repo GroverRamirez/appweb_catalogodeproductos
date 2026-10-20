@@ -35,6 +35,14 @@ return [
         ],
     ],
 
+    // Cotizacion oficial del dolar publicada por el BCB. La API es publica y no
+    // pide clave; si el servidor no tiene salida a internet, la tarea diaria
+    // falla sin ruido y queda vigente la ultima cotizacion cargada.
+    'bcb' => [
+        'url' => env('BCB_TC_URL', 'https://apibcb.cucu.bo/api/v1/tc/oficial'),
+        'timeout' => (int) env('BCB_TC_TIMEOUT', 10),
+    ],
+
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),

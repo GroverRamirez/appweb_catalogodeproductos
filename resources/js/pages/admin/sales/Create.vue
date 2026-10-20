@@ -254,9 +254,6 @@ const submit = () => form.post('/admin/sales');
                     <div class="space-y-1.5">
                         <Label for="id_card">
                             CI
-                            <span class="text-muted-foreground">
-                                (opcional)
-                            </span>
                         </Label>
                         <div class="relative">
                             <Input
@@ -303,9 +300,6 @@ const submit = () => form.post('/admin/sales');
                     <div class="space-y-1.5">
                         <Label for="customer_name">
                             Cliente
-                            <span class="text-muted-foreground">
-                                (opcional)
-                            </span>
                         </Label>
                         <Input
                             id="customer_name"

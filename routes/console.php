@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\ProductView;
+use App\Services\ExchangeRate;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -25,10 +26,14 @@ Schedule::exec('/usr/local/bin/backup.sh')
     ->runInBackground();
 
 // Tipo de cambio oficial del dólar. El BCB publica a las 23:30 de cada día
-// hábil y esa cotización rige al día siguiente, así que se consulta a primera
-// hora. Si la consulta falla, la tienda sigue con la última cotización cargada.
+// hábil y esa cotización rige al día siguiente. En vez de una sola hora fija
+// (00:20, que se pierde si a esa hora la PC está apagada o el servidor
+// reiniciando) se intenta cada 30 minutos hasta lograr la del día; después la
+// condición la salta hasta mañana. Si la consulta falla, la tienda sigue con la
+// última cotización cargada y se reintenta en la siguiente vuelta.
 Schedule::command('tipo-cambio:actualizar')
-    ->dailyAt('00:20')
+    ->everyThirtyMinutes()
+    ->when(fn () => ! app(ExchangeRate::class)->checkedToday())
     ->withoutOverlapping();
 
 // Limpieza de jobs fallidos con más de 7 días, semanal.

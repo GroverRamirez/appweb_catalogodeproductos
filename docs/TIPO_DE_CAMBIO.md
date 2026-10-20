@@ -21,7 +21,12 @@ aunque el BCB publique otra cotización hoy.
 
 ## De dónde sale la cotización
 
-Una tarea diaria (00:20) consulta la API pública del BCB y guarda el valor:
+Una tarea programada consulta la API pública del BCB y guarda el valor. Corre
+cada 30 minutos hasta conseguir la cotización del día y después se salta hasta
+mañana, así no se pierde si la PC o el servidor estaban apagados a medianoche.
+Necesita el scheduler de Laravel: en Docker lo corre supervisord; en local,
+`composer run dev` levanta `php artisan schedule:work` junto al servidor.
+A mano:
 
 ```bash
 php artisan tipo-cambio:actualizar             # consulta al BCB
@@ -35,7 +40,7 @@ la última cotización cargada y la tienda sigue vendiendo.
 
 También se puede editar a mano en **Admin → Configuración → Tipo de cambio**.
 Al hacerlo, el sistema marca el origen como `manual` con su fecha, y la tarea
-diaria vuelve a ponerlo en `bcb` la próxima vez que corra.
+vuelve a ponerlo en `bcb` al día siguiente.
 
 El valor vigente se muestra en la barra superior del catálogo ("Tipo de cambio:
 12,02 Bs") y al lado de las migas del panel.

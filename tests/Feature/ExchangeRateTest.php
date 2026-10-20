@@ -43,6 +43,24 @@ test('the daily command stores the rate published by the central bank', function
         ->and(app(ExchangeRate::class)->source())->toBe('bcb');
 });
 
+test('the scheduled lookup is skipped once today already has a rate', function () {
+    // beforeEach acaba de guardar una cotizacion: hoy ya no hace falta consultar.
+    expect($this->rates->checkedToday())->toBeTrue();
+
+    // Al dia siguiente la tarea vuelve a intentar, aunque la PC haya estado
+    // apagada a la hora en que antes corria.
+    $this->travel(1)->days();
+    expect($this->rates->checkedToday())->toBeFalse();
+
+    Http::fake(['*' => Http::response('', 500)]);
+    $this->artisan('tipo-cambio:actualizar')->assertFailed();
+    expect($this->rates->checkedToday())->toBeFalse();
+
+    Http::fake(['*' => Http::response(bcbPayload(12.40, '2026-10-02'))]);
+    $this->artisan('tipo-cambio:actualizar')->assertSuccessful();
+    expect($this->rates->checkedToday())->toBeTrue();
+});
+
 test('a failed lookup leaves the last known rate in place', function () {
     // Sin red, la tienda tiene que seguir vendiendo con la ultima cotizacion:
     // una vitrina en cero seria peor que una cotizacion de ayer.

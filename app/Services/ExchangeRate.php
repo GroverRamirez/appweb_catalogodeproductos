@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -27,6 +28,9 @@ class ExchangeRate
     private const MIN = 1.0;
 
     private const MAX = 100.0;
+
+    /** Fecha (Y-m-d) del ultimo dia en que ya se cargo una cotizacion. */
+    private const CHECKED_KEY = 'tipo-cambio:consultado';
 
     /** Metadatos de las settings, para no perder etiqueta ni grupo al escribir. */
     private const KEYS = [
@@ -90,6 +94,19 @@ class ExchangeRate
         $this->put('exchange_rate', (string) $rate);
         $this->put('exchange_rate_source', $source);
         $this->put('exchange_rate_updated_at', $date ?? now()->toDateTimeString());
+
+        // Marca el dia como resuelto para que la tarea programada no vuelva a
+        // consultar hasta mañana. No sirve `exchange_rate_updated_at` para
+        // esto: el fin de semana el BCB sigue publicando con la fecha del
+        // viernes y la tarea consultaria cada media hora sin necesidad. Un
+        // ajuste manual tambien cuenta, asi no lo pisa la consulta de la tarde.
+        Cache::put(self::CHECKED_KEY, now()->toDateString(), now()->endOfDay());
+    }
+
+    /** Si hoy ya se cargo una cotizacion (del BCB o a mano). */
+    public function checkedToday(): bool
+    {
+        return Cache::get(self::CHECKED_KEY) === now()->toDateString();
     }
 
     /**

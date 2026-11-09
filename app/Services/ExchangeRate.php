@@ -67,6 +67,26 @@ class ExchangeRate
     }
 
     /**
+     * Indica si una cotizacion nueva se aleja demasiado de la vigente.
+     *
+     * El rango de isSane() solo descarta basura; un valor plausible pero
+     * erroneo (50 en vez de 12,09) pasaria y cambiaria todos los precios en
+     * bolivianos de golpe. Por eso la tarea automatica compara contra la
+     * cotizacion vigente y rechaza saltos mayores a `services.bcb.max_change`.
+     */
+    public function exceedsMaxChange(float $rate): bool
+    {
+        $max = (float) config('services.bcb.max_change', 0.05);
+        $current = $this->current();
+
+        if ($max <= 0 || $current <= 0) {
+            return false;
+        }
+
+        return abs($rate - $current) / $current > $max;
+    }
+
+    /**
      * Dolares a bolivianos. El `$rate` explicito es el congelado en un
      * documento: sin el, un recibo reimpreso el mes que viene mostraria otro
      * total.

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Client extends Model
 {
@@ -249,6 +250,18 @@ class Client extends Model
                 throw new \DomainException('El teléfono ya es de otra cuenta.');
             }
 
+            // El teléfono se averigua fácil (está en WhatsApp, en una tarjeta):
+            // si la ficha de mostrador con ese teléfono ya tiene un CI y no es
+            // el que escribió la persona, no se une sola. Sin este control,
+            // cualquiera se quedaba con las ventas de otro cliente escribiendo
+            // su número; el staff lo resuelve a mano.
+            if ($phoneOwner
+                && $phoneOwner->user_id === null
+                && $phoneOwner->id_card !== null
+                && $phoneOwner->id_card !== $idCard) {
+                throw new \DomainException('El teléfono es de una ficha con otro CI.');
+            }
+
             $client = static::withTrashed()->where('user_id', $user->id)->first()
                 ?? $phoneOwner
                 ?? static::withTrashed()
@@ -259,6 +272,13 @@ class Client extends Model
                 ?? new static(['name' => $user->name, 'email' => $user->email]);
 
             if ($phoneOwner && $client->exists && $phoneOwner->id !== $client->id) {
+                // Rastro para el staff: una union mueve ventas y consultas.
+                Log::info('Ficha de mostrador unida a una cuenta web', [
+                    'cuenta' => $user->id,
+                    'ficha_unida' => $phoneOwner->id,
+                    'ficha_destino' => $client->id,
+                ]);
+
                 Sale::where('cliente_id', $phoneOwner->id)->update(['cliente_id' => $client->id]);
                 Inquiry::where('cliente_id', $phoneOwner->id)->update(['cliente_id' => $client->id]);
 

@@ -82,7 +82,8 @@ test('enlaza la ficha de mostrador que ya tenía ese CI', function () {
 test('si el teléfono es de una ficha de mostrador, se unen en una sola', function () {
     $user = clienteWeb();
     $propia = Client::factory()->create(['user_id' => $user->id, 'carnet_identidad' => null, 'telefono' => null]);
-    $mostrador = Client::factory()->create(['telefono' => '73333333']);
+    // Ficha de mostrador sin CI (venta al paso): no hay con qué contradecir.
+    $mostrador = Client::factory()->create(['telefono' => '73333333', 'carnet_identidad' => null]);
     $venta = Sale::factory()->create(['cliente_id' => $mostrador->id]);
 
     $this->actingAs($user)
@@ -92,6 +93,34 @@ test('si el teléfono es de una ficha de mostrador, se unen en una sola', functi
     expect($propia->fresh()->phone)->toBe('73333333')
         ->and($venta->fresh()->client_id)->toBe($propia->id)
         ->and($mostrador->fresh()->trashed())->toBeTrue();
+});
+
+test('no une una ficha de mostrador cuyo CI no coincide', function () {
+    // Escribir el teléfono de otro cliente no alcanza para quedarse con sus
+    // ventas: esa ficha ya tiene un CI distinto.
+    $user = clienteWeb();
+    $ajena = Client::factory()->create(['telefono' => '73333333', 'carnet_identidad' => '4444444']);
+    $venta = Sale::factory()->create(['cliente_id' => $ajena->id]);
+
+    $this->actingAs($user)
+        ->put(route('client-profile.update'), ['id_card' => '5555555', 'phone' => '73333333'])
+        ->assertSessionHasErrors('phone');
+
+    expect($ajena->fresh()->user_id)->toBeNull()
+        ->and($ajena->fresh()->trashed())->toBeFalse()
+        ->and($venta->fresh()->client_id)->toBe($ajena->id);
+});
+
+test('con el mismo CI y teléfono sí se une la ficha de mostrador', function () {
+    $user = clienteWeb();
+    $mostrador = Client::factory()->create(['telefono' => '73333333', 'carnet_identidad' => '5555555']);
+
+    $this->actingAs($user)
+        ->put(route('client-profile.update'), ['id_card' => '5555555', 'phone' => '73333333'])
+        ->assertSessionHasNoErrors();
+
+    expect($mostrador->fresh()->user_id)->toBe($user->id)
+        ->and(Client::count())->toBe(1);
 });
 
 test('no deja usar el teléfono de otra cuenta', function () {

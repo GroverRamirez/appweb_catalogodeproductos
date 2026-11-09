@@ -5,10 +5,12 @@ use App\Models\Product;
 use App\Models\Sale;
 use App\Models\Setting;
 use App\Models\User;
+use App\Notifications\ExchangeRateRejectedNotification;
 use App\Services\ExchangeRate;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
 
@@ -52,11 +54,15 @@ test('the scheduled lookup is skipped once today already has a rate', function (
     $this->travel(1)->days();
     expect($this->rates->checkedToday())->toBeFalse();
 
-    Http::fake(['*' => Http::response('', 500)]);
+    // Una sola secuencia: un segundo Http::fake('*') no reemplaza al primero,
+    // el primer stub que coincide sigue respondiendo 500.
+    Http::fake(['*' => Http::sequence()
+        ->push('', 500)
+        ->push(bcbPayload(12.40, '2026-10-02'))]);
+
     $this->artisan('tipo-cambio:actualizar')->assertFailed();
     expect($this->rates->checkedToday())->toBeFalse();
 
-    Http::fake(['*' => Http::response(bcbPayload(12.40, '2026-10-02'))]);
     $this->artisan('tipo-cambio:actualizar')->assertSuccessful();
     expect($this->rates->checkedToday())->toBeTrue();
 });
@@ -77,6 +83,37 @@ test('an absurd rate from the api is rejected', function () {
     $this->artisan('tipo-cambio:actualizar')->assertFailed();
 
     expect(app(ExchangeRate::class)->current())->toBe(12.02);
+});
+
+test('a rate too far from the current one is rejected and the store is warned once', function () {
+    // Un valor plausible pero erroneo (50 en vez de ~12) cambiaria todos los
+    // precios en bolivianos de golpe: la tarea lo rechaza y avisa una vez.
+    Notification::fake();
+    Setting::set('email_contact', 'dueno@tienda.bo');
+    Http::fake(['*' => Http::response(bcbPayload(50.00, '2026-10-02'))]);
+
+    $this->artisan('tipo-cambio:actualizar')->assertFailed();
+    $this->artisan('tipo-cambio:actualizar')->assertFailed();
+
+    expect(app(ExchangeRate::class)->current())->toBe(12.02)
+        ->and($this->rates->checkedToday())->toBeTrue();
+
+    Notification::assertSentOnDemandTimes(ExchangeRateRejectedNotification::class, 1);
+});
+
+test('a normal daily move is accepted', function () {
+    // 12,02 -> 12,50 es un 4 %: dentro del margen por defecto (5 %).
+    Http::fake(['*' => Http::response(bcbPayload(12.50, '2026-10-02'))]);
+
+    $this->artisan('tipo-cambio:actualizar')->assertSuccessful();
+
+    expect(app(ExchangeRate::class)->current())->toBe(12.5);
+});
+
+test('a big move can still be fixed by hand', function () {
+    $this->artisan('tipo-cambio:actualizar', ['--valor' => '15'])->assertSuccessful();
+
+    expect(app(ExchangeRate::class)->current())->toBe(15.0);
 });
 
 test('the rate can be fixed by hand from the command', function () {

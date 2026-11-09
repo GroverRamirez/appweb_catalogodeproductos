@@ -1,10 +1,13 @@
 <?php
 
+use App\Models\Client;
 use App\Models\Coupon;
 use App\Models\Inquiry;
 use App\Models\InquiryItem;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\ExchangeRate;
+use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 beforeEach(function () {
@@ -372,4 +375,21 @@ test('validateCoupon fails validation when subtotal is missing', function () {
         'code' => 'ANY',
     ])->assertUnprocessable()
         ->assertJsonValidationErrors('subtotal');
+});
+
+test('checkout with someone else phone does not link the account to that client', function () {
+    // La consulta queda en la ficha del teléfono, pero la cuenta no se
+    // apropia de esa ficha (ni de sus ventas) solo por escribir el número.
+    $this->seed(RoleSeeder::class);
+    $user = User::factory()->create();
+    $user->assignRole('cliente');
+    $ajena = Client::factory()->create(['telefono' => '51912345678']);
+    $product = Product::factory()->create(['activo' => true, 'precio' => 10]);
+
+    $this->actingAs($user)
+        ->post(route('public.checkout'), validCheckoutPayload([$product]))
+        ->assertRedirect();
+
+    expect($ajena->fresh()->user_id)->toBeNull()
+        ->and(Inquiry::first()->client_id)->toBe($ajena->id);
 });

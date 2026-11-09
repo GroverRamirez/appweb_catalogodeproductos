@@ -41,6 +41,10 @@ return [
     'bcb' => [
         'url' => env('BCB_TC_URL', 'https://apibcb.cucu.bo/api/v1/tc/oficial'),
         'timeout' => (int) env('BCB_TC_TIMEOUT', 10),
+        // Variacion maxima aceptada entre dos cotizaciones automaticas (0.05 =
+        // 5 %). Un salto mayor se rechaza y se avisa: es mas probable un error
+        // de la fuente que una devaluacion de un dia para otro.
+        'max_change' => (float) env('BCB_TC_MAX_CHANGE', 0.05),
     ],
 
     'google' => [

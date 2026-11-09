@@ -49,7 +49,7 @@ class ClientProfileController extends Controller
             Client::completeForUser($user, $data['id_card'], $data['phone']);
         } catch (\DomainException) {
             throw ValidationException::withMessages([
-                'phone' => 'Ese teléfono ya está registrado en otra cuenta. Si es tuyo, contáctanos.',
+                'phone' => 'Ese teléfono ya está registrado con otros datos. Si es tuyo, contáctanos.',
             ]);
         }
 

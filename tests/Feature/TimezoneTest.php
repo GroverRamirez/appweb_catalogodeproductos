@@ -22,6 +22,7 @@ test('the exchange rate is fetched after the BCB publishes, in local time', func
 
     $next = Carbon::instance($event->nextRunDate(Carbon::parse('2026-10-07 23:31', 'America/La_Paz')));
 
-    // El BCB publica a las 23:30 hora boliviana; la consulta tiene que caer despues.
-    expect($next->timezone('America/La_Paz')->format('Y-m-d H:i'))->toBe('2026-10-08 00:20');
+    // El BCB publica a las 23:30 hora boliviana; la tarea corre cada media hora
+    // en hora local, asi que la primera vuelta despues de publicar es 00:00.
+    expect($next->timezone('America/La_Paz')->format('Y-m-d H:i'))->toBe('2026-10-08 00:00');
 });

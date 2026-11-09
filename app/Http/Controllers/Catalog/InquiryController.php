@@ -169,9 +169,8 @@ class InquiryController extends Controller
      * Identifica al cliente detrás de una consulta del catálogo.
      *
      * Si viene logueado, su cuenta manda: se busca el cliente ya enlazado a ese
-     * usuario. Si no lo hay, se cae al teléfono, de modo que quien ya compró en
-     * la tienda y después se registra en la web queda como UN cliente y no dos;
-     * en ese caso se aprovecha para enlazar la cuenta a la ficha existente.
+     * usuario. Si no lo hay, se cae al teléfono, de modo que la consulta queda
+     * en la ficha de quien ya compró en la tienda (sin enlazarle la cuenta).
      *
      * @param  array<string, mixed>  $data
      */
@@ -185,19 +184,16 @@ class InquiryController extends Controller
             }
         }
 
-        $client = Client::resolveByPhone($data['customer_phone'] ?? null, [
+        // La consulta queda en la ficha de ese teléfono, pero la cuenta NO se
+        // enlaza a una ficha existente solo porque coincide el número:
+        // cualquiera podría escribir el teléfono de otro. El enlace se hace
+        // en "Completa tus datos" (Client::completeForUser), que además
+        // compara el CI.
+        return Client::resolveByPhone($data['customer_phone'] ?? null, [
             'name' => $data['customer_name'],
             'email' => $data['customer_email'] ?? null,
             'user_id' => $user?->id,
         ]);
-
-        // El cliente ya existía de una compra en tienda y ahora entró con su
-        // cuenta: se enlazan, en vez de dejar dos identidades del mismo humano.
-        if ($client && $user && $client->user_id === null) {
-            $client->update(['user_id' => $user->id]);
-        }
-
-        return $client;
     }
 
     public function validateCoupon(ValidateCouponRequest $request): JsonResponse

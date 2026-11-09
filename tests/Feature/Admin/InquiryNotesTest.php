@@ -117,6 +117,27 @@ test('the csv export carries the note history', function () {
     expect(strpos($csv, 'Llamé y quedó'))->toBeLessThan(strpos($csv, 'Pasó y se llevó'));
 });
 
+test('the csv export neutralizes formulas typed in the public form', function () {
+    // El nombre y el mensaje llegan del catalogo publico: una celda que empieza
+    // con = se ejecutaria como formula al abrir el CSV en Excel.
+    Inquiry::create([
+        'customer_name' => '=HYPERLINK("http://malo.example","clic")',
+        'customer_phone' => '+59170000001',
+        'customer_email' => '@evil',
+        'status' => 'pendiente',
+        'source' => 'web',
+    ]);
+
+    $csv = $this->actingAs($this->vendedor)
+        ->get(route('admin.inquiries.export'))
+        ->assertOk()
+        ->streamedContent();
+
+    expect($csv)->toContain('"\'=HYPERLINK(')
+        ->and($csv)->toContain("'@evil")
+        ->and($csv)->not->toContain(',"=HYPERLINK(');
+});
+
 test('inquiry detail page includes the notes with their author', function () {
     $this->inquiry->notes()->create([
         'user_id' => $this->vendedor->id,

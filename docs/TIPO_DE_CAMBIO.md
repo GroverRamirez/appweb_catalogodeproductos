@@ -38,6 +38,14 @@ El endpoint se configura con `BCB_TC_URL` (por defecto
 falla —sin internet, API caída, valor absurdo— **no pasa nada**: queda vigente
 la última cotización cargada y la tienda sigue vendiendo.
 
+La tarea también rechaza una cotización que se aleje más de un 5 % de la
+vigente (`BCB_TC_MAX_CHANGE=0.05`): es más probable un error de la fuente que
+una devaluación de un día para otro. En ese caso queda la vigente, se registra
+un aviso en el log y se manda un email (uno por día) al correo de contacto de
+Configuración. Si el salto es real, se fija a mano con `--valor` o desde el
+panel. Ojo: `apibcb.cucu.bo` no es un dominio del BCB (bcb.gob.bo); este límite
+acota el daño si esa fuente devolviera un valor equivocado.
+
 También se puede editar a mano en **Admin → Configuración → Tipo de cambio**.
 Al hacerlo, el sistema marca el origen como `manual` con su fecha, y la tarea
 vuelve a ponerlo en `bcb` al día siguiente.

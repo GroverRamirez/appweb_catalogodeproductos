@@ -284,7 +284,9 @@ class InquiryController extends Controller
         ];
 
         $rows = function () use ($query) {
-            foreach ($query->cursor() as $inq) {
+            // lazy() y no cursor(): cursor() ignora el with() y cargaba items
+            // y notas con una consulta por fila.
+            foreach ($query->lazy(200) as $inq) {
                 $items = $inq->items
                     ->map(fn ($i) => "{$i->quantity}x {$i->product_name_snapshot} ({$i->product_code_snapshot})")
                     ->implode(' | ');

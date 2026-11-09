@@ -28,8 +28,8 @@ npx eslint <archivo>         # lint frontend
 vendor/bin/pint --dirty      # formatear PHP modificado
 ```
 
-Servidor local del usuario: `php artisan serve` en el puerto 8000 (suele estar
-corriendo). Para previews usar otro puerto (`.claude/launch.json` usa 8010).
+Servidor local del usuario: `composer run dev` (`php artisan serve` en el puerto
+8020, ver `APP_URL` del `.env`; suele estar corriendo). Para previews usar otro puerto (`.claude/launch.json` usa 8010).
 
 ## Reglas del proyecto
 

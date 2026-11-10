@@ -28,10 +28,22 @@ if [[ -n "${DB_HOST:-}" ]]; then
     log "Waiting for MySQL at ${DB_HOST}:${DB_PORT:-3306}..."
     MAX_TRIES=30
     COUNT=0
-    until php -r "
-        \$conn = @new mysqli('${DB_HOST}', '${DB_USERNAME:-root}', '${DB_PASSWORD:-}', '', ${DB_PORT:-3306});
-        exit(\$conn->connect_errno ? 1 : 0);
-    " 2>/dev/null; do
+    # Con PDO (pdo_mysql), que es la extension que trae la imagen: mysqli no
+    # esta instalada y con ella la espera fallaba siempre. Los datos se leen
+    # con getenv para no meter la contrasena dentro del codigo PHP.
+    until php -r '
+        try {
+            new PDO(
+                "mysql:host=" . getenv("DB_HOST") . ";port=" . (getenv("DB_PORT") ?: "3306"),
+                getenv("DB_USERNAME") ?: "root",
+                getenv("DB_PASSWORD") ?: "",
+                [PDO::ATTR_TIMEOUT => 2]
+            );
+            exit(0);
+        } catch (Throwable $e) {
+            exit(1);
+        }
+    ' 2>/dev/null; do
         COUNT=$((COUNT+1))
         if [ "$COUNT" -ge "$MAX_TRIES" ]; then
             log "ERROR: MySQL not available after ${MAX_TRIES} attempts. Aborting."

@@ -7,7 +7,9 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+// En la imagen Docker el frontend se compila sin .env, asi que VITE_APP_NAME
+// llega vacio. El <title> inicial lo pone el servidor con APP_NAME.
+const appName = import.meta.env.VITE_APP_NAME || document.title || 'PC Store Pro';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),

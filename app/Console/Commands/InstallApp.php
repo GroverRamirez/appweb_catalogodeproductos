@@ -75,7 +75,7 @@ class InstallApp extends Command
             if ($datos !== null) {
                 $this->crearPropietario($datos);
             } elseif (AdminGuard::ownerCount() === 0) {
-                $this->warn('Todavia no hay propietario: volve a correr el comando con --datos.');
+                $this->warn('Todavia no hay propietario: vuelve a correr el comando con --datos.');
             }
 
             $this->avisarContactoFaltante();
@@ -144,7 +144,7 @@ class InstallApp extends Command
 
         $password = (string) $this->secret('Contrasena (minimo 8 caracteres)');
 
-        if ($password !== (string) $this->secret('Repeti la contrasena')) {
+        if ($password !== (string) $this->secret('Repite la contrasena')) {
             throw new \RuntimeException('Las dos contrasenas no coinciden.');
         }
 

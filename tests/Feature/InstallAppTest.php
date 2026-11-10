@@ -94,7 +94,7 @@ test('an invalid whatsapp number is rejected', function () {
 test('on a server it asks for the first owner instead of using demo users', function () {
     $this->artisan('app:instalar')
         ->expectsQuestion('Contrasena (minimo 8 caracteres)', 'clave-segura-1')
-        ->expectsQuestion('Repeti la contrasena', 'clave-segura-1')
+        ->expectsQuestion('Repite la contrasena', 'clave-segura-1')
         ->expectsQuestion('Nombre de la tienda', 'Compu Center')
         ->expectsQuestion('Nombre del propietario', 'Ana Rojas')
         ->expectsQuestion('Correo del propietario (es su usuario para entrar)', 'ana@tienda.bo')
@@ -114,7 +114,7 @@ test('on a server it asks for the first owner instead of using demo users', func
 test('mismatched passwords typed on the server create nobody', function () {
     $this->artisan('app:instalar')
         ->expectsQuestion('Contrasena (minimo 8 caracteres)', 'clave-segura-1')
-        ->expectsQuestion('Repeti la contrasena', 'otra-clave-22')
+        ->expectsQuestion('Repite la contrasena', 'otra-clave-22')
         ->assertFailed();
 
     expect(User::count())->toBe(0);

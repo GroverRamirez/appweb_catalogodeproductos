@@ -83,7 +83,11 @@ RUN apk add --no-cache \
         bash
 
 # ── PHP extensions ───────────────────────────────────────────────────────────
-RUN docker-php-ext-configure gd \
+# Las herramientas de compilacion (autoconf, gcc, make) se instalan aca y se
+# quitan al final. Sin esto docker-php-ext-install las borra al terminar y
+# `pecl install redis` falla porque ya no hay autoconf.
+RUN apk add --no-cache --virtual .phpize-deps $PHPIZE_DEPS \
+    && docker-php-ext-configure gd \
         --with-freetype \
         --with-jpeg \
         --with-webp \
@@ -97,7 +101,9 @@ RUN docker-php-ext-configure gd \
         opcache \
         intl \
     && pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis \
+    && rm -rf /tmp/pear \
+    && apk del .phpize-deps
 
 # ── App directory ────────────────────────────────────────────────────────────
 WORKDIR /var/www/html

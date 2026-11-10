@@ -5,6 +5,7 @@ use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\DatabaseBackup;
 use App\Services\ExchangeRate;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,7 +82,12 @@ test('it requires the cutoff date', function () {
 });
 
 test('it aborts without writing when the backup cannot be made', function () {
-    // Los tests corren en SQLite: la copia desde la app solo funciona en MySQL.
+    // Se fuerza el fallo: con SQLite en memoria la copia falla sola, pero en el
+    // CI con MySQL 8 mysqldump si funciona y el comando seguia adelante.
+    $this->mock(DatabaseBackup::class, function ($mock) {
+        $mock->shouldReceive('create')->andThrow(new RuntimeException('mysqldump no disponible'));
+    });
+
     $purchase = bsPurchase('2026-09-08', 490, 3);
 
     $this->artisan('compras:convertir-a-usd', ['--antes' => '2026-10-06'])

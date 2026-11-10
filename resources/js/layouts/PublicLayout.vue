@@ -686,6 +686,12 @@ useReveal();
                     <span>
                         © {{ new Date().getFullYear() }} {{ store.name }}.
                         {{ t('rights_reserved') }}
+                        <Link href="/privacidad" class="ml-3 hover:text-white"
+                            >Privacidad</Link
+                        >
+                        <Link href="/terminos" class="ml-3 hover:text-white"
+                            >Términos</Link
+                        >
                     </span>
                     <span v-if="store.exchange_rate" class="tabular">
                         Precios en Bs · TC

@@ -41,6 +41,10 @@ Route::middleware(EnsureClientProfileComplete::class)->group(function () {
     })->middleware('signed')->name('cart.thanks');
 });
 
+// Páginas legales (Google las pide para publicar el inicio de sesión)
+Route::inertia('/privacidad', 'catalog/Legal', ['page' => 'privacidad'])->name('legal.privacy');
+Route::inertia('/terminos', 'catalog/Legal', ['page' => 'terminos'])->name('legal.terms');
+
 // Endpoints públicos para consultas
 Route::post('/consultas', [PublicInquiryController::class, 'store'])
     ->middleware('throttle:10,1')

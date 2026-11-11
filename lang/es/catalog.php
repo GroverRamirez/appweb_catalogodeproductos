@@ -19,6 +19,7 @@ return [
     // Secciones home
     'categories' => 'Categorías',
     'see_all' => 'Ver todas',
+    'explore' => 'Explorar',
     'featured_products' => 'Productos destacados',
     'see_more' => 'Ver más',
     'newest' => 'Recién agregados',

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class Category extends Model
@@ -70,8 +71,9 @@ class Category extends Model
     }
 
     // Cache key version — bump this suffix if the stored shape changes.
-    private const CACHE_HOME = 'catalog.categories.home.v2';
-    private const CACHE_ALL  = 'catalog.categories.all.v2';
+    private const CACHE_HOME = 'catalog.categories.home.v3';
+
+    private const CACHE_ALL = 'catalog.categories.all.v2';
 
     public static function flushCache(): void
     {
@@ -88,30 +90,88 @@ class Category extends Model
      */
     public static function cachedHomeRoots(): array
     {
-        $data = Cache::remember(self::CACHE_HOME, now()->addHours(6), function () {
-            return static::query()
-                ->whereNull('categoria_padre_id')
-                ->active()
-                ->orderBy('orden')
-                ->take(6)
-                ->get(['id', 'nombre', 'slug', 'imagen'])
-                ->toArray();
-        });
+        $data = Cache::remember(self::CACHE_HOME, now()->addHours(6), fn () => static::buildHomeRoots());
 
         // Guard: if a stale non-array entry somehow slipped in, regenerate.
         if (! is_array($data)) {
             Cache::forget(self::CACHE_HOME);
-            $data = static::query()
-                ->whereNull('categoria_padre_id')
-                ->active()
-                ->orderBy('orden')
-                ->take(6)
-                ->get(['id', 'nombre', 'slug', 'imagen'])
-                ->toArray();
+            $data = static::buildHomeRoots();
             Cache::put(self::CACHE_HOME, $data, now()->addHours(6));
         }
 
         return $data;
+    }
+
+    /**
+     * Arma las tarjetas de categoría de la portada.
+     *
+     * Cada tarjeta viaja con una imagen y con cuántos productos tiene. Manda la
+     * imagen propia de la categoría; si no hay, se usa la foto de uno de sus
+     * productos, porque una vitrina de categorías sin fotos no invita a entrar.
+     * Las subcategorías suman a su raíz: es lo mismo que hace el filtro del
+     * catálogo cuando alguien hace clic en la tarjeta.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private static function buildHomeRoots(): array
+    {
+        $roots = static::query()
+            ->whereNull('categoria_padre_id')
+            ->active()
+            ->orderBy('orden')
+            ->take(6)
+            ->get(['id', 'nombre', 'slug', 'imagen'])
+            ->toArray();
+
+        if ($roots === []) {
+            return [];
+        }
+
+        $rootIds = array_column($roots, 'id');
+
+        // id de subcategoría => id de su raíz
+        $childToRoot = static::query()
+            ->whereIn('categoria_padre_id', $rootIds)
+            ->active()
+            ->pluck('categoria_padre_id', 'id')
+            ->all();
+
+        $familyIds = array_merge($rootIds, array_keys($childToRoot));
+        $rootOf = fn (int $categoryId) => (int) ($childToRoot[$categoryId] ?? $categoryId);
+
+        $counts = [];
+
+        foreach (DB::table('productos')
+            ->selectRaw('categoria_id, COUNT(*) as total')
+            ->whereIn('categoria_id', $familyIds)
+            ->where('activo', true)
+            ->whereNull('deleted_at')
+            ->groupBy('categoria_id')
+            ->get() as $row) {
+            $root = $rootOf((int) $row->categoria_id);
+            $counts[$root] = ($counts[$root] ?? 0) + (int) $row->total;
+        }
+
+        // Una sola pasada por las fotos: gana la principal del producto más
+        // visto, y la primera que llega para cada raíz se queda.
+        $images = [];
+
+        foreach (DB::table('producto_imagenes as pi')
+            ->join('productos as p', 'p.id', '=', 'pi.producto_id')
+            ->whereIn('p.categoria_id', $familyIds)
+            ->where('p.activo', true)
+            ->whereNull('p.deleted_at')
+            ->orderByDesc('pi.principal')
+            ->orderByDesc('p.visitas')
+            ->get(['p.categoria_id', 'pi.ruta']) as $row) {
+            $root = $rootOf((int) $row->categoria_id);
+            $images[$root] ??= $row->ruta;
+        }
+
+        return array_map(fn (array $root) => $root + [
+            'product_image' => $images[$root['id']] ?? null,
+            'products_count' => $counts[$root['id']] ?? 0,
+        ], $roots);
     }
 
     /**

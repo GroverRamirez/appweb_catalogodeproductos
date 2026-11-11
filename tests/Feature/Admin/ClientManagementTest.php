@@ -131,6 +131,43 @@ test('no se puede registrar dos clientes con el mismo telefono', function () {
     expect(Client::count())->toBe(1);
 });
 
+test('registrar el telefono de un cliente dado de baja reactiva su ficha', function () {
+    // El indice unico de MySQL no entiende de soft deletes, pero la validacion
+    // si los ignora: sin el camino de resolveByPhone, este alta pasaba la
+    // validacion y reventaba en el INSERT.
+    $baja = Client::factory()->create([
+        'nombre' => 'Ana Peñaloza',
+        'telefono' => '70123456',
+        'email' => 'viejo@correo.com',
+    ]);
+    $baja->delete();
+
+    $this->actingAs($this->owner)
+        ->post(route('admin.clients.store'), [
+            'name' => 'Ana Lia Peñaloza',
+            'phone' => '70123456',
+            'email' => 'nuevo@correo.com',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertRedirect(route('admin.clients.show', $baja));
+
+    // Es la misma ficha, reactivada y con los datos recien cargados.
+    expect(Client::withTrashed()->count())->toBe(1);
+
+    $reactivado = $baja->fresh();
+    expect($reactivado->trashed())->toBeFalse();
+    expect($reactivado->name)->toBe('Ana Lia Peñaloza');
+    expect($reactivado->email)->toBe('nuevo@correo.com');
+});
+
+test('un cliente sin telefono se registra igual', function () {
+    $this->actingAs($this->owner)
+        ->post(route('admin.clients.store'), ['name' => 'Consumidor sin datos'])
+        ->assertSessionHasNoErrors();
+
+    expect(Client::where('nombre', 'Consumidor sin datos')->exists())->toBeTrue();
+});
+
 test('la ficha del cliente muestra su historial y lo gastado', function () {
     $client = Client::factory()->create();
 

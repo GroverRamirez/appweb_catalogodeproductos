@@ -58,7 +58,7 @@ class AddSecurityHeaders
     {
         // Fuentes: la app usa Plus Jakarta Sans (Google) e Instrument Sans (Bunny)
         $styleFontOrigins = 'https://fonts.bunny.net https://fonts.googleapis.com';
-        $fontFileOrigins  = 'https://fonts.bunny.net https://fonts.gstatic.com';
+        $fontFileOrigins = 'https://fonts.bunny.net https://fonts.gstatic.com';
 
         $directives = [
             // Fuente por defecto: solo mismo origen

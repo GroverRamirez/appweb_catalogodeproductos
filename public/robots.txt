@@ -1,7 +1,14 @@
 User-agent: *
 Disallow: /admin
 Disallow: /dashboard
+Disallow: /settings
 Disallow: /carrito
+Disallow: /favoritos
 Disallow: /consultas
 Disallow: /checkout
-Sitemap: /sitemap.xml
+Disallow: /cupones
+Disallow: /completar-datos
+Disallow: /login/google
+Disallow: /locale/
+
+Sitemap: https://pcstorepro.tech/sitemap.xml

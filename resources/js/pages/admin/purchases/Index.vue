@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { Eye, PackagePlus, Plus, Search } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/catalog';
-import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({
     layout: () => ({
@@ -26,7 +25,11 @@ type PurchaseRow = {
     total_cost: string;
     items_count: number;
     created_at: string;
-    supplier: { id: number; name: string } | null;
+    supplier: {
+        id: number;
+        name: string;
+        contact_name: string | null;
+    } | null;
 };
 
 const props = defineProps<{
@@ -40,9 +43,8 @@ const props = defineProps<{
     filters: { q?: string; status?: string };
 }>();
 
-const page = usePage();
-const store = computed(() => page.props.store as StoreSettings);
-const cur = (n: string) => formatPrice(n, store.value.currency_symbol);
+// Compras y costos se manejan en dólares, igual que la lista de precios.
+const cur = (n: string) => formatPrice(n, 'USD');
 
 const q = ref(props.filters.q ?? '');
 const status = ref(props.filters.status ?? '');
@@ -109,7 +111,7 @@ watch([q, status], () => {
                     class="bg-muted/50 text-left text-xs text-muted-foreground uppercase"
                 >
                     <tr>
-                        <th class="px-3 py-2">Referencia</th>
+                        <th class="px-3 py-2">N.º compra</th>
                         <th class="px-3 py-2">Proveedor</th>
                         <th class="px-3 py-2">Fecha</th>
                         <th class="px-3 py-2 text-right">Productos</th>
@@ -124,11 +126,26 @@ watch([q, status], () => {
                         :key="p.id"
                         class="hover:bg-muted/30"
                     >
-                        <td class="px-3 py-2 font-medium">
-                            {{ p.reference_number ?? `#${p.id}` }}
+                        <td class="px-3 py-2">
+                            <div class="font-medium">#{{ p.id }}</div>
+                            <div
+                                v-if="p.reference_number"
+                                class="text-xs text-muted-foreground"
+                            >
+                                Ref. prov.: {{ p.reference_number }}
+                            </div>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
-                            {{ p.supplier?.name ?? '—' }}
+                            <template v-if="p.supplier">
+                                <div>{{ p.supplier.name }}</div>
+                                <div
+                                    v-if="p.supplier.contact_name"
+                                    class="text-xs"
+                                >
+                                    {{ p.supplier.contact_name }}
+                                </div>
+                            </template>
+                            <template v-else>—</template>
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
                             {{ new Date(p.created_at).toLocaleDateString() }}

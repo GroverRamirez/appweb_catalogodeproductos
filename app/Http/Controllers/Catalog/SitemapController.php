@@ -33,15 +33,15 @@ class SitemapController extends Controller
 
         // Static pages
         $urls->push([
-            'loc'        => url('/'),
+            'loc' => url('/'),
             'changefreq' => 'daily',
-            'priority'   => '1.0',
+            'priority' => '1.0',
         ]);
 
         $urls->push([
-            'loc'        => url('/catalogo'),
+            'loc' => url('/catalogo'),
             'changefreq' => 'daily',
-            'priority'   => '0.9',
+            'priority' => '0.9',
         ]);
 
         // Categories — each filter page (/catalogo?category=slug)
@@ -51,10 +51,10 @@ class SitemapController extends Controller
             ->get(['slug', 'updated_at'])
             ->each(function ($cat) use ($urls) {
                 $urls->push([
-                    'loc'        => url('/catalogo').'?category='.$cat->slug,
-                    'lastmod'    => $cat->updated_at->toAtomString(),
+                    'loc' => url('/catalogo').'?category='.$cat->slug,
+                    'lastmod' => $cat->updated_at->toAtomString(),
                     'changefreq' => 'weekly',
-                    'priority'   => '0.7',
+                    'priority' => '0.7',
                 ]);
             });
 
@@ -65,10 +65,10 @@ class SitemapController extends Controller
             ->get(['slug', 'updated_at'])
             ->each(function ($product) use ($urls) {
                 $urls->push([
-                    'loc'        => url('/catalogo/'.$product->slug),
-                    'lastmod'    => $product->updated_at->toAtomString(),
+                    'loc' => url('/catalogo/'.$product->slug),
+                    'lastmod' => $product->updated_at->toAtomString(),
                     'changefreq' => 'weekly',
-                    'priority'   => '0.8',
+                    'priority' => '0.8',
                 ]);
             });
 

@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Policies\RolePolicy;
 use App\Support\AdminGuard;
 use Carbon\CarbonImmutable;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -59,9 +60,18 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         // Forzar HTTPS en todas las URLs generadas (url(), route(), asset(), etc.)
-        // Solo en producción para no romper el entorno local ni los tests.
-        if (app()->isProduction()) {
+        // Solo en producción para no romper el entorno local ni los tests. La
+        // versión instalable para Windows corre en producción pero sobre
+        // http://127.0.0.1, y la apaga con APP_FORCE_HTTPS=false.
+        if (app()->isProduction() && config('app.force_https')) {
             URL::forceScheme('https');
+        }
+
+        // En desarrollo la app también se abre desde otros equipos de la WiFi
+        // (http://IP-de-la-PC:8020): las imágenes subidas usan URLs relativas
+        // en vez de APP_URL, que apunta a localhost.
+        if (app()->environment('local') && ! app()->runningInConsole()) {
+            config(['filesystems.disks.public.url' => '/storage']);
         }
 
         // El frontend (Inertia/Vue) consume colecciones planas (featured.length,
@@ -105,7 +115,11 @@ class AppServiceProvider extends ServiceProvider
      */
     protected function configureInertiaErrors(): void
     {
-        Inertia::handleExceptionsUsing(function (ExceptionResponse $e): ?ExceptionResponse {
+        Inertia::handleExceptionsUsing(function (ExceptionResponse $e): mixed {
+            if ($redirect = $this->redirectBackWithError($e)) {
+                return $redirect;
+            }
+
             if (! ($e->exception instanceof HttpException)) {
                 return null;
             }
@@ -120,7 +134,50 @@ class AppServiceProvider extends ServiceProvider
 
             return $e
                 ->render('Error', ['status' => $status])
-                ->withSharedData();  // expone store{}, auth{} y flash{} al componente
+                ->withSharedData();  // expone store{} y auth{} al componente
         });
+    }
+
+    /**
+     * Cuando falla un envío de formulario (POST/PUT/PATCH/DELETE hecho por
+     * Inertia), lo mejor es dejar al usuario donde estaba, con lo que escribió,
+     * y avisarle con una notificación de error en vez de una página de error.
+     *
+     * Los errores inesperados (500) solo se ocultan con APP_DEBUG=false: en
+     * desarrollo conviene seguir viendo el detalle de la excepción.
+     */
+    protected function redirectBackWithError(ExceptionResponse $e): ?RedirectResponse
+    {
+        $request = $e->request;
+
+        if (! $request->header('X-Inertia') || $request->isMethod('GET')) {
+            return null;
+        }
+
+        $exception = $e->exception;
+
+        if (! ($exception instanceof HttpException)) {
+            return config('app.debug')
+                ? null
+                : back()->with('error', [
+                    'message' => 'No se pudo completar la operación.',
+                    'description' => 'Ocurrió un error inesperado y no se guardaron los cambios. Intenta de nuevo.',
+                ]);
+        }
+
+        $message = match ($exception->getStatusCode()) {
+            419 => [
+                'message' => 'Tu sesión expiró por inactividad.',
+                'description' => 'Vuelve a intentarlo; si el problema sigue, recarga la página.',
+            ],
+            403 => 'No tienes permiso para realizar esta acción.',
+            // abort(422, 'Esta venta ya está anulada.') y similares: el texto
+            // del abort ya está pensado para el usuario.
+            409, 422 => $exception->getMessage() ?: 'No se pudo completar la operación.',
+            429 => 'Demasiados intentos seguidos. Espera un momento y vuelve a intentarlo.',
+            default => null,
+        };
+
+        return $message === null ? null : back()->with('error', $message);
     }
 }

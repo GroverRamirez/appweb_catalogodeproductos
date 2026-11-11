@@ -31,6 +31,7 @@ class RoleSeeder extends Seeder
             'roles.view', 'roles.create', 'roles.update', 'roles.delete',
             'settings.view', 'settings.update',
             'reports.view',
+            'backups.manage',
         ];
 
         foreach ($permissions as $name) {

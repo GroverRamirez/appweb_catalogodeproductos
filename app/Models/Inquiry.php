@@ -27,8 +27,9 @@ class Inquiry extends Model
         'status',
         'total_estimated',
         'coupon_code',
+        'coupon_consumed',
         'discount_amount',
-        'admin_notes',
+        'exchange_rate',
         'handled_by',
         'contacted_at',
     ];
@@ -47,10 +48,11 @@ class Inquiry extends Model
             'message' => 'mensaje',
             'source' => 'origen',
             'status' => 'estado',
+            'exchange_rate' => 'tipo_cambio',
             'total_estimated' => 'total_estimado',
             'coupon_code' => 'cupon_codigo',
+            'coupon_consumed' => 'cupon_consumido',
             'discount_amount' => 'descuento_monto',
-            'admin_notes' => 'notas_admin',
             'handled_by' => 'atendido_por',
             'contacted_at' => 'contactado_en',
             'public_token' => 'token_publico',
@@ -74,6 +76,8 @@ class Inquiry extends Model
     {
         return [
             'total_estimado' => 'decimal:2',
+            'tipo_cambio' => 'decimal:4',
+            'cupon_consumido' => 'boolean',
             'descuento_monto' => 'decimal:2',
             'contactado_en' => 'datetime',
         ];
@@ -129,5 +133,37 @@ class Inquiry extends Model
     public function scopePending(Builder $query): Builder
     {
         return $query->where('estado', 'pendiente');
+    }
+
+    /**
+     * Devuelve al cupón el uso que esta consulta tenía tomado.
+     *
+     * El uso se consume en el checkout, cuando todavía no se sabe si el pedido
+     * va a terminar en venta. Si la consulta se cierra sin vender o se elimina,
+     * ese uso vuelve: de lo contrario un cupón con tope se agota con pedidos
+     * que nunca se concretaron.
+     *
+     * La bandera `cupon_consumido` es lo que hace idempotente la devolución:
+     * cerrar dos veces, o cerrar y después eliminar, devuelve un solo uso.
+     *
+     * El código y el monto del descuento se conservan —son lo que se le prometió
+     * al cliente y lo que usa la venta si la consulta se reabre y se vende—,
+     * pero reabrirla no vuelve a tomar el uso: una vez devuelto, queda libre.
+     */
+    public function releaseCoupon(): bool
+    {
+        if (! $this->coupon_consumed) {
+            return false;
+        }
+
+        $coupon = Coupon::where('codigo', $this->coupon_code)->lockForUpdate()->first();
+
+        if ($coupon && $coupon->used_count > 0) {
+            $coupon->decrement('usos_realizados');
+        }
+
+        $this->update(['coupon_consumed' => false]);
+
+        return true;
     }
 }

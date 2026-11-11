@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Support\AdminGuard;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,6 +50,12 @@ class ProfileController extends Controller
     public function destroy(ProfileDeleteRequest $request): RedirectResponse
     {
         $user = $request->user();
+
+        // El personal no borra su cuenta: sus ventas y compras perderían quién
+        // las hizo. El propietario la desactiva desde Usuarios.
+        if (AdminGuard::canAccessAdmin($user)) {
+            return back()->with('error', 'Las cuentas del personal no se eliminan. Pide al propietario que la desactive.');
+        }
 
         Auth::logout();
 

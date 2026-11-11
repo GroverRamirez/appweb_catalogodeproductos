@@ -4,6 +4,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductView;
+use App\Services\ExchangeRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -11,6 +12,9 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Estos tests verifican la logica en una sola moneda: con cotizacion 1
+    // un dolar vale un boliviano. La conversion la cubre ExchangeRateTest.
+    app(ExchangeRate::class)->store(1.0);
     // Limpiar cache entre tests para evitar que cachedAll/cachedHomeRoots
     // devuelvan datos de un test anterior.
     Cache::flush();
@@ -203,14 +207,39 @@ test('catalog index sets noindex when search filter is active', function () {
         );
 });
 
-test('catalog index sets noindex when category filter is active', function () {
-    $cat = Category::factory()->create();
+test('catalog index indexes a plain category landing with its own title and canonical', function () {
+    $cat = Category::factory()->create(['nombre' => 'Cámaras de Seguridad']);
     Cache::flush();
 
     $this->get(route('catalog.index', ['category' => $cat->slug]))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
+            ->where('seo.noindex', false)
+            ->where('seo.title', 'Cámaras de Seguridad')
+            ->where('seo.canonical', url('/catalogo').'?category='.$cat->slug)
+        );
+});
+
+test('catalog index sets noindex when the category is combined with another filter', function () {
+    $cat = Category::factory()->create();
+    Cache::flush();
+
+    $this->get(route('catalog.index', ['category' => $cat->slug, 'sort' => 'price_asc']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
             ->where('seo.noindex', true)
+            ->where('seo.canonical', url('/catalogo'))
+        );
+});
+
+test('catalog index sets noindex when the category slug does not exist', function () {
+    Cache::flush();
+
+    $this->get(route('catalog.index', ['category' => 'categoria-inexistente']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('seo.noindex', true)
+            ->where('seo.title', 'Catálogo')
         );
 });
 

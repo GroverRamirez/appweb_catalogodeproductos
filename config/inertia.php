@@ -16,7 +16,10 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // Apagado: resources/js/app.ts monta la app solo para el navegador
+        // (createApp + mount), asi que el render en el servidor fallaba con
+        // "window is not defined" y caia igual al navegador.
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

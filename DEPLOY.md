@@ -47,30 +47,33 @@ docker compose build
 docker compose up -d
 ```
 
+Construye siempre desde un clon limpio del repositorio en el servidor, no
+desde la carpeta de desarrollo. El build necesita internet: instala las
+dependencias y baja la fuente desde fonts.bunny.net.
+
 El `entrypoint.sh` se encarga automáticamente de:
 cachear config/rutas/vistas/eventos, correr `migrate --force` y `storage:link`.
 
-### Sembrar datos iniciales (solo la primera vez)
+### Primera instalación: roles, configuración y propietario
 
 ```bash
-docker compose exec app php artisan db:seed --force
+docker compose exec -u www-data app php artisan app:instalar
 ```
 
-Crea roles/permisos, settings, categorías, marcas y productos demo. **En una
-tienda real**, en vez del seeder de demo siembra solo lo imprescindible:
+Carga los roles con sus permisos y la configuración inicial, y pregunta los
+datos del propietario (nombre, correo, contraseña), el WhatsApp de la tienda
+y el correo donde llegan los avisos de consultas. La contraseña no se ve al
+escribirla ni queda en el historial. Es seguro repetirlo: si ya hay datos,
+solo aplica las migraciones pendientes y no pisa lo que el propietario
+cambió. Se corre como `www-data` para que los archivos que deja en
+`storage` y `bootstrap/cache` sean del mismo usuario que PHP-FPM.
 
-```bash
-docker compose exec app php artisan db:seed --class=RoleSeeder --force
-docker compose exec app php artisan db:seed --class=SettingsSeeder --force
-```
+> **No uses `db:seed` en producción.** El seeder completo es para
+> desarrollo: carga productos de ejemplo y usuarios de demostración con la
+> contraseña `password` (en producción `AdminUserSeeder` se salta solo).
 
-Luego crea tu usuario admin (Tinker):
-
-```bash
-docker compose exec app php artisan tinker
->>> $u = App\Models\User::create(['name'=>'Admin','email'=>'admin@tudominio.com','password'=>Hash::make('CAMBIA_ESTO')]);
->>> $u->assignRole('admin');
-```
+Después, en **Configuración**, revisa el nombre, la dirección, el logo y los
+datos de contacto antes de abrir la tienda.
 
 ---
 
@@ -82,12 +85,24 @@ Ejemplo mínimo con Caddy en el host:
 
 ```
 tu-dominio.com {
-    reverse_proxy localhost:80
+    reverse_proxy localhost:8080
 }
 ```
 
+Con `APP_PORT=127.0.0.1:8080` el contenedor solo escucha en el host y el
+proxy se queda con los puertos 80 y 443 (los necesita para el certificado).
+
 Con `APP_URL=https://...` y `URL::forceScheme('https')` (ya activo en
 producción), Laravel genera todas las URLs en https.
+
+**Proxies de confianza.** `TRUSTED_PROXIES` (ver `config/trustedproxy.php`)
+le dice a Laravel que crea en las cabeceras `X-Forwarded-*` del proxy. Sin
+ella, todos los visitantes comparten la IP del proxy (los límites de login y
+checkout se vuelven uno solo para todos), no se envía HSTS y la página de
+gracias del checkout, que usa una URL firmada, no valida. Con el proxy en el
+host y Docker, `TRUSTED_PROXIES=172.16.0.0/12`; usa `*` solo si el puerto de
+la app no es accesible desde internet. Agrega también
+`SESSION_SECURE_COOKIE=true`.
 
 ---
 
@@ -101,13 +116,16 @@ producción), Laravel genera todas las URLs en https.
 - [ ] SMTP real configurado y probado (consulta de prueba → llega el email)
 - [ ] Migraciones aplicadas (`docker compose exec app php artisan migrate:status`)
 - [ ] `storage:link` hecho (las imágenes de productos cargan en `/storage/...`)
-- [ ] Usuario admin creado y login funciona
+- [ ] Propietario creado con `app:instalar` y login funciona
+- [ ] WhatsApp, correo de contacto y dirección reales en Configuración (una consulta de prueba abre WhatsApp y llega el email)
+- [ ] `APP_TIMEZONE=America/La_Paz` (el "hoy" del panel y la hora de las tareas programadas)
 - [ ] Healthcheck en verde (`docker compose ps` → `healthy`)
 - [ ] `GET /up` responde 200
 - [ ] El catálogo público carga con productos e imágenes
 - [ ] Workers de cola activos (`docker compose exec app supervisorctl status`)
 - [ ] Backup manual probado y restaurable (ver §6)
 - [ ] Reverse proxy con TLS en marcha (candado en el navegador)
+- [ ] `TRUSTED_PROXIES` y `SESSION_SECURE_COOKIE=true` configurados (la respuesta trae `Strict-Transport-Security`)
 - [ ] DNS apuntando correctamente
 
 ### Verificación rápida post-deploy
@@ -134,6 +152,18 @@ scheduler. Se guardan en el volumen `storage_backups`
 docker compose exec app /usr/local/bin/backup.sh
 docker compose exec app ls -lh storage/backups
 ```
+
+### Backup desde el panel
+
+El propietario (o un rol con el permiso `backups.manage`) puede generar,
+descargar y eliminar copias de la base en **Configuración → Copias de
+seguridad** (`/admin/settings/backups`). Usa `mysqldump` y deja el archivo en
+la misma carpeta privada `storage/backups`, con el mismo formato
+`db_<base>_<fecha>.sql.gz`, así que se restaura igual que abajo. Restaurar desde
+la web no está permitido a propósito.
+
+En Laragon (Windows) `mysqldump.exe` se detecta solo; si no, indicar la ruta en
+`.env` con `MYSQLDUMP_PATH`.
 
 ### Copiar los backups fuera del servidor
 

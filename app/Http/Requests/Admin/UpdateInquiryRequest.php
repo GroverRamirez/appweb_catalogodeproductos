@@ -26,7 +26,6 @@ class UpdateInquiryRequest extends FormRequest
     {
         return [
             'status' => ['required', Rule::in(Inquiry::STATUSES)],
-            'admin_notes' => ['nullable', 'string'],
         ];
     }
 }

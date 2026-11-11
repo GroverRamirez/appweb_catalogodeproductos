@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import ProductCombobox from '@/components/admin/ProductCombobox.vue';
@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/catalog';
-import type { StoreSettings } from '@/lib/catalog';
 
 defineOptions({
     layout: () => ({
@@ -40,9 +39,8 @@ const supplierOptions = computed<ComboOption[]>(() =>
     })),
 );
 
-const page = usePage();
-const store = computed(() => page.props.store as StoreSettings);
-const cur = (n: number) => formatPrice(n, store.value.currency_symbol);
+// Compras y costos se manejan en dólares, igual que la lista de precios.
+const cur = (n: number) => formatPrice(n, 'USD');
 
 const form = useForm({
     supplier_id: null as number | null,
@@ -59,19 +57,36 @@ const form = useForm({
     ],
 });
 
-const addItem = () =>
+// Producto al que corresponde el costo que autocompletamos en cada fila: es lo
+// que distingue "cambió de producto" de "volvió a elegir el mismo".
+const costedFor = ref<(number | null)[]>([null]);
+
+const addItem = () => {
     form.items.push({ product_id: null, quantity: 1, unit_cost: '' });
-const removeItem = (i: number) => form.items.splice(i, 1);
+    costedFor.value.push(null);
+};
+const removeItem = (i: number) => {
+    form.items.splice(i, 1);
+    costedFor.value.splice(i, 1);
+};
 
 // Al elegir un producto sugiere su ultimo costo conocido como punto de
 // partida. Si el producto no tiene costo, deja el campo vacio: sugerir 0
 // seria inventar un dato.
+//
+// Cambiar de producto pisa el costo anterior, que era el del producto que ya
+// no esta en la fila. Re-elegir el mismo producto no lo toca, para no borrar
+// un costo escrito a mano.
 const onProductPick = (i: number, product: ProductOption) => {
+    if (costedFor.value[i] === product.id) {
+        return;
+    }
+
+    costedFor.value[i] = product.id;
+
     const known = Number(product?.cost ?? 0);
 
-    if (known > 0 && !form.items[i].unit_cost) {
-        form.items[i].unit_cost = known;
-    }
+    form.items[i].unit_cost = known > 0 ? known : '';
 };
 
 // Un producto repetido en dos filas suele ser un error de carga: sumaria

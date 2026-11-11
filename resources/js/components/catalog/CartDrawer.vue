@@ -97,7 +97,7 @@ watch(drawerOpen, (open) => {
                     <li
                         v-for="item in items"
                         :key="item.product_id"
-                        class="flex gap-3 rounded-md border p-2"
+                        class="flex gap-3 rounded-xl border p-2"
                     >
                         <Link
                             :href="`/catalogo/${item.slug}`"
@@ -108,9 +108,12 @@ watch(drawerOpen, (open) => {
                                 v-if="item.image"
                                 :src="item.image"
                                 :alt="item.name"
-                                class="size-16 rounded object-cover"
+                                class="size-16 rounded-lg object-cover"
                             />
-                            <div v-else class="size-16 rounded bg-muted"></div>
+                            <div
+                                v-else
+                                class="size-16 rounded-lg bg-muted"
+                            ></div>
                         </Link>
                         <div class="flex flex-1 flex-col">
                             <Link
@@ -127,7 +130,7 @@ watch(drawerOpen, (open) => {
                                 class="mt-auto flex items-center justify-between gap-2"
                             >
                                 <div
-                                    class="inline-flex items-center rounded-md border"
+                                    class="inline-flex items-center rounded-full border"
                                 >
                                     <Button
                                         type="button"
@@ -185,11 +188,15 @@ watch(drawerOpen, (open) => {
             <div v-if="items.length" class="space-y-3 border-t bg-muted/30 p-4">
                 <div class="flex items-center justify-between">
                     <span class="text-sm text-muted-foreground">Subtotal</span>
-                    <span class="text-xl font-semibold">
+                    <span class="tabular font-display text-xl font-extrabold">
                         {{ formatPrice(subtotal, store.currency_symbol) }}
                     </span>
                 </div>
-                <Button as-child class="w-full" size="lg">
+                <Button
+                    as-child
+                    class="h-12 w-full rounded-full text-base"
+                    size="lg"
+                >
                     <Link href="/carrito" @click="drawerOpen = false">
                         Continuar al envío
                     </Link>

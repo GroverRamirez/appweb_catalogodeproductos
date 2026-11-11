@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import { ChevronLeft, ChevronRight } from 'lucide-vue-next';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { Button } from '@/components/ui/button';
 
 type Banner = {
     id: number;
@@ -54,68 +53,49 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
 </script>
 
 <template>
+    <!-- Banner a todo el ancho de la ventana, como en Digicorp: la imagen se
+     muestra completa (sin recortes) y la altura sigue su proporción. -->
     <section
         v-if="banners.length"
-        class="relative overflow-hidden border-b border-border bg-[hsl(222_33%_13%)]"
+        class="relative w-full overflow-hidden bg-[hsl(224_36%_10%)]"
         @mouseenter="stop"
         @mouseleave="start"
     >
-        <div
-            class="relative min-h-[200px] w-full md:min-h-[260px] lg:min-h-[320px]"
-        >
+        <!-- Todas las diapositivas comparten la misma celda de la grilla: la
+         altura la marca la imagen visible. -->
+        <div class="grid">
             <transition-group name="fade">
                 <div
                     v-for="(b, i) in banners"
                     v-show="i === current"
                     :key="b.id"
-                    class="absolute inset-0"
+                    class="col-start-1 row-start-1"
                 >
+                    <a
+                        v-if="b.link && isExternal(b.link)"
+                        :href="b.link"
+                        target="_blank"
+                        class="block"
+                    >
+                        <img
+                            :src="b.image_url"
+                            :alt="b.title ?? b.cta_text ?? ''"
+                            class="block h-auto w-full"
+                        />
+                    </a>
+                    <Link v-else-if="b.link" :href="b.link" class="block">
+                        <img
+                            :src="b.image_url"
+                            :alt="b.title ?? b.cta_text ?? ''"
+                            class="block h-auto w-full"
+                        />
+                    </Link>
                     <img
+                        v-else
                         :src="b.image_url"
                         :alt="b.title ?? ''"
-                        class="h-full min-h-[200px] w-full object-cover md:min-h-[260px] lg:min-h-[320px]"
+                        class="block h-auto w-full"
                     />
-                    <!-- Velo en degradado: oscurece solo donde va el texto (izquierda) y
-                         deja la imagen del producto a la derecha sin opacar. -->
-                    <div
-                        class="absolute inset-0 bg-gradient-to-r from-[hsl(222_33%_8%)]/85 via-[hsl(222_33%_10%)]/40 to-transparent md:via-30% md:to-55%"
-                    ></div>
-
-                    <div
-                        class="absolute inset-0 mx-auto flex max-w-[1400px] flex-col items-start justify-center gap-3 px-6 text-white md:px-10 lg:px-12"
-                    >
-                        <h2
-                            v-if="b.title"
-                            class="max-w-3xl font-display text-2xl leading-[1.1] font-bold tracking-tight md:text-4xl"
-                        >
-                            {{ b.title }}
-                        </h2>
-                        <p
-                            v-if="b.subtitle"
-                            class="max-w-2xl text-sm leading-relaxed text-white/80 md:text-base"
-                        >
-                            {{ b.subtitle }}
-                        </p>
-                        <Button
-                            v-if="b.link"
-                            as-child
-                            size="lg"
-                            class="mt-2 rounded-md bg-white font-semibold text-[hsl(222_33%_13%)] hover:bg-white/90"
-                        >
-                            <a
-                                v-if="isExternal(b.link)"
-                                :href="b.link"
-                                target="_blank"
-                            >
-                                {{ b.cta_text ?? 'Ver más' }}
-                                <ArrowRight class="size-4" />
-                            </a>
-                            <Link v-else :href="b.link">
-                                {{ b.cta_text ?? 'Ver más' }}
-                                <ArrowRight class="size-4" />
-                            </Link>
-                        </Button>
-                    </div>
                 </div>
             </transition-group>
         </div>
@@ -123,33 +103,33 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
         <button
             v-if="banners.length > 1"
             type="button"
-            class="absolute top-1/2 left-4 grid size-10 -translate-y-1/2 place-items-center rounded-md border border-white/20 bg-black/30 text-white transition hover:bg-black/50 md:left-6"
+            class="absolute top-1/2 left-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:grid sm:left-4 md:left-6 md:size-11"
             @click="prev"
             aria-label="Anterior"
         >
-            <ChevronLeft class="size-5" />
+            <ChevronLeft class="size-4 md:size-5" />
         </button>
         <button
             v-if="banners.length > 1"
             type="button"
-            class="absolute top-1/2 right-4 grid size-10 -translate-y-1/2 place-items-center rounded-md border border-white/20 bg-black/30 text-white transition hover:bg-black/50 md:right-6"
+            class="absolute top-1/2 right-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:grid sm:right-4 md:right-6 md:size-11"
             @click="next"
             aria-label="Siguiente"
         >
-            <ChevronRight class="size-5" />
+            <ChevronRight class="size-4 md:size-5" />
         </button>
 
         <div
             v-if="banners.length > 1"
-            class="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2"
+            class="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1.5 md:bottom-4 md:gap-2"
         >
             <button
                 v-for="(_, i) in banners"
                 :key="i"
                 type="button"
                 @click="goTo(i)"
-                class="h-1.5 rounded-full bg-white/40 transition-all hover:bg-white/70"
-                :class="i === current ? 'w-8 bg-white' : 'w-4'"
+                class="h-1 rounded-full bg-white/50 transition-all hover:bg-white/80 md:h-1.5"
+                :class="i === current ? 'w-6 bg-white md:w-8' : 'w-3 md:w-4'"
                 :aria-label="`Ir al banner ${i + 1}`"
             />
         </div>

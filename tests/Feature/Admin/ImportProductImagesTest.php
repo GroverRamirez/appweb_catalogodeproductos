@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Services\ImageProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -21,6 +22,12 @@ function bulkPng(): string
 
 beforeEach(function () {
     Storage::fake('public');
+    // Los hosts de prueba no existen: se resuelven a una IP publica fija.
+    ImageProcessor::resolveHostsUsing(fn () => ['93.184.216.34']);
+});
+
+afterEach(function () {
+    ImageProcessor::resolveHostsUsing(null);
 });
 
 test('importa imágenes en lote desde un CSV', function () {

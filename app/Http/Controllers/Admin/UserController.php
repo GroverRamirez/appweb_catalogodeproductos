@@ -40,6 +40,7 @@ class UserController extends Controller
                 'email' => $u->email,
                 'created_at' => $u->created_at,
                 'email_verified_at' => $u->email_verified_at,
+                'is_active' => $u->is_active,
                 'roles' => $u->roles->pluck('name'),
             ]),
             'filters' => $request->only(['q', 'role']),
@@ -116,18 +117,21 @@ class UserController extends Controller
         return to_route('admin.users.index')->with('success', 'Usuario actualizado.');
     }
 
-    public function destroy(Request $request, User $user): RedirectResponse
+    public function toggleActive(Request $request, User $user): RedirectResponse
     {
-        if ($user->id === $request->user()->id) {
-            return back()->with('error', 'No puedes eliminar tu propio usuario.');
+        if ($user->is_active) {
+            if ($user->id === $request->user()->id) {
+                return back()->with('error', 'No puedes desactivar tu propio usuario.');
+            }
+
+            if (AdminGuard::isLastOwner($user)) {
+                return back()->with('error', 'No puedes desactivar al último propietario activo.');
+            }
         }
 
-        if (AdminGuard::isLastOwner($user)) {
-            return back()->with('error', 'No puedes eliminar al último propietario del sistema.');
-        }
+        $user->is_active = ! $user->is_active;
+        $user->save();
 
-        $user->delete();
-
-        return to_route('admin.users.index')->with('success', 'Usuario eliminado.');
+        return back()->with('success', $user->is_active ? 'Usuario activado.' : 'Usuario desactivado.');
     }
 }

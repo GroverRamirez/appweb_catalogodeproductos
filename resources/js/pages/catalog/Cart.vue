@@ -217,7 +217,11 @@ const submit = (source: 'web' | 'whatsapp') => {
             <Button variant="ghost" size="icon-sm" as-child>
                 <Link href="/catalogo"><ArrowLeft class="size-4" /></Link>
             </Button>
-            <h1 class="text-2xl font-semibold">Tu carrito</h1>
+            <h1
+                class="font-display text-2xl font-extrabold tracking-tight md:text-3xl"
+            >
+                Tu carrito
+            </h1>
         </div>
 
         <!-- Skeleton durante SSR/hidratación: el carrito real solo existe en el cliente -->
@@ -232,7 +236,7 @@ const submit = (source: 'web' | 'whatsapp') => {
 
         <div
             v-else-if="!items.length"
-            class="rounded-lg border bg-card p-12 text-center"
+            class="rounded-2xl border bg-card p-12 text-center"
         >
             <ShoppingCart
                 class="mx-auto mb-3 size-12 text-muted-foreground/40"
@@ -264,11 +268,11 @@ const submit = (source: 'web' | 'whatsapp') => {
                                     v-if="item.image"
                                     :src="item.image"
                                     :alt="item.name"
-                                    class="size-20 rounded object-cover"
+                                    class="size-20 rounded-xl object-cover"
                                 />
                                 <div
                                     v-else
-                                    class="size-20 rounded bg-muted"
+                                    class="size-20 rounded-xl bg-muted"
                                 ></div>
                             </Link>
                             <div class="flex flex-1 flex-col">
@@ -283,7 +287,7 @@ const submit = (source: 'web' | 'whatsapp') => {
                                 </p>
                                 <div class="mt-auto flex items-center gap-3">
                                     <div
-                                        class="inline-flex items-center rounded-md border"
+                                        class="inline-flex items-center rounded-full border"
                                     >
                                         <Button
                                             type="button"

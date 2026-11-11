@@ -1,11 +1,15 @@
 import { createInertiaApp } from '@inertiajs/vue3';
+import { createApp, h } from 'vue';
+import { Toaster } from '@/components/ui/sonner';
 import { initializeTheme } from '@/composables/useAppearance';
 import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+// En la imagen Docker el frontend se compila sin .env, asi que VITE_APP_NAME
+// llega vacio. El <title> inicial lo pone el servidor con APP_NAME.
+const appName = import.meta.env.VITE_APP_NAME || document.title || 'PC Store Pro';
 
 createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
@@ -25,6 +29,14 @@ createInertiaApp({
             default:
                 return AppLayout;
         }
+    },
+    // Un solo contenedor de notificaciones para toda la app, fuera de los
+    // layouts: así un aviso que llega justo al cambiar de layout (p. ej. la
+    // bienvenida al pasar del login al panel) no se pierde.
+    setup({ el, App, props, plugin }) {
+        createApp({ render: () => [h(App, props), h(Toaster)] })
+            .use(plugin)
+            .mount(el!);
     },
     progress: {
         color: '#4B5563',

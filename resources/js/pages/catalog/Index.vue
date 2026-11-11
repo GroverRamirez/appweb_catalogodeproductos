@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { LayoutGrid, List, SearchX } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import Filters from '@/components/catalog/Filters.vue';
 import ProductCard from '@/components/catalog/ProductCard.vue';
 import ProductRow from '@/components/catalog/ProductRow.vue';
@@ -14,7 +14,7 @@ defineOptions({ layout: PublicLayout });
 
 type Product = CatalogProduct;
 
-defineProps<{
+const props = defineProps<{
     products: {
         data: Product[];
         links: { url: string | null; label: string; active: boolean }[];
@@ -38,6 +38,33 @@ defineProps<{
         noindex?: boolean;
     };
 }>();
+
+// Título del listado según lo que el cliente está mirando
+const heading = computed(() => {
+    const f = props.filters ?? {};
+
+    if (f.q) {
+        return `Resultados para “${f.q}”`;
+    }
+
+    if (f.category) {
+        const cat = props.categories.find((c) => c.slug === f.category);
+
+        if (cat) {
+            return cat.name;
+        }
+    }
+
+    if (f.sort === 'discount') {
+        return 'Ofertas';
+    }
+
+    if (f.sort === 'newest') {
+        return 'Novedades';
+    }
+
+    return 'Catálogo';
+});
 
 const initial: 'grid' | 'list' =
     typeof window !== 'undefined' &&
@@ -64,7 +91,7 @@ const setView = (v: 'grid' | 'list') => {
         :noindex="seo.noindex"
     />
 
-    <div class="mx-auto max-w-[1400px] px-6 py-4 md:py-5 lg:px-8">
+    <div class="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 md:py-6 lg:px-8">
         <div class="grid gap-6 lg:grid-cols-[240px_1fr]">
             <div
                 class="scrollbar-thin lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto"
@@ -77,15 +104,28 @@ const setView = (v: 'grid' | 'list') => {
             </div>
 
             <div>
-                <div class="mb-4 flex justify-end">
+                <div class="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                        <h1
+                            class="font-display text-xl font-extrabold tracking-tight md:text-2xl"
+                        >
+                            {{ heading }}
+                        </h1>
+                        <p class="text-sm text-muted-foreground">
+                            {{ products.total }}
+                            {{
+                                products.total === 1 ? 'producto' : 'productos'
+                            }}
+                        </p>
+                    </div>
                     <div
-                        class="inline-flex rounded-md border border-border bg-card p-0.5"
+                        class="inline-flex rounded-full bg-card p-1 ring-1 ring-border"
                     >
                         <Button
                             type="button"
                             size="sm"
                             :variant="view === 'grid' ? 'default' : 'ghost'"
-                            class="rounded px-3"
+                            class="size-8 rounded-full p-0 shadow-none"
                             @click="setView('grid')"
                             aria-label="Vista de cuadrícula"
                         >
@@ -95,7 +135,7 @@ const setView = (v: 'grid' | 'list') => {
                             type="button"
                             size="sm"
                             :variant="view === 'list' ? 'default' : 'ghost'"
-                            class="rounded px-3"
+                            class="size-8 rounded-full p-0 shadow-none"
                             @click="setView('list')"
                             aria-label="Vista de lista"
                         >
@@ -107,7 +147,7 @@ const setView = (v: 'grid' | 'list') => {
                 <template v-if="products.data.length">
                     <div
                         v-if="view === 'grid'"
-                        class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                        class="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
                     >
                         <ProductCard
                             v-for="p in products.data"
@@ -125,7 +165,7 @@ const setView = (v: 'grid' | 'list') => {
                 </template>
                 <div
                     v-else
-                    class="rounded-lg border border-dashed border-border bg-muted/30 p-16 text-center"
+                    class="rounded-2xl border border-dashed border-border bg-card p-16 text-center"
                 >
                     <div
                         class="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-accent text-primary"

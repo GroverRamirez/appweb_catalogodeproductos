@@ -6,6 +6,7 @@ export const PAYMENT_METHOD_LABELS: Record<string, string> = {
     efectivo: 'Efectivo',
     qr: 'QR',
     transferencia: 'Transferencia',
+    // Ya no se ofrece en ventas nuevas; se deja para mostrar las antiguas.
     tarjeta: 'Tarjeta',
 };
 

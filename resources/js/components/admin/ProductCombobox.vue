@@ -5,14 +5,18 @@ import type { ComboOption } from '@/components/admin/SearchCombobox.vue';
 
 /**
  * Adaptador sobre SearchCombobox: traduce productos a opciones y devuelve el
- * producto completo al elegir (el formulario necesita su costo). La lógica del
- * buscador vive en SearchCombobox, para no mantenerla en dos lugares.
+ * producto completo al elegir. La lógica del buscador vive en SearchCombobox,
+ * para no mantenerla en dos lugares.
+ *
+ * `cost` es opcional a propósito: lo necesita el formulario de compras, que
+ * sugiere el último costo conocido, y no el de ventas, que trabaja con
+ * precios. Cada pantalla manda solo las columnas que usa.
  */
 export type ProductOption = {
     id: number;
     name: string;
     code: string;
-    cost: string | null;
+    cost?: string | null;
     stock: number;
 };
 

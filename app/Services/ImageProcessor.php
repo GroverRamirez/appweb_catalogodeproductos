@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\Encoders\WebpEncoder;
 use Intervention\Image\ImageManager;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * Procesa imágenes subidas antes de persistirlas:
@@ -116,46 +117,196 @@ class ImageProcessor
         return ['path' => $path, 'thumb_path' => $thumb];
     }
 
+    /** Tamaño máximo de una imagen descargada por URL. */
+    private const DOWNLOAD_MAX_BYTES = 12 * 1024 * 1024;
+
+    /** Saltos de redirección permitidos; cada uno se vuelve a validar. */
+    private const DOWNLOAD_MAX_REDIRECTS = 3;
+
+    /** Resolución DNS reemplazable en tests (los hosts de prueba no existen). */
+    private static ?\Closure $hostResolver = null;
+
+    /**
+     * Reemplaza cómo se resuelven los hosts (solo para tests).
+     *
+     * @param  (callable(string): array<int, string>)|null  $resolver
+     */
+    public static function resolveHostsUsing(?callable $resolver): void
+    {
+        self::$hostResolver = $resolver ? \Closure::fromCallable($resolver) : null;
+    }
+
     /**
      * Descarga una URL a un archivo temporal con validaciones de seguridad:
      * solo http/https, bloquea direcciones internas (SSRF), exige Content-Type
      * de imagen y limita el tamaño. Devuelve el path temporal (a borrar por el caller).
+     *
+     * Contra SSRF: cada salto (la URL y cada redirección) se valida por
+     * separado, IPv4 e IPv6, y la conexión se fija con CURLOPT_RESOLVE a la IP
+     * ya validada, para que un DNS que cambie entre la validación y la
+     * descarga (DNS rebinding) no la desvíe a la red interna.
      */
     private function downloadToTemp(string $url): string
     {
-        $scheme = parse_url($url, PHP_URL_SCHEME);
+        for ($hop = 0; $hop <= self::DOWNLOAD_MAX_REDIRECTS; $hop++) {
+            [$host, $port, $ip] = $this->assertPublicUrl($url);
+            $pinned = str_contains($ip, ':') ? "[{$ip}]" : $ip;
+
+            $response = Http::timeout(20)
+                ->withoutRedirecting()
+                ->withOptions([
+                    'stream' => true,
+                    'curl' => [CURLOPT_RESOLVE => ["{$host}:{$port}:{$pinned}"]],
+                ])
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; CatalogoBot/1.0)'])
+                ->get($url);
+
+            if ($response->redirect()) {
+                $location = (string) $response->header('Location');
+                if ($location === '') {
+                    throw new \RuntimeException('La URL redirige sin indicar a dónde.');
+                }
+                $url = $this->absoluteUrl($url, $location);
+
+                continue;
+            }
+
+            if (! $response->successful()) {
+                throw new \RuntimeException("La descarga falló (HTTP {$response->status()}).");
+            }
+
+            $contentType = (string) $response->header('Content-Type');
+            if (! str_starts_with($contentType, 'image/')) {
+                throw new \RuntimeException("El recurso no es una imagen (Content-Type: {$contentType}).");
+            }
+
+            if ((int) $response->header('Content-Length') > self::DOWNLOAD_MAX_BYTES) {
+                throw new \RuntimeException('La imagen supera el tamaño máximo permitido (12 MB).');
+            }
+
+            return $this->streamToTemp($response->toPsrResponse()->getBody());
+        }
+
+        throw new \RuntimeException('La URL redirige demasiadas veces.');
+    }
+
+    /**
+     * Valida esquema y host, y devuelve [host, puerto, IP pública validada].
+     *
+     * @return array{0: string, 1: int, 2: string}
+     */
+    private function assertPublicUrl(string $url): array
+    {
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+
         if (! in_array($scheme, ['http', 'https'], true)) {
             throw new \InvalidArgumentException('La URL debe usar http o https.');
         }
 
-        // Anti-SSRF: rechazar hosts que resuelvan a IPs privadas o de loopback.
-        $host = parse_url($url, PHP_URL_HOST) ?: '';
-        $ip = gethostbyname($host);
-        if (filter_var($ip, FILTER_VALIDATE_IP)
-            && ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            throw new \InvalidArgumentException('No se permiten direcciones internas.');
+        $host = trim((string) ($parts['host'] ?? ''), '[]');
+        if ($host === '') {
+            throw new \InvalidArgumentException('La URL no tiene un host válido.');
         }
 
-        $response = Http::timeout(20)
-            ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; CatalogoBot/1.0)'])
-            ->get($url);
+        $port = (int) ($parts['port'] ?? ($scheme === 'https' ? 443 : 80));
 
-        if (! $response->successful()) {
-            throw new \RuntimeException("La descarga falló (HTTP {$response->status()}).");
+        $ips = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : $this->resolveHost($host);
+        if ($ips === []) {
+            throw new \InvalidArgumentException('No se pudo resolver el host de la URL.');
         }
 
-        $contentType = (string) $response->header('Content-Type');
-        if (! str_starts_with($contentType, 'image/')) {
-            throw new \RuntimeException("El recurso no es una imagen (Content-Type: {$contentType}).");
+        // FILTER_FLAG_GLOBAL_RANGE (PHP 8.2+) descarta también CGNAT,
+        // documentación y demás rangos no ruteables, además de privadas y
+        // reservadas.
+        foreach ($ips as $ip) {
+            if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_GLOBAL_RANGE)) {
+                throw new \InvalidArgumentException('No se permiten direcciones internas.');
+            }
         }
 
-        $bytes = $response->body();
-        if (strlen($bytes) > 12 * 1024 * 1024) {
-            throw new \RuntimeException('La imagen supera el tamaño máximo permitido (12 MB).');
+        return [$host, $port, $ips[0]];
+    }
+
+    /**
+     * IPs (v4 y v6) a las que resuelve un host.
+     *
+     * @return array<int, string>
+     */
+    private function resolveHost(string $host): array
+    {
+        if (self::$hostResolver) {
+            return array_values((self::$hostResolver)($host));
         }
 
+        $ips = @gethostbynamel($host) ?: [];
+        foreach (@dns_get_record($host, DNS_AAAA) ?: [] as $record) {
+            if (! empty($record['ipv6'])) {
+                $ips[] = $record['ipv6'];
+            }
+        }
+
+        return array_values(array_unique($ips));
+    }
+
+    /** Resuelve el Location de una redirección contra la URL que lo envió. */
+    private function absoluteUrl(string $base, string $location): string
+    {
+        if (preg_match('#^https?://#i', $location)) {
+            return $location;
+        }
+
+        $parts = parse_url($base);
+        $scheme = $parts['scheme'] ?? 'https';
+
+        if (str_starts_with($location, '//')) {
+            return "{$scheme}:{$location}";
+        }
+
+        $origin = $scheme.'://'.($parts['host'] ?? '').(isset($parts['port']) ? ':'.$parts['port'] : '');
+
+        if (str_starts_with($location, '/')) {
+            return $origin.$location;
+        }
+
+        $dir = rtrim(dirname($parts['path'] ?? '/'), '/\\');
+
+        return $origin.$dir.'/'.$location;
+    }
+
+    /**
+     * Copia el cuerpo a un archivo temporal cortando apenas supera el límite,
+     * sin cargarlo entero en memoria (el Content-Length puede faltar o mentir).
+     */
+    private function streamToTemp(StreamInterface $body): string
+    {
         $tmp = tempnam(sys_get_temp_dir(), 'prodimg_');
-        file_put_contents($tmp, $bytes);
+        $out = fopen($tmp, 'wb');
+        $total = 0;
+
+        if ($body->isSeekable()) {
+            $body->rewind();
+        }
+
+        try {
+            while (! $body->eof()) {
+                $chunk = $body->read(65536);
+                $total += strlen($chunk);
+
+                if ($total > self::DOWNLOAD_MAX_BYTES) {
+                    throw new \RuntimeException('La imagen supera el tamaño máximo permitido (12 MB).');
+                }
+
+                fwrite($out, $chunk);
+            }
+        } catch (\Throwable $e) {
+            fclose($out);
+            @unlink($tmp);
+
+            throw $e;
+        }
+
+        fclose($out);
 
         return $tmp;
     }

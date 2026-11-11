@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\InventoryMovement;
 use App\Models\Product;
+use App\Services\InventoryLedger;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -208,16 +210,41 @@ class ImportProductsController extends Controller
         try {
             DB::transaction(function () use ($validRows, &$imported, &$updated): void {
                 foreach ($validRows as $item) {
+                    // El stock sale del payload y entra por el kardex: escrito
+                    // directo en la columna, una importación dejaría el stock
+                    // sin ningún movimiento que lo explique.
+                    $payload = $item['payload'];
+                    $stock = (int) ($payload['stock'] ?? 0);
+                    unset($payload['stock']);
+
                     $existing = Product::where('codigo', $item['codigo'])->first();
 
                     if ($existing) {
-                        $existing->update($item['payload']);
+                        $existing->update($payload);
+
+                        InventoryLedger::adjustTo(
+                            $existing,
+                            $stock,
+                            'Importación de productos',
+                        );
+
                         $updated++;
                     } else {
-                        $payload = $item['payload'];
                         $payload['code'] = $item['codigo'];
                         $payload['slug'] = Product::uniqueSlug($item['nombre']);
-                        Product::create($payload);
+
+                        $product = Product::create($payload);
+
+                        if ($stock !== 0) {
+                            InventoryLedger::record(
+                                $product,
+                                $stock,
+                                InventoryMovement::TYPE_ADJUSTMENT,
+                                null,
+                                'Carga inicial por importación',
+                            );
+                        }
+
                         $imported++;
                     }
                 }

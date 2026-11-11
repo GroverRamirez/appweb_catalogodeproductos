@@ -22,6 +22,13 @@ cuando esté hecha y verificada (tests + revisión en navegador).
 ## 3. Funcionalidades siguientes
 
 - [x] Gestión de consultas más rica: notas internas, historial de contacto, aviso al staff de consulta nueva
+- [x] Reportes gerenciales: exportación a PDF (DomPDF) y Excel (Laravel Excel) y
+      panel con cinco indicadores gráficos (Chart.js) — ver `docs/REPORTES.md`.
+      Requiere `composer require barryvdh/laravel-dompdf maatwebsite/excel` y
+      `npm install` antes de usarlo
+- [x] Precios atados al tipo de cambio oficial flexible del dólar (lista en USD,
+      cobro en Bs, cotización diaria del BCB) — ver `docs/TIPO_DE_CAMBIO.md`.
+      Pendiente al desplegar: correr `precios:convertir-a-usd` una vez
 - [ ] Variantes de producto (tallas, colores, presentaciones) — evaluar si el rubro lo necesita
 - [x] Favoritos/wishlist en el catálogo público (productos relacionados ya existe en el detalle)
 - [ ] Búsqueda con Laravel Scout + Meilisearch (solo si el catálogo supera ~miles de productos)

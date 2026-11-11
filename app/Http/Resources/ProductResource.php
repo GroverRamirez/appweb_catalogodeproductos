@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\ExchangeRate;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,46 +26,58 @@ class ProductResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
+        // La lista de precios se carga en dolares y el cliente compra en
+        // bolivianos. La conversion vive aca, en el borde: asi ninguna vista
+        // del catalogo puede olvidarse de aplicarla ni usar otra cotizacion.
+        $rates = app(ExchangeRate::class);
+        $rate = $rates->current();
+
         return [
             // ── Campos escalares ───────────────────────────────────────────────
-            'id'                => $this->id,
-            'slug'              => $this->slug,
-            'name'              => $this->name,
-            'code'              => $this->code,
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'name' => $this->name,
+            'code' => $this->code,
 
-            // precio como string (decimal:2 cast en DB) para coincidir con
-            // el tipo CatalogProduct del frontend: price: string
-            'price'             => (string) $this->price,
-            'sale_price'        => $this->sale_price !== null
-                ? (string) $this->sale_price
+            // precio ya convertido a bolivianos, como string, para coincidir
+            // con el tipo CatalogProduct del frontend: price: string
+            'price' => number_format($rates->toBs($this->price, $rate), 2, '.', ''),
+            'sale_price' => $this->sale_price !== null
+                ? number_format($rates->toBs($this->sale_price, $rate), 2, '.', '')
                 : null,
 
-            'stock'             => (int) $this->stock,
-            'unit'              => $this->unit,
-            'short_description' => $this->short_description,
-            'description'       => $this->description,
+            // El precio de lista, por si una vista necesita mostrarlo o
+            // auditarlo; el catalogo publico usa los de arriba.
+            'price_usd' => (string) $this->price,
+            'sale_price_usd' => $this->sale_price !== null ? (string) $this->sale_price : null,
+            'exchange_rate' => $rate,
 
-            'is_featured'       => (bool) $this->is_featured,
-            'is_active'         => (bool) $this->is_active,
+            'stock' => (int) $this->stock,
+            'unit' => $this->unit,
+            'short_description' => $this->short_description,
+            'description' => $this->description,
+
+            'is_featured' => (bool) $this->is_featured,
+            'is_active' => (bool) $this->is_active,
 
             // Computed accessors definidos en Product
-            'current_price'     => (float) $this->current_price,
-            'is_on_sale'        => (bool) $this->is_on_sale,
+            'current_price' => $rates->toBs($this->current_price, $rate),
+            'is_on_sale' => (bool) $this->is_on_sale,
 
-            'created_at'        => $this->created_at?->toIso8601String(),
+            'created_at' => $this->created_at?->toIso8601String(),
 
             // ── Relaciones condicionales ───────────────────────────────────────
 
             // HasOne → imagen principal (cargada en Index / Home con mainImage)
             // Se expone como `main_image` (snake_case que Inertia envía al frontend)
             // y como `mainImage` (camelCase que algunos componentes usan como alias).
-            'main_image'        => $this->whenLoaded(
+            'main_image' => $this->whenLoaded(
                 'mainImage',
                 fn () => $this->resource->relationLoaded('mainImage') && $this->resource->mainImage
                     ? new ProductImageResource($this->resource->mainImage)
                     : null
             ),
-            'mainImage'         => $this->whenLoaded(
+            'mainImage' => $this->whenLoaded(
                 'mainImage',
                 fn () => $this->resource->relationLoaded('mainImage') && $this->resource->mainImage
                     ? new ProductImageResource($this->resource->mainImage)
@@ -72,12 +85,12 @@ class ProductResource extends JsonResource
             ),
 
             // HasMany → galería completa (cargada en Show con images)
-            'images'            => ProductImageResource::collection(
+            'images' => ProductImageResource::collection(
                 $this->whenLoaded('images')
             ),
 
             // BelongsTo → categoría
-            'category'          => $this->whenLoaded(
+            'category' => $this->whenLoaded(
                 'category',
                 fn () => $this->resource->category
                     ? new CategoryResource($this->resource->category)
@@ -85,7 +98,7 @@ class ProductResource extends JsonResource
             ),
 
             // BelongsTo → marca
-            'brand'             => $this->whenLoaded(
+            'brand' => $this->whenLoaded(
                 'brand',
                 fn () => $this->resource->brand
                     ? new BrandResource($this->resource->brand)
@@ -94,7 +107,7 @@ class ProductResource extends JsonResource
 
             // HasMany → atributos técnicos (cargados solo en Show)
             // Solo exponemos key+value que es lo que usa la vista de detalle.
-            'attributes'        => $this->whenLoaded(
+            'attributes' => $this->whenLoaded(
                 'attributes',
                 fn () => $this->resource->getRelation('attributes')
                     ->map(fn ($a) => ['key' => $a->key, 'value' => $a->value])

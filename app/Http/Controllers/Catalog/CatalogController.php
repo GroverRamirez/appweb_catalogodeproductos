@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\ProductView;
 use App\Models\Setting;
 use App\Services\ExchangeRate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -172,6 +173,44 @@ class CatalogController extends Controller
                 'og_image' => $this->assetUrl(Setting::get('logo_path')),
                 'noindex' => $activeFilters !== [] && ! $isCategoryLanding,
             ],
+        ]);
+    }
+
+    public function suggestions(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 2) {
+            return response()->json([
+                'products' => [],
+                'categories' => [],
+                'total' => 0,
+            ]);
+        }
+
+        $products = Product::query()
+            ->active()
+            ->search($q)
+            ->with(['mainImage', 'category:id,nombre,slug', 'brand:id,nombre,slug'])
+            ->limit(6)
+            ->get();
+
+        $categories = Category::query()
+            ->active()
+            ->where('nombre', 'like', "%{$q}%")
+            ->limit(3)
+            ->get(['id', 'nombre', 'slug']);
+
+        $total = Product::query()->active()->search($q)->count();
+
+        return response()->json([
+            'products' => ProductResource::collection($products),
+            'categories' => $categories->map(fn (Category $c) => [
+                'id' => $c->id,
+                'name' => $c->nombre,
+                'slug' => $c->slug,
+            ]),
+            'total' => $total,
         ]);
     }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { Eye, Heart, ImageOff, ShoppingCart } from 'lucide-vue-next';
+import { Eye, Flame, Heart, ImageOff, ShoppingCart } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/composables/useCart';
@@ -161,12 +161,19 @@ const onToggleFavorite = (e: MouseEvent) => {
                 >
                     <span
                         v-if="showSale"
-                        class="rounded-full bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground"
+                        class="rounded-full bg-destructive px-2 py-0.5 text-[11px] font-bold text-destructive-foreground shadow-xs"
                     >
                         −{{ discountPct }}%
                     </span>
                     <span
-                        v-else-if="isNew"
+                        v-if="store.show_stock && lowStock && !outOfStock"
+                        class="inline-flex items-center gap-1 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs"
+                    >
+                        <Flame class="size-2.5 fill-white text-white" />
+                        ¡Últimas {{ product.stock }}!
+                    </span>
+                    <span
+                        v-else-if="isNew && !showSale"
                         class="rounded-full bg-card/95 px-2 py-0.5 text-[11px] font-semibold text-primary ring-1 ring-primary/15"
                     >
                         Nuevo
@@ -253,15 +260,25 @@ const onToggleFavorite = (e: MouseEvent) => {
                         </template>
                         <p
                             v-if="store.show_stock"
-                            class="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                            class="mt-1 flex items-center gap-1.5 text-[11px]"
+                            :class="
+                                outOfStock
+                                    ? 'text-destructive'
+                                    : lowStock
+                                      ? 'font-semibold text-amber-600 dark:text-amber-400'
+                                      : 'text-muted-foreground'
+                            "
                         >
                             <span
                                 class="size-1.5 rounded-full"
-                                :class="stockDotClass"
+                                :class="[
+                                    stockDotClass,
+                                    lowStock ? 'animate-pulse' : '',
+                                ]"
                             ></span>
                             <span v-if="outOfStock">Sin stock</span>
                             <span v-else-if="lowStock"
-                                >Últimas {{ product.stock }} unidades</span
+                                >¡Últimas {{ product.stock }} unidades!</span
                             >
                             <span v-else>{{ product.stock }} disponibles</span>
                         </p>

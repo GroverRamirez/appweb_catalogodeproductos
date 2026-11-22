@@ -6,9 +6,11 @@ use App\Models\Inquiry;
 use App\Models\InquiryItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Notifications\OrderConfirmationNotification;
 use App\Services\ExchangeRate;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
     // Estos tests verifican la logica en una sola moneda: con cotizacion 1
@@ -392,4 +394,56 @@ test('checkout with someone else phone does not link the account to that client'
 
     expect($ajena->fresh()->user_id)->toBeNull()
         ->and(Inquiry::first()->client_id)->toBe($ajena->id);
+});
+
+test('checkout sends the order confirmation to the logged-in customer account email', function () {
+    Notification::fake();
+    $this->seed(RoleSeeder::class);
+    $user = User::factory()->create(['email' => 'cliente@example.com']);
+    $user->assignRole('cliente');
+
+    $product = Product::factory()->create(['activo' => true, 'precio' => 120.00]);
+
+    // El correo del formulario no se usa: va a la cuenta verificada.
+    $payload = validCheckoutPayload([$product]);
+    $payload['customer_email'] = 'otra@example.com';
+
+    $this->actingAs($user)
+        ->post(route('public.checkout'), $payload)
+        ->assertRedirect();
+
+    Notification::assertSentOnDemand(
+        OrderConfirmationNotification::class,
+        function ($notification, $channels, $notifiable) {
+            return $notifiable->routes['mail'] === 'cliente@example.com';
+        }
+    );
+});
+
+test('guest checkout does not email the address typed in the form', function () {
+    Notification::fake();
+
+    $product = Product::factory()->create(['activo' => true, 'precio' => 120.00]);
+
+    $payload = validCheckoutPayload([$product]);
+    $payload['customer_email'] = 'cualquiera@example.com';
+
+    $this->post(route('public.checkout'), $payload)
+        ->assertRedirect();
+
+    Notification::assertSentOnDemandTimes(OrderConfirmationNotification::class, 0);
+});
+
+test('checkout does not send order confirmation email when email is omitted', function () {
+    Notification::fake();
+
+    $product = Product::factory()->create(['activo' => true, 'precio' => 120.00]);
+
+    $payload = validCheckoutPayload([$product]);
+    $payload['customer_email'] = null;
+
+    $this->post(route('public.checkout'), $payload)
+        ->assertRedirect();
+
+    Notification::assertNothingSent();
 });

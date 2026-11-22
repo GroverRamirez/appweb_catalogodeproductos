@@ -22,6 +22,9 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::middleware(EnsureClientProfileComplete::class)->group(function () {
     Route::get('/', [CatalogController::class, 'home'])->name('home');
     Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
+    Route::get('/catalogo/sugerencias', [CatalogController::class, 'suggestions'])
+        ->middleware('throttle:60,1')
+        ->name('catalog.suggestions');
     Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
     // Carrito + checkout
@@ -40,6 +43,8 @@ Route::middleware(EnsureClientProfileComplete::class)->group(function () {
                 'payment_status' => $inquiry->payment_status,
                 'payment_receipt_url' => $inquiry->payment_receipt_url,
                 'total_estimated' => $inquiry->total_estimated,
+                'discount_amount' => $inquiry->discount_amount,
+                'coupon_code' => $inquiry->coupon_code,
                 'items' => $inquiry->items,
             ],
         ]);

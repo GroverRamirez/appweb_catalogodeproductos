@@ -78,24 +78,85 @@ class SaleController extends Controller
     }
 
     /**
-     * Busca la ficha del cliente por CI para autocompletar el formulario de
-     * venta. Va con el permiso de registrar ventas, no con el de ver
-     * clientes: es parte de vender y devuelve solo lo que el formulario usa.
+     * Busca la ficha del cliente por CI, nombre o teléfono para autocompletar
+     * el formulario de venta. Va con el permiso de registrar ventas, no con el
+     * de ver clientes: es parte de vender y devuelve solo lo que el formulario usa.
      */
     public function clientLookup(Request $request): JsonResponse
     {
-        $request->validate(['ci' => ['required', 'string', 'max:30']]);
+        $request->validate([
+            'ci' => ['nullable', 'string', 'max:50'],
+            'q' => ['nullable', 'string', 'max:100'],
+        ]);
 
-        $client = Client::findByIdCard($request->string('ci')->toString());
+        $hasCi = $request->filled('ci');
+        $hasQ = $request->filled('q');
 
-        return response()->json([
-            'client' => $client ? [
+        if (! $hasCi && ! $hasQ) {
+            return response()->json([
+                'client' => null,
+                'clients' => [],
+            ]);
+        }
+
+        if ($hasCi && ! $hasQ) {
+            $client = Client::findByIdCard($request->string('ci')->toString());
+
+            $formatted = $client ? [
                 'id' => $client->id,
                 'name' => $client->name,
                 'phone' => $client->phone,
                 'id_card' => $client->id_card,
                 'sales_count' => $client->sales()->count(),
-            ] : null,
+            ] : null;
+
+            return response()->json([
+                'client' => $formatted,
+                'clients' => $formatted ? [$formatted] : [],
+            ]);
+        }
+
+        $term = $request->string('q')->trim()->toString();
+
+        if (mb_strlen($term) < 2) {
+            return response()->json([
+                'client' => null,
+                'clients' => [],
+            ]);
+        }
+
+        $phone = Client::normalizePhone($term);
+        $normalizedCi = Client::normalizeIdCard($term);
+
+        $clients = Client::query()
+            ->active()
+            ->where(function ($group) use ($term, $normalizedCi, $phone) {
+                $group->where('nombre', 'like', "%{$term}%");
+
+                if ($normalizedCi !== null) {
+                    $group->orWhere('carnet_identidad', 'like', "%{$normalizedCi}%");
+                }
+
+                if ($phone !== null) {
+                    $group->orWhere('telefono', 'like', "%{$phone}%");
+                }
+            })
+            ->withCount('sales')
+            ->orderBy('nombre')
+            ->take(8)
+            ->get();
+
+        $formatted = $clients->map(fn (Client $c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'phone' => $c->phone,
+            'id_card' => $c->id_card,
+            'sales_count' => (int) $c->sales_count,
+        ]);
+
+        return response()->json([
+            'client' => $formatted->first(),
+            'clients' => $formatted->all(),
         ]);
     }
 

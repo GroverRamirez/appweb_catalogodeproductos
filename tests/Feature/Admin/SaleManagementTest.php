@@ -301,6 +301,45 @@ test('the client lookup by CI returns the registered client', function () {
         ->assertJsonPath('client', null);
 });
 
+test('client lookup supports flexible search by name, phone, or CI', function () {
+    $c1 = Client::factory()->create([
+        'name' => 'Carlos Mendoza',
+        'phone' => '71234567',
+        'id_card' => '5432100',
+    ]);
+    $c2 = Client::factory()->create([
+        'name' => 'Carla Morales',
+        'phone' => '79876543',
+        'id_card' => '9876543',
+    ]);
+
+    // Búsqueda por nombre
+    $this->actingAs($this->owner)
+        ->getJson(route('admin.sales.client-lookup', ['q' => 'Carlos']))
+        ->assertOk()
+        ->assertJsonPath('client.id', $c1->id)
+        ->assertJsonCount(1, 'clients');
+
+    // Búsqueda por coincidencia parcial que retorna múltiples clientes
+    $this->actingAs($this->owner)
+        ->getJson(route('admin.sales.client-lookup', ['q' => 'Car']))
+        ->assertOk()
+        ->assertJsonCount(2, 'clients');
+
+    // Búsqueda por teléfono
+    $this->actingAs($this->owner)
+        ->getJson(route('admin.sales.client-lookup', ['q' => '79876543']))
+        ->assertOk()
+        ->assertJsonPath('client.id', $c2->id);
+
+    // Búsqueda con menos de 2 caracteres devuelve lista vacía
+    $this->actingAs($this->owner)
+        ->getJson(route('admin.sales.client-lookup', ['q' => 'C']))
+        ->assertOk()
+        ->assertJsonPath('client', null)
+        ->assertJsonCount(0, 'clients');
+});
+
 test('a vendedor can use the client lookup but a user without sales.create cannot', function () {
     $vendedor = User::factory()->create();
     $vendedor->assignRole('vendedor');

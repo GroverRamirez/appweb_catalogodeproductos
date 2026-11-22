@@ -4,6 +4,7 @@ import {
     Check,
     ChevronDown,
     ChevronRight,
+    Flame,
     Heart,
     MessageCircle,
     Minus,
@@ -80,6 +81,9 @@ const showSale = computed(
         Number(props.product.sale_price) < Number(props.product.price),
 );
 const inStock = computed(() => props.product.stock > 0);
+const lowStock = computed(
+    () => props.product.stock > 0 && props.product.stock <= 5,
+);
 
 const quantity = ref(1);
 const incQ = () => (quantity.value = Math.min(999, quantity.value + 1));
@@ -304,14 +308,31 @@ const sendWhatsApp = () => {
 
                 <div v-if="store.show_stock">
                     <Badge
-                        v-if="inStock"
+                        v-if="!inStock"
+                        variant="secondary"
+                        class="gap-1 rounded-full px-2.5 py-1 text-muted-foreground"
+                    >
+                        Sin stock
+                    </Badge>
+                    <Badge
+                        v-else-if="lowStock"
                         variant="outline"
-                        class="gap-1 rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700"
+                        class="gap-1.5 rounded-full border-amber-300 bg-amber-50 px-3 py-1 font-semibold text-amber-800 shadow-xs dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
+                    >
+                        <Flame
+                            class="size-3.5 animate-pulse fill-amber-500 text-amber-500"
+                        />
+                        ¡Pocas unidades! Solo quedan {{ product.stock }}
+                        {{ product.unit }}
+                    </Badge>
+                    <Badge
+                        v-else
+                        variant="outline"
+                        class="gap-1 rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
                     >
                         <Check class="size-3" /> En stock ({{ product.stock }}
                         {{ product.unit }})
                     </Badge>
-                    <Badge v-else variant="secondary">Sin stock</Badge>
                 </div>
 
                 <p
@@ -410,6 +431,14 @@ const sendWhatsApp = () => {
                                 >
                             </Button>
                         </div>
+
+                        <p
+                            v-if="store.show_stock && lowStock"
+                            class="text-xs font-medium text-amber-600 dark:text-amber-400"
+                        >
+                            ⚡ Alta demanda: quedan pocas unidades disponibles
+                            en almacén.
+                        </p>
 
                         <Button
                             v-if="store.whatsapp"

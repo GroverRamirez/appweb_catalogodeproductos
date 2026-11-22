@@ -1,0 +1,57 @@
+{
+  "id": "/",
+  "name": "PC Store Pro",
+  "short_name": "PC Store Pro",
+  "description": "Catálogo digital de productos y compras en línea. Explora productos, agrega a favoritos y realiza tus pedidos rápidamente.",
+  "start_url": "/?utm_source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#2563eb",
+  "lang": "es",
+  "categories": ["shopping", "business"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Catálogo",
+      "url": "/catalogo",
+      "description": "Ver todos los productos"
+    },
+    {
+      "name": "Mis Pedidos",
+      "url": "/mis-pedidos",
+      "description": "Consultar mis compras y pedidos"
+    },
+    {
+      "name": "Ofertas",
+      "url": "/catalogo?sort=discount",
+      "description": "Ver ofertas y descuentos"
+    }
+  ]
+}

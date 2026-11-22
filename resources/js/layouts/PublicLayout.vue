@@ -2,6 +2,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import {
     Clock,
+    Download,
     Flame,
     Heart,
     Home,
@@ -13,17 +14,19 @@ import {
     MapPin,
     Menu,
     MessageCircle,
+    Moon,
     Package,
     Phone,
-    Search,
     ShoppingCart,
+    Smartphone,
     Sparkles,
+    Sun,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
+import LiveSearch from '@/components/catalog/LiveSearch.vue';
 import WhatsAppFab from '@/components/catalog/WhatsAppFab.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     Sheet,
     SheetContent,
@@ -31,6 +34,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from '@/components/ui/sheet';
+import { useAppearance } from '@/composables/useAppearance';
 import { useCart } from '@/composables/useCart';
 import { useReveal } from '@/composables/useReveal';
 import { useTranslations } from '@/composables/useTranslations';
@@ -121,16 +125,6 @@ const accountActive = computed(() =>
         : currentPath.value.startsWith('/mis-pedidos'),
 );
 
-const q = ref(
-    new URLSearchParams(
-        typeof window !== 'undefined' ? window.location.search : '',
-    ).get('q') ?? '',
-);
-
-const doSearch = () => {
-    router.get('/catalogo', { q: q.value }, { preserveState: false });
-};
-
 const handleLogout = () => {
     router.post(logout().url, {}, { onSuccess: () => router.flushAll() });
 };
@@ -138,6 +132,52 @@ const handleLogout = () => {
 const { count: cartCount, drawerOpen } = useCart();
 const { count: wishlistCount, sync: syncWishlist } = useWishlist();
 const openCart = () => (drawerOpen.value = true);
+
+// Modo Oscuro / Claro en tienda pública
+const { resolvedAppearance, updateAppearance } = useAppearance();
+
+const toggleTheme = () => {
+    const next = resolvedAppearance.value === 'dark' ? 'light' : 'dark';
+    updateAppearance(next);
+};
+
+// PWA: Detección y disparo de prompt de instalación
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+const deferredPrompt = ref<BeforeInstallPromptEvent | null>(null);
+const canInstallPwa = ref(false);
+const isPwaInstalled = ref(false);
+
+const onBeforeInstallPrompt = (e: Event) => {
+    e.preventDefault();
+    deferredPrompt.value = e as BeforeInstallPromptEvent;
+    canInstallPwa.value = true;
+};
+
+const onAppInstalled = () => {
+    canInstallPwa.value = false;
+    isPwaInstalled.value = true;
+    deferredPrompt.value = null;
+};
+
+const promptInstallPwa = async () => {
+    if (!deferredPrompt.value) {
+        return;
+    }
+
+    deferredPrompt.value.prompt();
+    const choice = await deferredPrompt.value.userChoice;
+
+    if (choice?.outcome === 'accepted') {
+        canInstallPwa.value = false;
+        isPwaInstalled.value = true;
+    }
+
+    deferredPrompt.value = null;
+};
 
 // El contador del carrito sale de localStorage (solo cliente): renderizar el
 // badge recién al montar evita el mismatch de hidratación con el SSR.
@@ -189,10 +229,21 @@ onMounted(() => {
 
     updateSecondaryNav();
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.addEventListener('appinstalled', onAppInstalled);
+
+    if (
+        typeof window !== 'undefined' &&
+        window.matchMedia('(display-mode: standalone)').matches
+    ) {
+        isPwaInstalled.value = true;
+    }
 });
 
 onBeforeUnmount(() => {
     window.removeEventListener('scroll', onScroll);
+    window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+    window.removeEventListener('appinstalled', onAppInstalled);
 });
 
 // scroll-reveal en todas las páginas envueltas en PublicLayout
@@ -265,6 +316,14 @@ useReveal();
                     >
                         <Mail class="size-3.5" /> {{ store.email }}
                     </a>
+                    <button
+                        v-if="canInstallPwa"
+                        type="button"
+                        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-0.5 text-[11px] font-semibold text-primary transition hover:bg-primary/20"
+                        @click="promptInstallPwa"
+                    >
+                        <Smartphone class="size-3" /> Instalar App
+                    </button>
                 </div>
             </div>
         </div>
@@ -308,27 +367,10 @@ useReveal();
                     </Link>
                 </div>
 
-                <form
-                    @submit.prevent="doSearch"
-                    class="relative hidden w-full max-w-2xl flex-[2] md:block"
-                    role="search"
-                >
-                    <Search
-                        class="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-muted-foreground"
-                    />
-                    <Input
-                        v-model="q"
-                        :placeholder="t('search_placeholder')"
-                        class="h-11 w-full rounded-full border-transparent bg-muted pr-28 pl-11 shadow-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:bg-card"
-                    />
-                    <Button
-                        type="submit"
-                        size="sm"
-                        class="absolute top-1/2 right-1.5 h-8 -translate-y-1/2 rounded-full px-4 shadow-none"
-                    >
-                        Buscar
-                    </Button>
-                </form>
+                <LiveSearch
+                    class="hidden max-w-2xl flex-[2] md:block"
+                    :placeholder="t('search_placeholder')"
+                />
 
                 <div
                     class="flex flex-1 basis-0 items-center justify-end gap-1 md:gap-1.5"
@@ -364,6 +406,45 @@ useReveal();
                         >
                             {{ cartCount }}
                         </span>
+                    </Button>
+
+                    <!-- Selector de Modo Oscuro / Claro -->
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="rounded-full hover:bg-muted"
+                        :aria-label="
+                            resolvedAppearance === 'dark'
+                                ? 'Cambiar a modo claro'
+                                : 'Cambiar a modo oscuro'
+                        "
+                        :title="
+                            resolvedAppearance === 'dark'
+                                ? 'Cambiar a modo claro'
+                                : 'Cambiar a modo oscuro'
+                        "
+                        @click="toggleTheme"
+                    >
+                        <Sun
+                            v-if="resolvedAppearance === 'dark'"
+                            class="size-5 text-amber-400 transition-transform hover:rotate-45"
+                        />
+                        <Moon
+                            v-else
+                            class="size-5 text-muted-foreground transition-transform hover:-rotate-12"
+                        />
+                    </Button>
+
+                    <!-- Botón para instalar PWA (si está disponible) -->
+                    <Button
+                        v-if="canInstallPwa"
+                        variant="outline"
+                        size="sm"
+                        class="hidden h-8 gap-1.5 rounded-full border-primary/30 text-xs font-medium text-primary hover:bg-primary/10 lg:inline-flex"
+                        @click="promptInstallPwa"
+                    >
+                        <Download class="size-3.5" />
+                        Instalar App
                     </Button>
 
                     <span
@@ -449,19 +530,11 @@ useReveal();
                             <SheetDescription class="sr-only">
                                 Menú de navegación y buscador de la tienda
                             </SheetDescription>
-                            <form
-                                @submit.prevent="doSearch"
-                                class="relative mb-4"
-                            >
-                                <Search
-                                    class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-                                />
-                                <Input
-                                    v-model="q"
-                                    :placeholder="t('search_placeholder')"
-                                    class="h-10 rounded-full bg-muted pl-9"
-                                />
-                            </form>
+                            <LiveSearch
+                                class="mb-4"
+                                :placeholder="t('search_placeholder')"
+                                compact
+                            />
                             <nav class="flex flex-col gap-1">
                                 <Link
                                     v-for="item in mobileMenuItems"
@@ -472,26 +545,72 @@ useReveal();
                                     {{ item.label }}
                                 </Link>
                             </nav>
+
+                            <!-- Instalación PWA en móvil -->
+                            <div
+                                v-if="canInstallPwa"
+                                class="mt-4 rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs"
+                            >
+                                <div
+                                    class="mb-1 flex items-center gap-2 font-semibold text-foreground"
+                                >
+                                    <Smartphone class="size-4 text-primary" />
+                                    <span>App Móvil</span>
+                                </div>
+                                <p class="mb-2.5 text-muted-foreground">
+                                    Instala la tienda en tu pantalla de inicio
+                                    para navegar más rápido.
+                                </p>
+                                <Button
+                                    size="sm"
+                                    class="h-8 w-full gap-1.5 rounded-lg text-xs font-medium"
+                                    @click="promptInstallPwa"
+                                >
+                                    <Download class="size-3.5" />
+                                    Instalar App
+                                </Button>
+                            </div>
+
+                            <!-- Selector de Modo Oscuro / Claro en móvil -->
+                            <div
+                                class="mt-4 flex items-center justify-between border-t border-border pt-4"
+                            >
+                                <span
+                                    class="text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+                                >
+                                    Tema visual
+                                </span>
+                                <button
+                                    type="button"
+                                    class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
+                                    @click="toggleTheme"
+                                >
+                                    <Sun
+                                        v-if="resolvedAppearance === 'dark'"
+                                        class="size-3.5 text-amber-400"
+                                    />
+                                    <Moon
+                                        v-else
+                                        class="size-3.5 text-muted-foreground"
+                                    />
+                                    <span>{{
+                                        resolvedAppearance === 'dark'
+                                            ? 'Modo Oscuro'
+                                            : 'Modo Claro'
+                                    }}</span>
+                                </button>
+                            </div>
                         </SheetContent>
                     </Sheet>
                 </div>
             </div>
 
             <!-- Búsqueda visible en móvil, debajo del logo -->
-            <form
-                @submit.prevent="doSearch"
-                class="relative mx-4 mb-3 sm:mx-6 md:hidden"
-                role="search"
-            >
-                <Search
-                    class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                    v-model="q"
-                    :placeholder="t('search_placeholder')"
-                    class="h-10 w-full rounded-full border-transparent bg-muted pl-10 shadow-none"
-                />
-            </form>
+            <LiveSearch
+                class="mx-4 mb-3 sm:mx-6 md:hidden"
+                :placeholder="t('search_placeholder')"
+                compact
+            />
 
             <Transition
                 enter-active-class="transition-opacity duration-100 ease-out"
@@ -733,37 +852,22 @@ useReveal();
 </template>
 
 <style>
-/* La tienda pública es siempre clara, aunque el usuario tenga el panel en modo
-   oscuro o el sistema en dark. Redefinimos los tokens claros en el contenedor;
-   por herencia de variables CSS, todo el subárbol del storefront los usa. */
+/* El contenedor storefront hereda los tokens definidos en app.css para modo
+   claro (:root) y modo oscuro (.dark), aportando sombras y estilos del tab móvil. */
 .storefront {
-    --background: hsl(220 23% 98%);
-    --foreground: hsl(224 32% 12%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(224 32% 12%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(224 32% 12%);
-    --primary: hsl(221 83% 50%);
-    --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(220 20% 94%);
-    --secondary-foreground: hsl(224 30% 18%);
-    --muted: hsl(220 20% 96%);
-    --muted-foreground: hsl(220 9% 44%);
-    --accent: hsl(221 85% 96%);
-    --accent-foreground: hsl(221 83% 38%);
-    --brand: hsl(221 83% 50%);
-    --brand-foreground: hsl(0 0% 100%);
-    --destructive: hsl(0 72% 50%);
-    --destructive-foreground: hsl(0 0% 100%);
-    --border: hsl(220 16% 91%);
-    --input: hsl(220 14% 86%);
-    --ring: hsl(221 83% 50%);
     --shadow-soft:
         0 1px 2px hsl(224 32% 12% / 0.04),
         0 2px 8px -2px hsl(224 32% 12% / 0.06);
     --shadow-lift:
         0 2px 4px hsl(224 32% 12% / 0.04),
         0 16px 32px -12px hsl(224 32% 12% / 0.16);
+}
+
+.dark .storefront {
+    --shadow-soft:
+        0 1px 3px hsl(0 0% 0% / 0.3), 0 2px 8px -2px hsl(0 0% 0% / 0.4);
+    --shadow-lift:
+        0 2px 6px hsl(0 0% 0% / 0.4), 0 16px 32px -12px hsl(0 0% 0% / 0.6);
 }
 
 .storefront .mobile-tab {

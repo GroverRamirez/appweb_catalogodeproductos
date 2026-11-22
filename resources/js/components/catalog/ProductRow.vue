@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Star } from 'lucide-vue-next';
+import { ArrowRight, Flame, Star } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,9 @@ const discountPct = computed(() => {
 });
 
 const outOfStock = computed(() => props.product.stock <= 0);
+const lowStock = computed(
+    () => props.product.stock > 0 && props.product.stock <= 5,
+);
 </script>
 
 <template>
@@ -124,13 +127,21 @@ const outOfStock = computed(() => props.product.stock <= 0);
                         :class="
                             outOfStock
                                 ? 'text-destructive'
-                                : 'text-muted-foreground'
+                                : lowStock
+                                  ? 'inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400'
+                                  : 'text-muted-foreground'
                         "
                     >
+                        <Flame
+                            v-if="lowStock"
+                            class="size-3 animate-pulse fill-current text-amber-500"
+                        />
                         {{
                             outOfStock
                                 ? 'Sin stock'
-                                : `${product.stock} disponibles`
+                                : lowStock
+                                  ? `¡Últimas ${product.stock} unidades!`
+                                  : `${product.stock} disponibles`
                         }}
                     </p>
                 </div>

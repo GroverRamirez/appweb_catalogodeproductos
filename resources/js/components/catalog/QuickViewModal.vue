@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Phone } from 'lucide-vue-next';
+import { ArrowRight, Flame, Phone } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,10 @@ const showSale = computed(
     () =>
         !!props.product.sale_price &&
         Number(props.product.sale_price) < Number(props.product.price),
+);
+
+const lowStock = computed(
+    () => props.product.stock > 0 && props.product.stock <= 5,
 );
 
 const whatsappHref = computed(() => {
@@ -147,17 +151,28 @@ const consultViaWhatsApp = () => {
                         </span>
                     </div>
 
-                    <Badge
-                        v-if="store.show_stock"
-                        :variant="product.stock > 0 ? 'default' : 'destructive'"
-                        class="w-fit"
-                    >
-                        {{
-                            product.stock > 0
-                                ? `${product.stock} disponibles`
-                                : 'Sin stock'
-                        }}
-                    </Badge>
+                    <div v-if="store.show_stock">
+                        <Badge
+                            v-if="product.stock <= 0"
+                            variant="destructive"
+                            class="w-fit"
+                        >
+                            Sin stock
+                        </Badge>
+                        <Badge
+                            v-else-if="lowStock"
+                            variant="outline"
+                            class="w-fit gap-1 border-amber-300 bg-amber-50 font-semibold text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
+                        >
+                            <Flame
+                                class="size-3 animate-pulse fill-amber-500 text-amber-500"
+                            />
+                            ¡Últimas {{ product.stock }} unidades!
+                        </Badge>
+                        <Badge v-else variant="default" class="w-fit">
+                            {{ product.stock }} disponibles
+                        </Badge>
+                    </div>
 
                     <div class="mt-auto flex flex-col gap-2 pt-4">
                         <Button

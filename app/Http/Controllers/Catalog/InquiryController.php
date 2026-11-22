@@ -14,6 +14,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\NewInquiryNotification;
+use App\Notifications\OrderConfirmationNotification;
 use App\Services\ExchangeRate;
 use App\Services\TelegramNotificationService;
 use Illuminate\Http\JsonResponse;
@@ -46,7 +47,7 @@ class InquiryController extends Controller
                 'client_id' => $client?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
-                'customer_email' => $data['customer_email'] ?? null,
+                'customer_email' => $data['customer_email'] ?? $user?->email,
                 'message' => $data['message'] ?? null,
                 'source' => $data['source'] ?? 'web',
                 'status' => 'pendiente',
@@ -102,7 +103,7 @@ class InquiryController extends Controller
                 'client_id' => $client?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
-                'customer_email' => $data['customer_email'] ?? null,
+                'customer_email' => $data['customer_email'] ?? $user?->email,
                 'message' => $data['message'] ?? null,
                 'source' => $data['source'] ?? 'web',
                 'status' => 'pendiente',
@@ -161,6 +162,7 @@ class InquiryController extends Controller
         });
 
         $this->notifyAdmin($inquiry);
+        $this->notifyCustomer($inquiry, $user);
 
         return redirect(URL::signedRoute('cart.thanks', ['inquiry' => $inquiry->public_token]))
             ->with('success', '¡Recibimos tu pedido! Te contactaremos pronto.');
@@ -276,6 +278,25 @@ class InquiryController extends Controller
 
         try {
             app(TelegramNotificationService::class)->notifyNewInquiry($inquiry);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    /**
+     * Envía la confirmación del pedido al correo de la cuenta del cliente.
+     *
+     * Solo a cuentas con correo verificado: el checkout es público y el
+     * correo del formulario lo escribe cualquiera, así que mandar ahí
+     * dejaría usar la tienda para enviar correos a direcciones ajenas.
+     */
+    protected function notifyCustomer(Inquiry $inquiry, ?User $user): void
+    {
+        try {
+            if ($user && $user->email_verified_at && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+                Notification::route('mail', $user->email)
+                    ->notify(new OrderConfirmationNotification($inquiry));
+            }
         } catch (\Throwable $e) {
             report($e);
         }

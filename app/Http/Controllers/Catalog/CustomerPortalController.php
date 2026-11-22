@@ -183,7 +183,7 @@ class CustomerPortalController extends Controller
             foreach ($toInsert as $productId) {
                 WishlistItem::firstOrCreate([
                     'user_id' => $user->id,
-                    'product_id' => $productId,
+                    'producto_id' => $productId,
                 ]);
             }
         }
@@ -223,7 +223,7 @@ class CustomerPortalController extends Controller
         } else {
             WishlistItem::firstOrCreate([
                 'user_id' => $user->id,
-                'product_id' => $product->id,
+                'producto_id' => $product->id,
             ]);
             $inWishlist = true;
         }

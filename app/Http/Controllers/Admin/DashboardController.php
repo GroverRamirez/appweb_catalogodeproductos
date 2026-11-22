@@ -151,6 +151,7 @@ class DashboardController extends Controller
         $recentInquiries = Inquiry::query()
             ->select('id', 'cliente_nombre', 'cliente_telefono', 'estado', 'origen', 'created_at')
             ->latest()
+            ->latest('id')
             ->take(5)
             ->get();
 
@@ -158,6 +159,7 @@ class DashboardController extends Controller
             ->with('supplier:id,nombre')
             ->withCount('items')
             ->latest()
+            ->latest('id')
             ->take(5)
             ->get(['id', 'proveedor_id', 'numero_referencia', 'estado', 'costo_total', 'created_at']);
 
@@ -165,6 +167,7 @@ class DashboardController extends Controller
             ->with('client:id,nombre')
             ->withCount('items')
             ->latest()
+            ->latest('id')
             ->take(5)
             ->get(['id', 'numero_recibo', 'cliente_id', 'cliente_nombre', 'metodo_pago', 'estado', 'total', 'created_at']);
 

@@ -51,7 +51,7 @@ jobs:
     steps:
       # ── 1. Código fuente ──────────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
@@ -70,7 +70,7 @@ jobs:
       # ── 3. Cache Composer ─────────────────────────────────────────────────────
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: vendor
           key: composer-php${{ matrix.php }}-${{ hashFiles('composer.lock') }}
@@ -82,7 +82,7 @@ jobs:
 
       # ── 4. Node / npm ─────────────────────────────────────────────────────────
       - name: Setup Node 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
           cache: 'npm'          # usa package-lock.json como cache key automáticamente
@@ -118,4 +118,4 @@ jobs:
 
       # ── 9. Tests ──────────────────────────────────────────────────────────────
       - name: Run Pest tests
-        run: ./vendor/bin/pest --ci --stop-on-failure
+        run: ./vendor/bin/pest --stop-on-failure

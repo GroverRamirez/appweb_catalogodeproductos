@@ -140,6 +140,9 @@ RUN mkdir -p \
         storage \
         bootstrap/cache \
         /var/log/supervisor \
+        # nginx corre como www-data y guarda aqui los archivos subidos
+        # (comprobantes, imagenes) antes de pasarlos a PHP
+        /var/lib/nginx \
     && chmod -R 775 storage bootstrap/cache
 
 EXPOSE 80

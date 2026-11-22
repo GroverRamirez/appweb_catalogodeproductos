@@ -79,6 +79,12 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
             ->middlewareFor(['create', 'store', 'edit', 'update', 'destroy'], 'permission:inventory.adjust');
 
         // Deben ir antes del resource para no chocar con el wildcard {purchase}
+        Route::get('purchases/suggested', [PurchaseController::class, 'suggested'])
+            ->middleware('permission:inventory.view')
+            ->name('purchases.suggested');
+        Route::get('purchases/suggested/export', [PurchaseController::class, 'exportSuggestedCsv'])
+            ->middleware('permission:inventory.view')
+            ->name('purchases.suggested.export');
         Route::patch('purchases/{purchase}/void', [PurchaseController::class, 'void'])
             ->middleware('permission:inventory.adjust')
             ->name('purchases.void');
@@ -138,6 +144,9 @@ Route::middleware(['auth', 'verified', 'can:access-admin'])
         Route::patch('inquiries/{inquiry}', [InquiryController::class, 'update'])
             ->middleware('permission:inquiries.update')
             ->name('inquiries.update');
+        Route::patch('inquiries/{inquiry}/payment-status', [InquiryController::class, 'updatePaymentStatus'])
+            ->middleware('permission:inquiries.update')
+            ->name('inquiries.payment-status');
         Route::post('inquiries/{inquiry}/notas', [InquiryController::class, 'storeNote'])
             ->middleware('permission:inquiries.update')
             ->name('inquiries.notes.store');

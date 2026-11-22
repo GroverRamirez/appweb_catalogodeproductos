@@ -132,6 +132,21 @@ class DashboardController extends Controller
                 ->all()
         );
 
+        // Ingresos por ventas confirmadas de los últimos 6 meses, para comparar
+        // ventas vs compras y evaluar el margen operativo bruto en el tiempo.
+        $salesByMonth = Cache::remember("dashboard.sales_6m.{$today}.".self::V, self::CACHE_TTL,
+            fn () => Sale::query()
+                ->selectRaw("{$monthExpr} as month, SUM(total) as total")
+                ->where('estado', 'confirmada')
+                ->where('created_at', '>=', now()->startOfMonth()->subMonths(5))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(fn ($row) => ['month' => $row->month, 'total' => (float) $row->total])
+                ->values()
+                ->all()
+        );
+
         // ── Datos sin cache (operacionales, el admin necesita verlos en tiempo real)
         $recentInquiries = Inquiry::query()
             ->select('id', 'cliente_nombre', 'cliente_telefono', 'estado', 'origen', 'created_at')
@@ -145,6 +160,13 @@ class DashboardController extends Controller
             ->latest()
             ->take(5)
             ->get(['id', 'proveedor_id', 'numero_referencia', 'estado', 'costo_total', 'created_at']);
+
+        $recentSales = Sale::query()
+            ->with('client:id,nombre')
+            ->withCount('items')
+            ->latest()
+            ->take(5)
+            ->get(['id', 'numero_recibo', 'cliente_id', 'cliente_nombre', 'metodo_pago', 'estado', 'total', 'created_at']);
 
         // Mismo criterio que las stats: las compras estan en dolares y el
         // panel habla en bolivianos, asi que se convierten fuera del cache.
@@ -161,8 +183,10 @@ class DashboardController extends Controller
             'lowStockProducts' => $lowStockProducts,
             'recentInquiries' => $recentInquiries,
             'recentPurchases' => $recentPurchases,
+            'recentSales' => $recentSales,
             'viewsLast7Days' => $viewsLast7Days,
             'spendByMonth' => $spendByMonth,
+            'salesByMonth' => $salesByMonth,
         ]);
     }
 
@@ -180,5 +204,6 @@ class DashboardController extends Controller
         Cache::forget('dashboard.low_stock.'.self::V);
         Cache::forget("dashboard.views_7d.{$today}.".self::V);
         Cache::forget("dashboard.spend_6m.{$today}.".self::V);
+        Cache::forget("dashboard.sales_6m.{$today}.".self::V);
     }
 }

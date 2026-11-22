@@ -18,6 +18,15 @@ export type CatalogProduct = {
     brand?: { id?: number; name: string; slug?: string } | null;
 };
 
+export type PaymentSettings = {
+    bank_qr_enabled: boolean;
+    bank_qr_image_url: string | null;
+    bank_name: string;
+    bank_account_holder: string;
+    bank_account_number: string;
+    bank_payment_instructions: string;
+};
+
 export type StoreSettings = {
     name: string;
     tagline: string;
@@ -37,6 +46,7 @@ export type StoreSettings = {
     exchange_rate_updated_at: string | null;
     logo_url: string | null;
     favicon_url: string | null;
+    payment?: PaymentSettings;
 };
 
 export const imageUrl = (path?: string | null): string | null => {

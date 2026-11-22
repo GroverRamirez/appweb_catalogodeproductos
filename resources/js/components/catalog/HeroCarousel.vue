@@ -103,7 +103,7 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
         <button
             v-if="banners.length > 1"
             type="button"
-            class="absolute top-1/2 left-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:grid sm:left-4 md:left-6 md:size-11"
+            class="absolute top-1/2 left-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:left-4 sm:grid md:left-6 md:size-11"
             @click="prev"
             aria-label="Anterior"
         >
@@ -112,7 +112,7 @@ const isExternal = (url: string) => /^https?:\/\//.test(url);
         <button
             v-if="banners.length > 1"
             type="button"
-            class="absolute top-1/2 right-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:grid sm:right-4 md:right-6 md:size-11"
+            class="absolute top-1/2 right-2 hidden size-8 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[hsl(224_36%_10%)] shadow-sm ring-1 ring-black/10 transition hover:bg-white sm:right-4 sm:grid md:right-6 md:size-11"
             @click="next"
             aria-label="Siguiente"
         >

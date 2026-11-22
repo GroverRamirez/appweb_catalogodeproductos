@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, Ban, Printer } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,6 +9,7 @@ import { usePermissions } from '@/composables/usePermissions';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 import { useThermalPrint } from '@/lib/thermalPrint';
+import type { PaperWidth } from '@/lib/thermalPrint';
 
 defineOptions({
     layout: () => ({
@@ -44,13 +45,36 @@ type PurchaseDetail = {
     voided_at: string | null;
 };
 
-const props = defineProps<{ purchase: PurchaseDetail }>();
+const props = defineProps<{
+    purchase: PurchaseDetail;
+    qrSvg?: string | null;
+}>();
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
 // Compras y costos se manejan en dólares, igual que la lista de precios.
 const cur = (n: string | number) => formatPrice(n, 'USD');
 const { can } = usePermissions();
+
+const paperWidth = ref<PaperWidth>(
+    typeof window !== 'undefined' &&
+        (localStorage.getItem('pos_paper_width') as PaperWidth) === '58mm'
+        ? '58mm'
+        : '80mm',
+);
+
+const setPaperWidth = (w: PaperWidth) => {
+    paperWidth.value = w;
+
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('pos_paper_width', w);
+    }
+};
+
+const printView = useThermalPrint(
+    'comprobante-compra-print',
+    () => paperWidth.value,
+);
 
 const num = (n: string | number) => {
     const amount = typeof n === 'string' ? parseFloat(n) : n;
@@ -83,8 +107,6 @@ const phone = computed(() => {
     return raw.startsWith('+') ? raw : `+${raw}`;
 });
 
-const printView = useThermalPrint('comprobante-compra-print');
-
 const voidPurchase = () => {
     if (
         !confirm(
@@ -101,16 +123,18 @@ const voidPurchase = () => {
 <template>
     <Head :title="`Compra #${purchase.id}`" />
 
-    <!-- print:p-0 — en impresión el viewport son los 80 mm del rollo, así que
+    <!-- print:p-0 — en impresión el viewport son los 58 mm u 80 mm del rollo, así que
          este padding se suma al margen del @page y recorta el ancho útil del
-         ticket: sin esto se imprimía en ~65 mm de los 72 disponibles. -->
+         ticket: sin esto se imprimiría recortado. -->
     <div class="mx-auto max-w-4xl space-y-4 p-3 md:p-4 print:p-0">
-        <div class="flex items-center justify-between gap-2 print:hidden">
+        <div
+            class="flex flex-wrap items-center justify-between gap-2 print:hidden"
+        >
             <div class="flex items-center gap-2">
                 <Button variant="ghost" size="icon-sm" as-child>
-                    <Link href="/admin/purchases"
-                        ><ArrowLeft class="size-4"
-                    /></Link>
+                    <Link href="/admin/purchases">
+                        <ArrowLeft class="size-4" />
+                    </Link>
                 </Button>
                 <h1 class="text-xl font-semibold">Compra #{{ purchase.id }}</h1>
                 <Badge
@@ -127,9 +151,42 @@ const voidPurchase = () => {
                     }}
                 </Badge>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Selector de ancho de ticket térmico -->
+                <div
+                    class="inline-flex rounded-lg border border-border bg-muted/50 p-0.5 text-xs font-medium"
+                    title="Ancho de papel de la impresora térmica"
+                >
+                    <button
+                        type="button"
+                        class="rounded-md px-2.5 py-1 transition-colors"
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'bg-background font-semibold text-foreground shadow-xs'
+                                : 'text-muted-foreground hover:text-foreground'
+                        "
+                        @click="setPaperWidth('58mm')"
+                    >
+                        58 mm
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-2.5 py-1 transition-colors"
+                        :class="
+                            paperWidth === '80mm'
+                                ? 'bg-background font-semibold text-foreground shadow-xs'
+                                : 'text-muted-foreground hover:text-foreground'
+                        "
+                        @click="setPaperWidth('80mm')"
+                    >
+                        80 mm
+                    </button>
+                </div>
+
                 <Button variant="outline" @click="printView">
-                    <Printer class="size-4" /> Imprimir
+                    <Printer class="size-4" /> Imprimir ticket ({{
+                        paperWidth
+                    }})
                 </Button>
                 <Button
                     v-if="
@@ -254,24 +311,40 @@ const voidPurchase = () => {
 
         <!-- El comprobante no se muestra en pantalla: los datos de la compra ya
              están arriba, y repetirlos abajo en formato ticket solo alargaba el
-             detalle. Aparece únicamente al imprimir (botón Imprimir), que es
-             cuando el formato de tira de 80 mm tiene sentido. -->
+             detalle. Aparece únicamente al imprimir (botón Imprimir), adaptado
+             a tiras térmicas de 58 mm u 80 mm según se elija. -->
         <section
             id="print-receipt"
-            class="mx-auto hidden w-full max-w-[360px] rounded-lg border border-border bg-card px-4 py-5 font-mono text-[11px] leading-relaxed text-foreground shadow-sm print:block print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none"
+            class="mx-auto hidden w-full rounded-lg border border-border bg-card px-4 py-5 font-mono leading-relaxed text-foreground shadow-sm print:block print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none"
+            :class="
+                paperWidth === '58mm'
+                    ? 'max-w-[260px] text-[10px]'
+                    : 'max-w-[360px] text-[11px]'
+            "
         >
             <div class="text-center">
                 <img
                     v-if="store.logo_url"
                     :src="store.logo_url"
                     :alt="store.name"
-                    class="mx-auto mb-1 h-12 w-auto object-contain print:h-10"
+                    class="mx-auto mb-1 h-12 w-auto object-contain print:h-9"
                 />
-                <p class="text-[13px] font-bold">{{ store.name }}</p>
-                <p v-if="store.address" class="whitespace-pre-line">
+                <p
+                    class="font-bold"
+                    :class="paperWidth === '58mm' ? 'text-xs' : 'text-[13px]'"
+                >
+                    {{ store.name }}
+                </p>
+                <p
+                    v-if="store.address"
+                    class="text-[10px] whitespace-pre-line print:text-[9px]"
+                >
                     {{ store.address }}
                 </p>
-                <p v-if="phone || store.email">
+                <p
+                    v-if="phone || store.email"
+                    class="text-[10px] print:text-[9px]"
+                >
                     {{ [phone, store.email].filter(Boolean).join(' · ') }}
                 </p>
             </div>
@@ -280,39 +353,82 @@ const voidPurchase = () => {
                 class="my-2 border-t border-dashed border-border print:border-black"
             />
 
-            <p class="text-center font-bold">
-                COMPROBANTE DE INGRESO DE MERCADERIA
+            <p class="text-center font-bold">COMPROBANTE DE INGRESO</p>
+            <p
+                class="text-center font-bold"
+                :class="paperWidth === '58mm' ? 'text-xs' : 'text-[13px]'"
+            >
+                Compra #{{ purchase.id }}
             </p>
 
-            <!-- La columna de etiquetas se angosta al imprimir: 28 (112px) es
-                 casi la mitad del ancho útil de un rollo de 80 mm. Acá es w-24 y
-                 no w-20 como en ventas, porque "Remito prov.:" son 13
-                 caracteres y en 80px no entraba. Los valores se parten en varias
-                 líneas en vez de cortarse: en un comprobante, media palabra con
-                 puntos suspensivos no sirve. -->
             <div class="mt-2 space-y-0.5">
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0 print:w-24">N.o interno:</span>
+                    <span
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'w-18 print:w-16'
+                                : 'w-28 print:w-24'
+                        "
+                        class="shrink-0"
+                    >
+                        N.o interno:
+                    </span>
                     <span>#{{ purchase.id }}</span>
                 </div>
                 <div v-if="purchase.reference_number" class="flex gap-2">
-                    <span class="w-28 shrink-0 print:w-24">Remito prov.:</span>
+                    <span
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'w-18 print:w-16'
+                                : 'w-28 print:w-24'
+                        "
+                        class="shrink-0"
+                    >
+                        Remito prov.:
+                    </span>
                     <span class="min-w-0 flex-1 break-words">{{
                         purchase.reference_number
                     }}</span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0 print:w-24">Fecha:</span>
+                    <span
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'w-18 print:w-16'
+                                : 'w-28 print:w-24'
+                        "
+                        class="shrink-0"
+                    >
+                        Fecha:
+                    </span>
                     <span>{{ fmtDate(purchase.created_at) }}</span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0 print:w-24">Proveedor:</span>
+                    <span
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'w-18 print:w-16'
+                                : 'w-28 print:w-24'
+                        "
+                        class="shrink-0"
+                    >
+                        Proveedor:
+                    </span>
                     <span class="min-w-0 flex-1 break-words">{{
                         purchase.supplier?.name ?? '—'
                     }}</span>
                 </div>
                 <div class="flex gap-2">
-                    <span class="w-28 shrink-0 print:w-24">Registró:</span>
+                    <span
+                        :class="
+                            paperWidth === '58mm'
+                                ? 'w-18 print:w-16'
+                                : 'w-28 print:w-24'
+                        "
+                        class="shrink-0"
+                    >
+                        Registró:
+                    </span>
                     <span class="min-w-0 flex-1 break-words">{{
                         purchase.creator?.name ?? '—'
                     }}</span>
@@ -323,11 +439,7 @@ const voidPurchase = () => {
                 class="my-2 border-t border-dashed border-border print:border-black"
             />
 
-            <!-- Cada ítem ocupa dos líneas, como en cualquier ticket: el nombre
-                 usa el ancho completo del rollo y abajo va el cálculo. En cuatro
-                 columnas el nombre se quedaba con ~130px de los 272 del rollo y
-                 salía cortado con puntos suspensivos, que en un comprobante es
-                 el peor lugar para ahorrar espacio. -->
+            <!-- Cada ítem ocupa dos líneas, adaptado al rollo -->
             <div class="tabular-nums">
                 <div class="flex justify-between gap-2 font-bold">
                     <span>Detalle</span>
@@ -353,7 +465,10 @@ const voidPurchase = () => {
                 class="my-2 border-t border-dashed border-border print:border-black"
             />
 
-            <div class="flex justify-end font-bold">
+            <div
+                class="flex justify-end font-bold"
+                :class="paperWidth === '58mm' ? 'text-xs' : 'text-sm'"
+            >
                 <span>TOTAL:&nbsp;{{ totalFmt(purchase.total_cost) }}</span>
             </div>
 
@@ -372,14 +487,34 @@ const voidPurchase = () => {
                 <span class="font-bold">Notas:</span> {{ purchase.notes }}
             </p>
 
-            <div class="mt-10 flex justify-between gap-4">
+            <!-- Código QR de la compra para verificación rápida -->
+            <div
+                v-if="qrSvg"
+                class="my-3 flex flex-col items-center justify-center text-center"
+            >
+                <div
+                    class="mx-auto size-24 print:size-20 [&>svg]:size-full"
+                    v-html="qrSvg"
+                />
+                <p
+                    class="mt-1 text-[9px] text-muted-foreground print:text-black"
+                >
+                    Escanear para verificar compra
+                </p>
+            </div>
+
+            <div class="mt-8 flex justify-between gap-4">
                 <div class="flex-1 text-center">
-                    <div class="border-t border-border pt-1 print:border-black">
+                    <div
+                        class="border-t border-border pt-1 text-[10px] print:border-black"
+                    >
                         Recibido por
                     </div>
                 </div>
                 <div class="flex-1 text-center">
-                    <div class="border-t border-border pt-1 print:border-black">
+                    <div
+                        class="border-t border-border pt-1 text-[10px] print:border-black"
+                    >
                         Entregado por
                     </div>
                 </div>

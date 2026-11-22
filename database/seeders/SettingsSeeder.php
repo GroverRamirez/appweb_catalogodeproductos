@@ -36,6 +36,12 @@ class SettingsSeeder extends Seeder
             ['key' => 'products_per_page', 'value' => '15', 'type' => 'number', 'group' => 'catalogo', 'label' => 'Productos por página'],
             ['key' => 'logo_path', 'value' => '', 'type' => 'image', 'group' => 'general', 'label' => 'Logo de la tienda (PNG/SVG con fondo transparente)'],
             ['key' => 'favicon_path', 'value' => '', 'type' => 'image', 'group' => 'general', 'label' => 'Favicon (ico/png cuadrado)'],
+            ['key' => 'bank_qr_enabled', 'value' => '1', 'type' => 'boolean', 'group' => 'pagos', 'label' => 'Habilitar pago con QR Bancario / Transferencia'],
+            ['key' => 'bank_qr_image', 'value' => '', 'type' => 'image', 'group' => 'pagos', 'label' => 'Código QR Bancario de la tienda (imagen)'],
+            ['key' => 'bank_name', 'value' => 'Banco Unión', 'type' => 'string', 'group' => 'pagos', 'label' => 'Nombre del Banco (ej: Banco Unión, BNB, BCP)'],
+            ['key' => 'bank_account_holder', 'value' => 'Mi Catálogo S.R.L.', 'type' => 'string', 'group' => 'pagos', 'label' => 'Titular de la cuenta'],
+            ['key' => 'bank_account_number', 'value' => '10000012345678', 'type' => 'string', 'group' => 'pagos', 'label' => 'Número de cuenta bancaria / Tipo'],
+            ['key' => 'bank_payment_instructions', 'value' => 'Realiza la transferencia o pago con el código QR y sube tu comprobante. Indica tu número de pedido en el concepto/glosa.', 'type' => 'text', 'group' => 'pagos', 'label' => 'Instrucciones de pago para el cliente'],
         ];
 
         foreach ($defaults as $row) {

@@ -15,11 +15,15 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Notifications\NewInquiryNotification;
 use App\Services\ExchangeRate;
+use App\Services\TelegramNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 class InquiryController extends Controller
 {
@@ -220,7 +224,43 @@ class InquiryController extends Controller
     }
 
     /**
-     * Envía email al `email_contact` configurado en settings.
+     * Sube el comprobante de pago/transferencia para una consulta específica.
+     */
+    public function uploadReceipt(Request $request, Inquiry $inquiry): RedirectResponse
+    {
+        $request->validate([
+            'receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
+        ], [
+            'receipt.required' => 'Debes seleccionar un archivo.',
+            'receipt.file' => 'El archivo subido no es válido.',
+            'receipt.mimes' => 'El comprobante debe ser una imagen (JPG, PNG, WebP) o un archivo PDF.',
+            'receipt.max' => 'El comprobante no debe superar los 5 MB.',
+        ]);
+
+        if ($inquiry->comprobante_pago) {
+            Storage::disk('public')->delete($inquiry->comprobante_pago);
+        }
+
+        $file = $request->file('receipt');
+        $extension = strtolower($file->getClientOriginalExtension());
+        $filename = 'recibo_'.$inquiry->id.'_'.Str::random(12).'.'.$extension;
+        $path = $file->storeAs('comprobantes_pago', $filename, 'public');
+
+        $inquiry->update([
+            'payment_receipt_path' => $path,
+            'payment_status' => 'comprobante_subido',
+        ]);
+
+        $inquiry->notes()->create([
+            'user_id' => $request->user()?->id,
+            'body' => 'El cliente subió el comprobante de pago.',
+        ]);
+
+        return back()->with('success', '¡Comprobante de pago subido correctamente! Validaremos tu transferencia a la brevedad.');
+    }
+
+    /**
+     * Envía email al `email_contact` configurado en settings y notificación instantánea a Telegram.
      */
     protected function notifyAdmin(Inquiry $inquiry): void
     {
@@ -230,6 +270,12 @@ class InquiryController extends Controller
                 Notification::route('mail', $adminEmail)
                     ->notify(new NewInquiryNotification($inquiry));
             }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
+        try {
+            app(TelegramNotificationService::class)->notifyNewInquiry($inquiry);
         } catch (\Throwable $e) {
             report($e);
         }

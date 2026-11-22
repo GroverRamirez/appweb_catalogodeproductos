@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Deferred, Link, useForm, usePage } from '@inertiajs/vue3';
 import {
     Check,
     ChevronDown,
@@ -50,7 +50,7 @@ type Product = {
 
 const props = defineProps<{
     product: Product;
-    related: CatalogProduct[];
+    related?: CatalogProduct[];
     alsoViewed?: CatalogProduct[];
     seo: {
         title: string;
@@ -218,7 +218,9 @@ const sendWhatsApp = () => {
             class="grid gap-8 md:grid-cols-[minmax(0,340px)_1fr] lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-10"
         >
             <!-- Galería -->
-            <div class="mx-auto w-full max-w-xs space-y-3 sm:max-w-sm md:max-w-none lg:sticky lg:top-24 lg:self-start">
+            <div
+                class="mx-auto w-full max-w-xs space-y-3 sm:max-w-sm md:max-w-none lg:sticky lg:top-24 lg:self-start"
+            >
                 <div
                     class="relative aspect-square overflow-hidden rounded-2xl bg-card ring-1 ring-border/70"
                 >
@@ -531,30 +533,111 @@ const sendWhatsApp = () => {
         </div>
 
         <!-- Relacionados -->
-        <div v-if="related.length" class="mt-12">
-            <h2 class="mb-4 font-display text-xl font-extrabold tracking-tight">
-                Productos relacionados
-            </h2>
-            <div
-                class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
-            >
-                <ProductCard v-for="p in related" :key="p.id" :product="p" />
+        <Deferred data="related">
+            <template #fallback>
+                <div class="mt-12">
+                    <div
+                        class="mb-4 h-7 w-56 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                    >
+                        <div
+                            v-for="i in 5"
+                            :key="i"
+                            class="overflow-hidden rounded-2xl border border-border/60 bg-card p-3 shadow-xs"
+                        >
+                            <div
+                                class="aspect-square w-full animate-pulse rounded-xl bg-muted"
+                            ></div>
+                            <div class="mt-3 space-y-2">
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-4/5 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-5 w-1/2 animate-pulse rounded bg-muted"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div v-if="related && related.length" class="mt-12">
+                <h2
+                    class="mb-4 font-display text-xl font-extrabold tracking-tight"
+                >
+                    Productos relacionados
+                </h2>
+                <div
+                    class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                >
+                    <ProductCard
+                        v-for="p in related"
+                        :key="p.id"
+                        :product="p"
+                    />
+                </div>
             </div>
-        </div>
+        </Deferred>
 
         <!-- También te puede interesar -->
-        <div v-if="alsoViewed && alsoViewed.length" class="mt-12">
-            <h2 class="mb-4 font-display text-xl font-extrabold tracking-tight">
-                También te puede interesar
-            </h2>
-            <p class="mb-3 text-sm text-muted-foreground">
-                Lo más visto en esta categoría últimamente.
-            </p>
-            <div
-                class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
-            >
-                <ProductCard v-for="p in alsoViewed" :key="p.id" :product="p" />
+        <Deferred data="alsoViewed">
+            <template #fallback>
+                <div class="mt-12">
+                    <div
+                        class="mb-2 h-7 w-64 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="mb-4 h-4 w-80 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                    >
+                        <div
+                            v-for="i in 4"
+                            :key="i"
+                            class="overflow-hidden rounded-2xl border border-border/60 bg-card p-3 shadow-xs"
+                        >
+                            <div
+                                class="aspect-square w-full animate-pulse rounded-xl bg-muted"
+                            ></div>
+                            <div class="mt-3 space-y-2">
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-4/5 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-5 w-1/2 animate-pulse rounded bg-muted"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div v-if="alsoViewed && alsoViewed.length" class="mt-12">
+                <h2
+                    class="mb-4 font-display text-xl font-extrabold tracking-tight"
+                >
+                    También te puede interesar
+                </h2>
+                <p class="mb-3 text-sm text-muted-foreground">
+                    Lo más visto en esta categoría últimamente.
+                </p>
+                <div
+                    class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                >
+                    <ProductCard
+                        v-for="p in alsoViewed"
+                        :key="p.id"
+                        :product="p"
+                    />
+                </div>
             </div>
-        </div>
+        </Deferred>
     </div>
 </template>

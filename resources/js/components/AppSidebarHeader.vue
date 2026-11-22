@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import OrdersNotificationBell from '@/components/admin/OrdersNotificationBell.vue';
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { formatRate } from '@/lib/catalog';
@@ -39,16 +40,20 @@ const rateTitle = computed(() =>
             </template>
         </div>
 
-        <span
-            v-if="store?.exchange_rate"
-            class="hidden text-xs text-muted-foreground sm:inline-flex sm:items-center sm:gap-1"
-            :title="rateTitle"
-        >
-            TC
-            <strong class="font-semibold text-foreground">
-                {{ formatRate(store.exchange_rate) }} Bs
-            </strong>
-            / USD
-        </span>
+        <div class="flex items-center gap-3">
+            <span
+                v-if="store?.exchange_rate"
+                class="hidden text-xs text-muted-foreground sm:inline-flex sm:items-center sm:gap-1"
+                :title="rateTitle"
+            >
+                TC
+                <strong class="font-semibold text-foreground">
+                    {{ formatRate(store.exchange_rate) }} Bs
+                </strong>
+                / USD
+            </span>
+
+            <OrdersNotificationBell />
+        </div>
     </header>
 </template>

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/catalog';
+import { referenceCheck } from '@/routes/admin/purchases';
 
 defineOptions({
     layout: () => ({
@@ -24,10 +25,17 @@ defineOptions({
 });
 
 type SupplierOption = { id: number; name: string };
+type InitialItem = {
+    product_id: number;
+    quantity: number;
+    unit_cost: number | string;
+};
 
 const props = defineProps<{
     suppliers: SupplierOption[];
     products: ProductOption[];
+    initialSupplierId?: number | null;
+    initialItems?: InitialItem[];
 }>();
 
 // El proveedor tambien se busca escribiendo, igual que el producto: con la
@@ -43,23 +51,31 @@ const supplierOptions = computed<ComboOption[]>(() =>
 const cur = (n: number) => formatPrice(n, 'USD');
 
 const form = useForm({
-    supplier_id: null as number | null,
+    supplier_id: props.initialSupplierId ?? null,
     reference_number: '',
-    notes: '',
+    notes: props.initialItems?.length
+        ? 'Generado automáticamente desde sugerencia de reposición.'
+        : '',
     // unit_cost arranca vacio a proposito: si arrancara en 0, olvidarse de
     // llenarlo registraria la compra con costo cero en silencio.
-    items: [
-        {
-            product_id: null as number | null,
-            quantity: 1,
-            unit_cost: '' as number | string,
-        },
-    ],
+    items: props.initialItems?.length
+        ? props.initialItems.map((item) => ({ ...item }))
+        : [
+              {
+                  product_id: null as number | null,
+                  quantity: 1,
+                  unit_cost: '' as number | string,
+              },
+          ],
 });
 
 // Producto al que corresponde el costo que autocompletamos en cada fila: es lo
 // que distingue "cambió de producto" de "volvió a elegir el mismo".
-const costedFor = ref<(number | null)[]>([null]);
+const costedFor = ref<(number | null)[]>(
+    props.initialItems?.length
+        ? props.initialItems.map((item) => item.product_id)
+        : [null],
+);
 
 const addItem = () => {
     form.items.push({ product_id: null, quantity: 1, unit_cost: '' });
@@ -144,15 +160,16 @@ watch(
         }
 
         refTimer = setTimeout(async () => {
-            const params = new URLSearchParams({ reference });
-
-            if (form.supplier_id !== null) {
-                params.set('supplier_id', String(form.supplier_id));
-            }
-
             try {
                 const res = await fetch(
-                    `/admin/purchases/reference-check?${params}`,
+                    referenceCheck.url({
+                        query: {
+                            reference,
+                            ...(form.supplier_id !== null
+                                ? { supplier_id: String(form.supplier_id) }
+                                : {}),
+                        },
+                    }),
                     { headers: { Accept: 'application/json' } },
                 );
 

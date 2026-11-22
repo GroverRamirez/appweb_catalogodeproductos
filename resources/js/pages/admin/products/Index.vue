@@ -12,6 +12,7 @@ import {
     PowerOff,
     Search,
     Star,
+    Truck,
     XCircle,
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -30,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/composables/usePermissions';
 import { xsrfToken } from '@/lib/xsrf';
+import { importMethod as importProducts } from '@/routes/admin/products';
 
 defineOptions({
     layout: () => ({
@@ -175,7 +177,7 @@ async function runImport() {
     fd.append('file', importFile.value);
 
     try {
-        const res = await fetch('/admin/products/import', {
+        const res = await fetch(importProducts.url(), {
             method: 'POST',
             headers: {
                 'X-XSRF-TOKEN': xsrfToken(),
@@ -240,6 +242,16 @@ async function runImport() {
                     @click="importOpen = true"
                 >
                     <FileUp class="size-4" /> Importar CSV
+                </Button>
+                <Button
+                    v-if="can('inventory.view')"
+                    as-child
+                    variant="outline"
+                    class="rounded-full"
+                >
+                    <Link href="/admin/purchases/suggested">
+                        <Truck class="size-4" /> Reposición sugerida
+                    </Link>
                 </Button>
                 <Button
                     v-if="can('inventory.view')"

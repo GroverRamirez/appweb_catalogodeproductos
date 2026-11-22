@@ -23,6 +23,7 @@ class InquiryController extends Controller
         $inquiries = Inquiry::query()
             ->withCount('items')
             ->when($request->filled('status'), fn ($q) => $q->where('estado', $request->string('status')))
+            ->when($request->filled('payment_status'), fn ($q) => $q->where('estado_pago', $request->string('payment_status')))
             ->when($request->string('q')->toString(), function ($q, $term) {
                 $q->where(function ($qq) use ($term) {
                     $qq->where('cliente_nombre', 'like', "%$term%")
@@ -35,18 +36,20 @@ class InquiryController extends Controller
 
         return Inertia::render('admin/inquiries/Index', [
             'inquiries' => $inquiries,
-            'filters' => $request->only(['q', 'status']),
+            'filters' => $request->only(['q', 'status', 'payment_status']),
             'statuses' => Inquiry::STATUSES,
+            'paymentStatuses' => Inquiry::PAYMENT_STATUSES,
         ]);
     }
 
     public function show(Inquiry $inquiry): Response
     {
-        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name', 'notes.author:id,name', 'sales:id,consulta_id,numero_recibo,estado,total', 'client:id,nombre,telefono']);
+        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name', 'notes.author:id,name', 'sales:id,consulta_id,numero_recibo,estado,total', 'client:id,nombre,telefono', 'paymentVerifier:id,name']);
 
         return Inertia::render('admin/inquiries/Show', [
             'inquiry' => $inquiry,
             'statuses' => Inquiry::STATUSES,
+            'paymentStatuses' => Inquiry::PAYMENT_STATUSES,
         ]);
     }
 
@@ -98,6 +101,53 @@ class InquiryController extends Controller
         }
 
         return back()->with('success', 'Consulta actualizada.');
+    }
+
+    public function updatePaymentStatus(Request $request, Inquiry $inquiry): RedirectResponse
+    {
+        $data = $request->validate([
+            'payment_status' => ['required', 'string', 'in:'.implode(',', Inquiry::PAYMENT_STATUSES)],
+            'notes_pago' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $previousStatus = $inquiry->payment_status;
+        $newStatus = $data['payment_status'];
+
+        $inquiry->payment_status = $newStatus;
+        if (array_key_exists('notes_pago', $data)) {
+            $inquiry->payment_notes = $data['notes_pago'];
+        }
+
+        if ($newStatus === 'verificado') {
+            $inquiry->payment_verified_at = now();
+            $inquiry->payment_verified_by = $request->user()->id;
+        } elseif ($newStatus === 'sin_pago' || $newStatus === 'rechazado') {
+            $inquiry->payment_verified_at = null;
+            $inquiry->payment_verified_by = null;
+        }
+
+        $inquiry->save();
+
+        $statusLabels = [
+            'sin_pago' => 'Sin pago',
+            'comprobante_subido' => 'Comprobante subido',
+            'verificado' => 'Pago verificado',
+            'rechazado' => 'Comprobante rechazado',
+        ];
+        $labelPrev = $statusLabels[$previousStatus] ?? $previousStatus;
+        $labelNew = $statusLabels[$newStatus] ?? $newStatus;
+
+        $noteBody = "Actualizó estado de pago de \"{$labelPrev}\" a \"{$labelNew}\".";
+        if (! empty($data['notes_pago'])) {
+            $noteBody .= "\nDetalle/Motivo: {$data['notes_pago']}";
+        }
+
+        $inquiry->notes()->create([
+            'user_id' => $request->user()->id,
+            'body' => $noteBody,
+        ]);
+
+        return back()->with('success', 'Estado de pago actualizado.');
     }
 
     public function storeNote(StoreInquiryNoteRequest $request, Inquiry $inquiry): RedirectResponse

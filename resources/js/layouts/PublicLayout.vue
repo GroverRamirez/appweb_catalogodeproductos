@@ -13,11 +13,11 @@ import {
     MapPin,
     Menu,
     MessageCircle,
+    Package,
     Phone,
     Search,
     ShoppingCart,
     Sparkles,
-    User,
 } from 'lucide-vue-next';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import CartDrawer from '@/components/catalog/CartDrawer.vue';
@@ -85,6 +85,16 @@ const secondaryNavItems = computed(() => [
         active: currentPath.value === '/favoritos',
         icon: Heart,
     },
+    ...(user.value && !isStaff.value
+        ? [
+              {
+                  label: 'Mis Pedidos',
+                  href: '/mis-pedidos',
+                  active: currentPath.value.startsWith('/mis-pedidos'),
+                  icon: Package,
+              },
+          ]
+        : []),
 ]);
 const mobileMenuItems = computed(() =>
     secondaryNavItems.value.map(({ label, href }) => ({ label, href })),
@@ -96,19 +106,19 @@ const accountHref = computed(() => {
         return login();
     }
 
-    return isStaff.value ? '/admin' : '/settings/profile';
+    return isStaff.value ? '/admin' : '/mis-pedidos';
 });
 const accountIcon = computed(() => {
     if (!user.value) {
         return LogIn;
     }
 
-    return isStaff.value ? LayoutDashboard : User;
+    return isStaff.value ? LayoutDashboard : Package;
 });
 const accountActive = computed(() =>
     isStaff.value
         ? currentPath.value.startsWith('/admin')
-        : currentPath.value.startsWith('/settings'),
+        : currentPath.value.startsWith('/mis-pedidos'),
 );
 
 const q = ref(
@@ -126,7 +136,7 @@ const handleLogout = () => {
 };
 
 const { count: cartCount, drawerOpen } = useCart();
-const { count: wishlistCount } = useWishlist();
+const { count: wishlistCount, sync: syncWishlist } = useWishlist();
 const openCart = () => (drawerOpen.value = true);
 
 // El contador del carrito sale de localStorage (solo cliente): renderizar el
@@ -172,6 +182,11 @@ const onScroll = () => {
 
 onMounted(() => {
     mounted.value = true;
+
+    if (user.value) {
+        syncWishlist();
+    }
+
     updateSecondaryNav();
     window.addEventListener('scroll', onScroll, { passive: true });
 });
@@ -373,6 +388,20 @@ useReveal();
                                 <span class="hidden sm:inline">{{
                                     t('panel')
                                 }}</span>
+                            </Link>
+                        </Button>
+                        <Button
+                            v-else
+                            variant="outline"
+                            size="sm"
+                            as-child
+                            class="rounded-full font-medium"
+                        >
+                            <Link href="/mis-pedidos">
+                                <Package class="size-4" />
+                                <span class="hidden sm:inline"
+                                    >Mis Pedidos</span
+                                >
                             </Link>
                         </Button>
                         <Button

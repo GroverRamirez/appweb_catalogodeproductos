@@ -109,6 +109,7 @@ const groupTitle = (g: string) => {
         general: 'General',
         contacto: 'Contacto',
         catalogo: 'Catálogo',
+        pagos: 'Pagos / QR Bancario',
     };
 
     return map[g] ?? g;

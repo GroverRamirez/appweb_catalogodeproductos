@@ -7,6 +7,7 @@ use App\Models\ProductView;
 use App\Services\ExchangeRate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
 use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
@@ -269,7 +270,6 @@ test('catalog show renders product page', function () {
         ->assertInertia(fn (Assert $page) => $page
             ->component('catalog/Show')
             ->has('product')
-            ->has('related')
             ->has('seo')
             ->where('product.slug', $product->slug)
         );
@@ -352,6 +352,9 @@ test('catalog show returns related products from same category', function () {
     $this->get(route('catalog.show', $product->slug))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->has('related', 3)
+            ->component('catalog/Show')
+            ->loadDeferredProps(fn (Assert $deferred) => $deferred
+                ->has('related', 3)
+            )
         );
 });

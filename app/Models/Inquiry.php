@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Inquiry extends Model
@@ -32,10 +33,19 @@ class Inquiry extends Model
         'exchange_rate',
         'handled_by',
         'contacted_at',
+        'payment_receipt_path',
+        'payment_status',
+        'payment_verified_at',
+        'payment_verified_by',
+        'payment_notes',
     ];
 
     protected $hidden = [
         'token_publico',
+    ];
+
+    protected $appends = [
+        'payment_receipt_url',
     ];
 
     protected function aliases(): array
@@ -56,6 +66,11 @@ class Inquiry extends Model
             'handled_by' => 'atendido_por',
             'contacted_at' => 'contactado_en',
             'public_token' => 'token_publico',
+            'payment_receipt_path' => 'comprobante_pago',
+            'payment_status' => 'estado_pago',
+            'payment_verified_at' => 'pago_verificado_en',
+            'payment_verified_by' => 'pago_verificado_por',
+            'payment_notes' => 'notas_pago',
         ];
     }
 
@@ -80,10 +95,13 @@ class Inquiry extends Model
             'cupon_consumido' => 'boolean',
             'descuento_monto' => 'decimal:2',
             'contactado_en' => 'datetime',
+            'pago_verificado_en' => 'datetime',
         ];
     }
 
     public const STATUSES = ['pendiente', 'contactado', 'vendido', 'cerrado'];
+
+    public const PAYMENT_STATUSES = ['sin_pago', 'comprobante_subido', 'verificado', 'rechazado'];
 
     public const SOURCES = ['whatsapp', 'web', 'telefono', 'otro'];
 
@@ -119,6 +137,23 @@ class Inquiry extends Model
     public function notes(): HasMany
     {
         return $this->hasMany(InquiryNote::class, 'consulta_id')->latest('id');
+    }
+
+    public function paymentVerifier(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pago_verificado_por');
+    }
+
+    public function getPaymentReceiptUrlAttribute(): ?string
+    {
+        $path = $this->comprobante_pago;
+        if (! $path) {
+            return null;
+        }
+
+        return str_starts_with($path, 'http')
+            ? $path
+            : Storage::url($path);
     }
 
     public function resolveRouteBindingQuery($query, $value, $field = null)

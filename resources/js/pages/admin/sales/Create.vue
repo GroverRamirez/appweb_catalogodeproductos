@@ -19,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 import { PAYMENT_METHOD_LABELS } from '@/lib/sales';
+import { clientLookup } from '@/routes/admin/sales';
 
 defineOptions({
     layout: () => ({
@@ -114,10 +115,9 @@ const lookupClient = async () => {
     ciLookup.value = 'loading';
 
     try {
-        const res = await fetch(
-            `/admin/sales/client-lookup?${new URLSearchParams({ ci })}`,
-            { headers: { Accept: 'application/json' } },
-        );
+        const res = await fetch(clientLookup.url({ query: { ci } }), {
+            headers: { Accept: 'application/json' },
+        });
 
         // Si mientras tanto se siguió escribiendo, esta respuesta ya es vieja.
         if (ci !== form.id_card.trim()) {
@@ -252,9 +252,7 @@ const submit = () => form.post('/admin/sales');
                 </CardHeader>
                 <CardContent class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div class="space-y-1.5">
-                        <Label for="id_card">
-                            CI
-                        </Label>
+                        <Label for="id_card"> CI </Label>
                         <div class="relative">
                             <Input
                                 id="id_card"
@@ -298,9 +296,7 @@ const submit = () => form.post('/admin/sales');
                         </p>
                     </div>
                     <div class="space-y-1.5">
-                        <Label for="customer_name">
-                            Cliente
-                        </Label>
+                        <Label for="customer_name"> Cliente </Label>
                         <Input
                             id="customer_name"
                             v-model="form.customer_name"

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CartValidationController;
 use App\Http\Controllers\Catalog\CatalogController;
 use App\Http\Controllers\Catalog\ClientProfileController;
+use App\Http\Controllers\Catalog\CustomerPortalController;
 use App\Http\Controllers\Catalog\InquiryController as PublicInquiryController;
 use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LocaleController;
@@ -34,11 +35,19 @@ Route::middleware(EnsureClientProfileComplete::class)->group(function () {
         return inertia('catalog/CartThanks', [
             'inquiry' => [
                 'id' => $inquiry->id,
+                'public_token' => $inquiry->public_token,
+                'status' => $inquiry->status,
+                'payment_status' => $inquiry->payment_status,
+                'payment_receipt_url' => $inquiry->payment_receipt_url,
                 'total_estimated' => $inquiry->total_estimated,
                 'items' => $inquiry->items,
             ],
         ]);
     })->middleware('signed')->name('cart.thanks');
+
+    Route::post('/carrito/gracias/{inquiry:public_token}/comprobante', [PublicInquiryController::class, 'uploadReceipt'])
+        ->middleware('throttle:10,1')
+        ->name('public.inquiries.receipt');
 });
 
 // Páginas legales (Google las pide para publicar el inicio de sesión)
@@ -71,6 +80,21 @@ Route::middleware('guest')->group(function () {
     Route::get('/login/google/callback', [GoogleAuthController::class, 'callback'])
         ->middleware('throttle:20,1')
         ->name('login.google.callback');
+});
+
+// Favoritos (sincronización con BD para usuarios autenticados)
+Route::middleware('auth')->group(function () {
+    Route::post('/favoritos/sincronizar', [CustomerPortalController::class, 'syncWishlist'])->name('customer.wishlist.sync');
+    Route::post('/favoritos/toggle/{product}', [CustomerPortalController::class, 'toggleWishlist'])->name('customer.wishlist.toggle');
+});
+
+// Portal del Cliente / Mis Pedidos y Compras
+Route::middleware(['auth', EnsureClientProfileComplete::class])->group(function () {
+    Route::get('/mis-pedidos', [CustomerPortalController::class, 'index'])->name('customer.orders');
+    Route::post('/mis-pedidos/{inquiry}/comprobante', [CustomerPortalController::class, 'uploadReceipt'])
+        ->middleware('throttle:10,1')
+        ->name('customer.orders.receipt');
+    Route::get('/mis-pedidos/compras/{sale}/comprobante.pdf', [CustomerPortalController::class, 'receipt'])->name('customer.sales.receipt');
 });
 
 // Completar CI y teléfono del cliente (después de Google o del registro)

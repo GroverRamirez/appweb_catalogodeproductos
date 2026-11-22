@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, PackagePlus, Plus, Search } from 'lucide-vue-next';
+import { Eye, PackagePlus, Plus, Search, Truck } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 import PageHeader from '@/components/admin/PageHeader.vue';
 import Pagination from '@/components/Pagination.vue';
@@ -76,6 +76,11 @@ watch([q, status], () => {
             description="Ingresos de mercadería registrados, con el stock que sumaron."
         >
             <template #actions>
+                <Button variant="outline" as-child class="rounded-md">
+                    <Link href="/admin/purchases/suggested">
+                        <Truck class="size-4" /> Reposición sugerida
+                    </Link>
+                </Button>
                 <Button as-child class="rounded-md">
                     <Link href="/admin/purchases/create">
                         <Plus class="size-4" /> Nueva compra

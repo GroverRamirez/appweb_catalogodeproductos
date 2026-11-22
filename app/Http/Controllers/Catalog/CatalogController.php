@@ -200,9 +200,6 @@ class CatalogController extends Controller
             );
         }
 
-        $related = $this->buildRelated($product, 8);
-        $alsoViewed = $this->buildAlsoViewed($product, 4);
-
         // SEO — calcular antes de pasar el producto al Resource
         $mainImagePath = $product->images->firstWhere('principal', true)?->path
             ?? $product->images->first()?->path;
@@ -241,8 +238,8 @@ class CatalogController extends Controller
 
         return Inertia::render('catalog/Show', [
             'product' => new ProductResource($product),
-            'related' => ProductResource::collection($related),
-            'alsoViewed' => ProductResource::collection($alsoViewed),
+            'related' => Inertia::defer(fn () => ProductResource::collection($this->buildRelated($product, 8))),
+            'alsoViewed' => Inertia::defer(fn () => ProductResource::collection($this->buildAlsoViewed($product, 4))),
             'seo' => [
                 'title' => $product->name,
                 'description' => $description,

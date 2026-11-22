@@ -23,6 +23,7 @@ import PublicLayout from '@/layouts/PublicLayout.vue';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
 import { xsrfToken } from '@/lib/xsrf';
+import { validate as validateCoupon } from '@/routes/public/coupons';
 
 defineOptions({ layout: PublicLayout });
 
@@ -97,7 +98,7 @@ const applyCoupon = async () => {
     couponLoading.value = true;
 
     try {
-        const res = await fetch('/cupones/validar', {
+        const res = await fetch(validateCoupon.url(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

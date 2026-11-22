@@ -38,3 +38,4 @@ yarn-error.log
 *.tgz
 /test_out.txt
 /Claude outputs
+.pint.cache

@@ -105,6 +105,14 @@ class HandleInertiaRequests extends Middleware
                 'show_stock' => (bool) Setting::get('show_stock', true),
                 'logo_url' => $this->assetUrl(Setting::get('logo_path')),
                 'favicon_url' => $this->assetUrl(Setting::get('favicon_path')),
+                'payment' => [
+                    'bank_qr_enabled' => (bool) Setting::get('bank_qr_enabled', true),
+                    'bank_qr_image_url' => $this->assetUrl(Setting::get('bank_qr_image')),
+                    'bank_name' => (string) Setting::get('bank_name', ''),
+                    'bank_account_holder' => (string) Setting::get('bank_account_holder', ''),
+                    'bank_account_number' => (string) Setting::get('bank_account_number', ''),
+                    'bank_payment_instructions' => (string) Setting::get('bank_payment_instructions', ''),
+                ],
             ],
         ];
     }

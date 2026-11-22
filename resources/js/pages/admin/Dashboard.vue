@@ -14,6 +14,7 @@ import {
     Wallet,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import SalesVsSpendChart from '@/components/admin/SalesVsSpendChart.vue';
 import SpendTrendChart from '@/components/admin/SpendTrendChart.vue';
 import StatCard from '@/components/admin/StatCard.vue';
 import ViewsTrendChart from '@/components/admin/ViewsTrendChart.vue';
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePermissions } from '@/composables/usePermissions';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
+import { receiptNumber } from '@/lib/sales';
 
 defineOptions({
     layout: () => ({
@@ -74,14 +76,28 @@ type PurchaseRow = {
     supplier: { id: number; name: string } | null;
 };
 
+type SaleRow = {
+    id: number;
+    receipt_number: number;
+    customer_name: string | null;
+    payment_method: string;
+    status: string;
+    total: string;
+    items_count: number;
+    created_at: string;
+    client: { id: number; name: string } | null;
+};
+
 const props = defineProps<{
     stats: Stats;
     topProducts: ProductRow[];
     lowStockProducts: ProductRow[];
     recentInquiries: InquiryRow[];
     recentPurchases: PurchaseRow[];
+    recentSales: SaleRow[];
     viewsLast7Days: { day: string; total: number }[];
     spendByMonth: { month: string; total: number }[];
+    salesByMonth: { month: string; total: number }[];
 }>();
 
 const { can } = usePermissions();
@@ -327,7 +343,7 @@ const statusColor = (s: string) => {
             </Card>
 
             <Card
-                v-if="can('inventory.view')"
+                v-if="can('sales.view') || can('inventory.view')"
                 class="admin-card overflow-hidden rounded-xl border"
             >
                 <CardHeader
@@ -335,24 +351,42 @@ const statusColor = (s: string) => {
                 >
                     <CardTitle class="flex items-center gap-2 font-display">
                         <span
-                            class="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm"
+                            class="grid size-9 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm"
                         >
-                            <ShoppingCart class="size-4" />
+                            <TrendingUp class="size-4" />
                         </span>
-                        Gasto en compras
+                        {{
+                            can('sales.view')
+                                ? 'Ingresos vs. Gasto en compras'
+                                : 'Gasto en compras'
+                        }}
                     </CardTitle>
                     <Link
-                        href="/admin/purchases"
+                        :href="
+                            can('sales.view')
+                                ? '/admin/sales'
+                                : '/admin/purchases'
+                        "
                         class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                     >
-                        Ver compras
+                        {{ can('sales.view') ? 'Ver ventas' : 'Ver compras' }}
                         <ArrowRight
                             class="size-3 transition-transform group-hover:translate-x-1"
                         />
                     </Link>
                 </CardHeader>
                 <CardContent class="pt-6">
-                    <SpendTrendChart :data="spendByMonth" :format="cur" />
+                    <SalesVsSpendChart
+                        v-if="can('sales.view')"
+                        :sales-data="salesByMonth"
+                        :spend-data="spendByMonth"
+                        :format="cur"
+                    />
+                    <SpendTrendChart
+                        v-else
+                        :data="spendByMonth"
+                        :format="cur"
+                    />
                 </CardContent>
             </Card>
         </div>
@@ -439,13 +473,22 @@ const statusColor = (s: string) => {
                         </span>
                         Stock bajo
                     </CardTitle>
-                    <Link
-                        v-if="can('inventory.adjust')"
-                        href="/admin/purchases/create"
-                        class="text-xs font-semibold text-primary hover:underline"
-                    >
-                        Registrar compra
-                    </Link>
+                    <div class="flex items-center gap-3">
+                        <Link
+                            v-if="can('inventory.view')"
+                            href="/admin/purchases/suggested"
+                            class="text-xs font-semibold text-amber-700 hover:underline dark:text-amber-400"
+                        >
+                            Reposición sugerida
+                        </Link>
+                        <Link
+                            v-if="can('inventory.adjust')"
+                            href="/admin/purchases/create"
+                            class="text-xs font-semibold text-primary hover:underline"
+                        >
+                            Registrar compra
+                        </Link>
+                    </div>
                 </CardHeader>
                 <CardContent class="p-0">
                     <table
@@ -503,6 +546,92 @@ const statusColor = (s: string) => {
                         />
                         <p class="text-sm text-muted-foreground">
                             Todo el stock está sobre el umbral.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card
+                v-if="can('sales.view')"
+                class="admin-card overflow-hidden rounded-xl border"
+            >
+                <CardHeader
+                    class="admin-card-header flex flex-row items-center justify-between space-y-0"
+                >
+                    <CardTitle class="flex items-center gap-2 font-display">
+                        <span
+                            class="grid size-9 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm"
+                        >
+                            <Receipt class="size-4" />
+                        </span>
+                        Últimas ventas
+                    </CardTitle>
+                    <Link
+                        href="/admin/sales"
+                        class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                        Ver todas
+                        <ArrowRight
+                            class="size-3 transition-transform group-hover:translate-x-1"
+                        />
+                    </Link>
+                </CardHeader>
+                <CardContent class="p-0">
+                    <table v-if="recentSales.length" class="w-full text-sm">
+                        <tbody class="divide-y divide-border/80">
+                            <tr
+                                v-for="s in recentSales"
+                                :key="s.id"
+                                class="transition hover:bg-accent/45"
+                            >
+                                <td class="px-4 py-3">
+                                    <Link
+                                        :href="`/admin/sales/${s.id}`"
+                                        class="font-medium hover:text-primary hover:underline"
+                                    >
+                                        Recibo #{{
+                                            receiptNumber(s.receipt_number)
+                                        }}
+                                    </Link>
+                                    <span
+                                        class="block text-xs text-muted-foreground"
+                                    >
+                                        {{
+                                            s.client?.name ??
+                                            s.customer_name ??
+                                            'Consumidor final'
+                                        }}
+                                        · {{ s.items_count }}
+                                        {{
+                                            s.items_count === 1
+                                                ? 'producto'
+                                                : 'productos'
+                                        }}
+                                        · {{ s.payment_method }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="font-mono font-semibold">
+                                        {{ cur(s.total) }}
+                                    </span>
+                                    <Badge
+                                        v-if="s.status === 'anulada'"
+                                        variant="secondary"
+                                        class="ml-2"
+                                    >
+                                        Anulada
+                                    </Badge>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 px-4 py-10 text-center"
+                    >
+                        <Receipt class="size-6 text-muted-foreground/50" />
+                        <p class="text-sm text-muted-foreground">
+                            Todavía no registraste ventas.
                         </p>
                     </div>
                 </CardContent>

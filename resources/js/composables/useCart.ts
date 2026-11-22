@@ -113,7 +113,9 @@ export function useCart() {
     );
 
     const add = (item: Omit<CartItem, 'quantity'>, qty = 1) => {
-        const existing = items.value.find((i) => i.product_id === item.product_id);
+        const existing = items.value.find(
+            (i) => i.product_id === item.product_id,
+        );
 
         if (existing) {
             existing.quantity += qty;

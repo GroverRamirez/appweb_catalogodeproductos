@@ -150,6 +150,11 @@ class Product extends Model
         return $this->hasMany(ProductView::class, 'producto_id');
     }
 
+    public function favorites(): HasMany
+    {
+        return $this->hasMany(WishlistItem::class, 'producto_id');
+    }
+
     // Accessors
     public function getCurrentPriceAttribute(): float
     {

@@ -51,7 +51,11 @@ const debouncedApply = () => {
         const params = Object.fromEntries(
             Object.entries(local).filter(([, v]) => v !== '' && v != null),
         );
-        router.get('/catalogo', params, { preserveState: true, replace: true });
+        router.get('/catalogo', params, {
+            only: ['products', 'filters', 'seo'],
+            preserveState: true,
+            replace: true,
+        });
     }, 400);
 };
 
@@ -59,7 +63,15 @@ watch(local, debouncedApply, { deep: true });
 
 const clear = () => {
     Object.keys(local).forEach((k) => ((local as any)[k] = ''));
-    router.get('/catalogo', {}, { preserveState: false });
+    router.get(
+        '/catalogo',
+        {},
+        {
+            only: ['products', 'filters', 'seo'],
+            preserveState: true,
+            replace: true,
+        },
+    );
 };
 
 const rootCategories = props.categories.filter((c) => !c.parent_id);

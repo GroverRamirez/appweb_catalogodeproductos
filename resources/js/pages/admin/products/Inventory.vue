@@ -238,9 +238,7 @@ const submit = () =>
                                     <td class="px-4 py-3">
                                         {{ m.reason ?? '—' }}
                                     </td>
-                                    <td
-                                        class="px-4 py-3 text-muted-foreground"
-                                    >
+                                    <td class="px-4 py-3 text-muted-foreground">
                                         {{ m.author ?? '—' }}
                                     </td>
                                 </tr>

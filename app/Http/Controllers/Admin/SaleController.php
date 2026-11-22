@@ -12,6 +12,10 @@ use App\Models\SaleItem;
 use App\Models\Setting;
 use App\Services\ExchangeRate;
 use App\Services\InventoryLedger;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -178,8 +182,22 @@ class SaleController extends Controller
             'client:id,nombre,telefono,carnet_identidad',
         ]);
 
+        $qrSvg = null;
+        try {
+            $renderer = new ImageRenderer(
+                new RendererStyle(110, 1),
+                new SvgImageBackEnd
+            );
+            $writer = new Writer($renderer);
+            $receiptVerificationUrl = url("/mis-pedidos?recibo={$sale->receipt_number}");
+            $qrSvg = $writer->writeString($receiptVerificationUrl);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return Inertia::render('admin/sales/Show', [
             'sale' => $sale,
+            'qrSvg' => $qrSvg,
         ]);
     }
 

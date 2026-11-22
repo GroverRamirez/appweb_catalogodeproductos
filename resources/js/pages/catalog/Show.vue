@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Link, useForm, usePage } from '@inertiajs/vue3';
+import { Deferred, Link, useForm, usePage } from '@inertiajs/vue3';
 import {
     Check,
     ChevronDown,
+    ChevronRight,
+    Flame,
     Heart,
     MessageCircle,
     Minus,
@@ -49,7 +51,7 @@ type Product = {
 
 const props = defineProps<{
     product: Product;
-    related: CatalogProduct[];
+    related?: CatalogProduct[];
     alsoViewed?: CatalogProduct[];
     seo: {
         title: string;
@@ -63,9 +65,6 @@ const props = defineProps<{
 
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
-const flash = computed(
-    () => (page.props.flash ?? {}) as { success?: string; error?: string },
-);
 
 const mainImageIdx = ref(
     props.product.images.findIndex((i) => i.is_main) >= 0
@@ -82,6 +81,9 @@ const showSale = computed(
         Number(props.product.sale_price) < Number(props.product.price),
 );
 const inStock = computed(() => props.product.stock > 0);
+const lowStock = computed(
+    () => props.product.stock > 0 && props.product.stock <= 5,
+);
 
 const quantity = ref(1);
 const incQ = () => (quantity.value = Math.min(999, quantity.value + 1));
@@ -131,7 +133,9 @@ onMounted(() => (mounted.value = true));
 const showLeadForm = ref(false);
 
 const { has: inWishlist, toggle: toggleWishlist } = useWishlist();
-const isFavorite = computed(() => mounted.value && inWishlist(props.product.id));
+const isFavorite = computed(
+    () => mounted.value && inWishlist(props.product.id),
+);
 const toggleCurrentFavorite = () => {
     const mainImg =
         props.product.images.find((i) => i.is_main) ?? props.product.images[0];
@@ -187,32 +191,42 @@ const sendWhatsApp = () => {
         :json-ld="seo.json_ld ?? undefined"
     />
 
-    <div class="mx-auto max-w-[1200px] px-4 py-6">
+    <div class="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:px-8">
         <!-- Breadcrumb -->
         <nav
-            class="mb-4 flex flex-wrap items-center gap-1 text-sm text-muted-foreground"
+            class="mb-5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
         >
-            <Link href="/" class="hover:underline">Inicio</Link>
-            <span>/</span>
-            <Link href="/catalogo" class="hover:underline">Catálogo</Link>
+            <Link href="/" class="transition hover:text-foreground"
+                >Inicio</Link
+            >
+            <ChevronRight class="size-3.5 opacity-60" />
+            <Link href="/catalogo" class="transition hover:text-foreground"
+                >Catálogo</Link
+            >
             <template v-if="product.category">
-                <span>/</span>
+                <ChevronRight class="size-3.5 opacity-60" />
                 <Link
                     :href="`/catalogo?category=${product.category.slug}`"
-                    class="hover:underline"
+                    class="transition hover:text-foreground"
                 >
                     {{ product.category.name }}
                 </Link>
             </template>
-            <span>/</span>
-            <span class="text-foreground">{{ product.name }}</span>
+            <ChevronRight class="size-3.5 opacity-60" />
+            <span class="line-clamp-1 font-medium text-foreground">{{
+                product.name
+            }}</span>
         </nav>
 
-        <div class="grid gap-8 lg:grid-cols-[minmax(0,460px)_1fr]">
+        <div
+            class="grid gap-8 md:grid-cols-[minmax(0,340px)_1fr] lg:grid-cols-[minmax(0,460px)_1fr] lg:gap-10"
+        >
             <!-- Galería -->
-            <div class="space-y-3 lg:sticky lg:top-24 lg:self-start">
+            <div
+                class="mx-auto w-full max-w-xs space-y-3 sm:max-w-sm md:max-w-none lg:sticky lg:top-24 lg:self-start"
+            >
                 <div
-                    class="relative aspect-square overflow-hidden rounded-lg border bg-muted"
+                    class="relative aspect-square overflow-hidden rounded-2xl bg-card ring-1 ring-border/70"
                 >
                     <img
                         v-if="product.images[mainImageIdx]"
@@ -236,11 +250,11 @@ const sendWhatsApp = () => {
                         :key="img.id"
                         type="button"
                         @click="mainImageIdx = i"
-                        class="aspect-square overflow-hidden rounded border-2 transition"
+                        class="aspect-square overflow-hidden rounded-xl ring-2 ring-offset-2 ring-offset-background transition"
                         :class="
                             i === mainImageIdx
-                                ? 'border-primary'
-                                : 'border-transparent hover:border-muted-foreground/40'
+                                ? 'ring-primary'
+                                : 'opacity-80 ring-transparent hover:opacity-100 hover:ring-border'
                         "
                     >
                         <img
@@ -253,15 +267,17 @@ const sendWhatsApp = () => {
             </div>
 
             <!-- Info -->
-            <div class="space-y-4">
+            <div class="max-w-2xl space-y-3">
                 <div>
                     <p
                         v-if="product.brand"
-                        class="mb-1 text-sm text-muted-foreground"
+                        class="mb-2 inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground"
                     >
                         {{ product.brand.name }}
                     </p>
-                    <h1 class="text-2xl font-bold md:text-3xl">
+                    <h1
+                        class="font-display text-xl leading-snug font-bold tracking-tight md:text-2xl"
+                    >
                         {{ product.name }}
                     </h1>
                     <p class="mt-1 text-sm text-muted-foreground">
@@ -270,7 +286,10 @@ const sendWhatsApp = () => {
                 </div>
 
                 <div v-if="store.show_prices" class="flex items-baseline gap-3">
-                    <span class="text-3xl font-bold">
+                    <span
+                        class="tabular font-display text-2xl font-extrabold tracking-tight md:text-[1.75rem]"
+                        :class="showSale ? 'text-destructive' : ''"
+                    >
                         {{
                             formatPrice(
                                 product.sale_price ?? product.price,
@@ -288,11 +307,32 @@ const sendWhatsApp = () => {
                 </div>
 
                 <div v-if="store.show_stock">
-                    <Badge v-if="inStock" variant="default" class="gap-1">
+                    <Badge
+                        v-if="!inStock"
+                        variant="secondary"
+                        class="gap-1 rounded-full px-2.5 py-1 text-muted-foreground"
+                    >
+                        Sin stock
+                    </Badge>
+                    <Badge
+                        v-else-if="lowStock"
+                        variant="outline"
+                        class="gap-1.5 rounded-full border-amber-300 bg-amber-50 px-3 py-1 font-semibold text-amber-800 shadow-xs dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-300"
+                    >
+                        <Flame
+                            class="size-3.5 animate-pulse fill-amber-500 text-amber-500"
+                        />
+                        ¡Pocas unidades! Solo quedan {{ product.stock }}
+                        {{ product.unit }}
+                    </Badge>
+                    <Badge
+                        v-else
+                        variant="outline"
+                        class="gap-1 rounded-full border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    >
                         <Check class="size-3" /> En stock ({{ product.stock }}
                         {{ product.unit }})
                     </Badge>
-                    <Badge v-else variant="secondary">Sin stock</Badge>
                 </div>
 
                 <p
@@ -303,15 +343,20 @@ const sendWhatsApp = () => {
                 </p>
 
                 <!-- Selector cantidad + acciones -->
-                <Card>
-                    <CardContent class="space-y-3 pt-5">
+                <Card
+                    class="rounded-2xl py-5 shadow-none ring-1 ring-border/50"
+                >
+                    <CardContent class="space-y-3">
                         <div class="flex items-center gap-3">
                             <Label>Cantidad</Label>
-                            <div class="flex items-center rounded-md border">
+                            <div
+                                class="flex items-center rounded-full border bg-card p-0.5"
+                            >
                                 <Button
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
+                                    class="rounded-full"
                                     @click="decQ"
                                 >
                                     <Minus class="size-3" />
@@ -324,6 +369,7 @@ const sendWhatsApp = () => {
                                     type="button"
                                     variant="ghost"
                                     size="icon-sm"
+                                    class="rounded-full"
                                     @click="incQ"
                                 >
                                     <Plus class="size-3" />
@@ -350,7 +396,7 @@ const sendWhatsApp = () => {
                                 v-if="inStock"
                                 type="button"
                                 size="lg"
-                                class="flex-1"
+                                class="h-11 flex-1 rounded-full"
                                 @click="addCurrentToCart"
                             >
                                 <ShoppingCart class="size-4" />
@@ -360,7 +406,10 @@ const sendWhatsApp = () => {
                                 type="button"
                                 size="lg"
                                 variant="outline"
-                                :class="inStock ? '' : 'w-full'"
+                                :class="[
+                                    'h-11 rounded-full',
+                                    inStock ? 'w-11 px-0' : 'w-full',
+                                ]"
                                 :aria-label="
                                     isFavorite
                                         ? 'Quitar de favoritos'
@@ -377,16 +426,26 @@ const sendWhatsApp = () => {
                                             : ''
                                     "
                                 />
-                                <span v-if="!inStock">Guardar en favoritos</span>
+                                <span v-if="!inStock"
+                                    >Guardar en favoritos</span
+                                >
                             </Button>
                         </div>
+
+                        <p
+                            v-if="store.show_stock && lowStock"
+                            class="text-xs font-medium text-amber-600 dark:text-amber-400"
+                        >
+                            ⚡ Alta demanda: quedan pocas unidades disponibles
+                            en almacén.
+                        </p>
 
                         <Button
                             v-if="store.whatsapp"
                             type="button"
                             size="lg"
                             variant="outline"
-                            class="w-full border-emerald-600 text-emerald-700 hover:bg-emerald-50"
+                            class="h-11 w-full rounded-full border-emerald-600/60 text-emerald-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-800"
                             @click="sendWhatsApp"
                         >
                             <MessageCircle class="size-4" />
@@ -454,12 +513,6 @@ const sendWhatsApp = () => {
                             >
                                 {{ form.errors.customer_phone }}
                             </p>
-                            <p
-                                v-if="flash.success"
-                                class="rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
-                            >
-                                {{ flash.success }}
-                            </p>
                         </form>
 
                         <div
@@ -477,7 +530,7 @@ const sendWhatsApp = () => {
         <!-- Descripción y características -->
         <div class="mt-10 grid gap-8 lg:grid-cols-3">
             <div class="lg:col-span-2">
-                <h2 class="mb-3 text-lg font-semibold">Descripción</h2>
+                <h2 class="mb-3 font-display text-lg font-bold">Descripción</h2>
                 <p
                     v-if="product.description"
                     class="text-sm leading-relaxed whitespace-pre-line text-muted-foreground"
@@ -490,12 +543,16 @@ const sendWhatsApp = () => {
             </div>
 
             <div v-if="product.attributes.length">
-                <h2 class="mb-3 text-lg font-semibold">Características</h2>
-                <dl class="divide-y rounded-lg border bg-card text-sm">
+                <h2 class="mb-3 font-display text-lg font-bold">
+                    Características
+                </h2>
+                <dl
+                    class="divide-y overflow-hidden rounded-2xl bg-card text-sm ring-1 ring-border/70"
+                >
                     <div
                         v-for="a in product.attributes"
                         :key="a.id"
-                        class="flex justify-between gap-3 px-3 py-2"
+                        class="flex justify-between gap-3 px-4 py-2.5"
                     >
                         <dt class="text-muted-foreground">{{ a.key }}</dt>
                         <dd class="font-medium">{{ a.value }}</dd>
@@ -505,24 +562,111 @@ const sendWhatsApp = () => {
         </div>
 
         <!-- Relacionados -->
-        <div v-if="related.length" class="mt-12">
-            <h2 class="mb-4 text-xl font-semibold">Productos relacionados</h2>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <ProductCard v-for="p in related" :key="p.id" :product="p" />
+        <Deferred data="related">
+            <template #fallback>
+                <div class="mt-12">
+                    <div
+                        class="mb-4 h-7 w-56 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                    >
+                        <div
+                            v-for="i in 5"
+                            :key="i"
+                            class="overflow-hidden rounded-2xl border border-border/60 bg-card p-3 shadow-xs"
+                        >
+                            <div
+                                class="aspect-square w-full animate-pulse rounded-xl bg-muted"
+                            ></div>
+                            <div class="mt-3 space-y-2">
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-4/5 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-5 w-1/2 animate-pulse rounded bg-muted"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div v-if="related && related.length" class="mt-12">
+                <h2
+                    class="mb-4 font-display text-xl font-extrabold tracking-tight"
+                >
+                    Productos relacionados
+                </h2>
+                <div
+                    class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                >
+                    <ProductCard
+                        v-for="p in related"
+                        :key="p.id"
+                        :product="p"
+                    />
+                </div>
             </div>
-        </div>
+        </Deferred>
 
         <!-- También te puede interesar -->
-        <div v-if="alsoViewed && alsoViewed.length" class="mt-12">
-            <h2 class="mb-4 text-xl font-semibold">
-                También te puede interesar
-            </h2>
-            <p class="mb-3 text-sm text-muted-foreground">
-                Lo más visto en esta categoría últimamente.
-            </p>
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <ProductCard v-for="p in alsoViewed" :key="p.id" :product="p" />
+        <Deferred data="alsoViewed">
+            <template #fallback>
+                <div class="mt-12">
+                    <div
+                        class="mb-2 h-7 w-64 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="mb-4 h-4 w-80 animate-pulse rounded bg-muted"
+                    ></div>
+                    <div
+                        class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                    >
+                        <div
+                            v-for="i in 4"
+                            :key="i"
+                            class="overflow-hidden rounded-2xl border border-border/60 bg-card p-3 shadow-xs"
+                        >
+                            <div
+                                class="aspect-square w-full animate-pulse rounded-xl bg-muted"
+                            ></div>
+                            <div class="mt-3 space-y-2">
+                                <div
+                                    class="h-3 w-1/3 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-4 w-4/5 animate-pulse rounded bg-muted"
+                                ></div>
+                                <div
+                                    class="h-5 w-1/2 animate-pulse rounded bg-muted"
+                                ></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div v-if="alsoViewed && alsoViewed.length" class="mt-12">
+                <h2
+                    class="mb-4 font-display text-xl font-extrabold tracking-tight"
+                >
+                    También te puede interesar
+                </h2>
+                <p class="mb-3 text-sm text-muted-foreground">
+                    Lo más visto en esta categoría últimamente.
+                </p>
+                <div
+                    class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5"
+                >
+                    <ProductCard
+                        v-for="p in alsoViewed"
+                        :key="p.id"
+                        :product="p"
+                    />
+                </div>
             </div>
-        </div>
+        </Deferred>
     </div>
 </template>

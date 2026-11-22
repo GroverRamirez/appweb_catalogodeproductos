@@ -26,7 +26,8 @@ class UpdateProductRequest extends FormRequest
             'price' => 'required|numeric|min:0',
             'sale_price' => 'nullable|numeric|min:0|lte:price',
             'cost' => 'nullable|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            // El stock no se edita desde acá: se mueve con compras, ventas y
+            // ajustes, y cada movimiento queda en el kardex.
             'min_stock' => 'nullable|integer|min:0',
             'unit' => 'nullable|string|max:20',
             'category_id' => 'nullable|exists:categorias,id',

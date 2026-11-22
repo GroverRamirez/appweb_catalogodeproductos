@@ -19,6 +19,7 @@ return [
     // Home sections
     'categories' => 'Categories',
     'see_all' => 'See all',
+    'explore' => 'Explore',
     'featured_products' => 'Featured products',
     'see_more' => 'See more',
     'newest' => 'New arrivals',

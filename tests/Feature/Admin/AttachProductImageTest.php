@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Product;
+use App\Services\ImageProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -22,6 +23,12 @@ function fakePngBytes(): string
 
 beforeEach(function () {
     Storage::fake('public');
+    // Los hosts de prueba no existen: se resuelven a una IP publica fija.
+    ImageProcessor::resolveHostsUsing(fn () => ['93.184.216.34']);
+});
+
+afterEach(function () {
+    ImageProcessor::resolveHostsUsing(null);
 });
 
 test('descarga una imagen desde URL y la adjunta como principal', function () {
@@ -78,4 +85,54 @@ test('rechaza URLs que no son http/https', function () {
         ->assertExitCode(1);
 
     expect($product->images()->count())->toBe(0);
+});
+
+test('rechaza un host que resuelve a una IP interna', function () {
+    ImageProcessor::resolveHostsUsing(fn () => ['10.0.0.5']);
+    Http::fake(['*' => Http::response(fakePngBytes(), 200, ['Content-Type' => 'image/png'])]);
+    $product = Product::factory()->create();
+
+    $this->artisan('products:image', ['code' => $product->code, 'url' => 'https://interno.example/f.png'])
+        ->assertExitCode(1);
+
+    Http::assertNothingSent();
+});
+
+test('rechaza un host con IPv6 de loopback', function () {
+    ImageProcessor::resolveHostsUsing(fn () => ['93.184.216.34', '::1']);
+    Http::fake();
+    $product = Product::factory()->create();
+
+    $this->artisan('products:image', ['code' => $product->code, 'url' => 'https://doble.example/f.png'])
+        ->assertExitCode(1);
+
+    Http::assertNothingSent();
+});
+
+test('no sigue una redireccion hacia la red interna', function () {
+    // El primer salto es publico y valido; la redireccion apunta a localhost.
+    Http::fake([
+        'https://publico.example/*' => Http::response('', 302, ['Location' => 'http://127.0.0.1/secreto.png']),
+        '*' => Http::response(fakePngBytes(), 200, ['Content-Type' => 'image/png']),
+    ]);
+    $product = Product::factory()->create();
+
+    $this->artisan('products:image', ['code' => $product->code, 'url' => 'https://publico.example/f.png'])
+        ->assertExitCode(1);
+
+    expect($product->images()->count())->toBe(0);
+    Http::assertSentCount(1);
+});
+
+test('sigue una redireccion publica valida', function () {
+    Http::fake([
+        'https://viejo.example/nueva/*' => Http::response(fakePngBytes(), 200, ['Content-Type' => 'image/png']),
+        'https://viejo.example/*' => Http::response('', 301, ['Location' => '/nueva/f.png']),
+    ]);
+    $product = Product::factory()->create();
+
+    $this->artisan('products:image', ['code' => $product->code, 'url' => 'https://viejo.example/f.png'])
+        ->assertExitCode(0);
+
+    expect($product->images()->count())->toBe(1);
 });

@@ -8,9 +8,11 @@ import {
     LayoutGrid,
     Pencil,
     Plus,
+    Power,
+    PowerOff,
     Search,
     Star,
-    Trash2,
+    Truck,
     XCircle,
 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
@@ -29,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { usePermissions } from '@/composables/usePermissions';
 import { xsrfToken } from '@/lib/xsrf';
+import { importMethod as importProducts } from '@/routes/admin/products';
 
 defineOptions({
     layout: () => ({
@@ -105,12 +108,21 @@ watch([q, category, brand, status, lowStock, noCost], () => {
     }, 300);
 });
 
-const destroy = (p: Product) => {
-    if (!confirm(`¿Eliminar "${p.name}"?`)) {
+const toggleActive = (p: Product) => {
+    if (
+        p.is_active &&
+        !confirm(
+            `¿Desactivar "${p.name}"? Dejará de verse en el catálogo, pero no se borra nada.`,
+        )
+    ) {
         return;
     }
 
-    router.delete(`/admin/products/${p.id}`, { preserveScroll: true });
+    router.patch(
+        `/admin/products/${p.id}/activo`,
+        {},
+        { preserveScroll: true },
+    );
 };
 
 const imageUrl = (p: Product) => {
@@ -165,7 +177,7 @@ async function runImport() {
     fd.append('file', importFile.value);
 
     try {
-        const res = await fetch('/admin/products/import', {
+        const res = await fetch(importProducts.url(), {
             method: 'POST',
             headers: {
                 'X-XSRF-TOKEN': xsrfToken(),
@@ -230,6 +242,16 @@ async function runImport() {
                     @click="importOpen = true"
                 >
                     <FileUp class="size-4" /> Importar CSV
+                </Button>
+                <Button
+                    v-if="can('inventory.view')"
+                    as-child
+                    variant="outline"
+                    class="rounded-full"
+                >
+                    <Link href="/admin/purchases/suggested">
+                        <Truck class="size-4" /> Reposición sugerida
+                    </Link>
                 </Button>
                 <Button
                     v-if="can('inventory.view')"
@@ -320,7 +342,7 @@ async function runImport() {
                             <th class="px-3 py-2">Producto</th>
                             <th class="px-3 py-2">Categoría</th>
                             <th class="px-3 py-2">Marca</th>
-                            <th class="px-3 py-2 text-right">Precio</th>
+                            <th class="px-3 py-2 text-right">Precio (USD)</th>
                             <th class="px-3 py-2 text-right">Stock</th>
                             <th class="px-3 py-2">Estado</th>
                             <th class="px-3 py-2"></th>
@@ -412,11 +434,26 @@ async function runImport() {
                                     </Link>
                                 </Button>
                                 <Button
+                                    v-if="can('products.update')"
                                     variant="ghost"
                                     size="icon-sm"
-                                    @click="destroy(p)"
+                                    :title="
+                                        p.is_active
+                                            ? 'Desactivar producto'
+                                            : 'Activar producto'
+                                    "
+                                    :aria-label="
+                                        p.is_active
+                                            ? 'Desactivar producto'
+                                            : 'Activar producto'
+                                    "
+                                    @click="toggleActive(p)"
                                 >
-                                    <Trash2 class="size-4 text-destructive" />
+                                    <PowerOff
+                                        v-if="p.is_active"
+                                        class="size-4 text-muted-foreground"
+                                    />
+                                    <Power v-else class="size-4 text-primary" />
                                 </Button>
                             </td>
                         </tr>

@@ -276,3 +276,19 @@ test('a user without inventory.adjust cannot register a purchase', function () {
 
     expect($product->fresh()->stock)->toBe($product->stock);
 });
+
+test('the purchases index shows the supplier contact person', function () {
+    $supplier = Supplier::factory()->create([
+        'nombre' => 'Digicorp SRL',
+        'contacto_nombre' => 'Ana Rojas',
+    ]);
+    Purchase::factory()->create(['proveedor_id' => $supplier->id]);
+
+    $this->actingAs($this->owner)
+        ->get(route('admin.purchases.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->where('purchases.data.0.supplier.name', 'Digicorp SRL')
+            ->where('purchases.data.0.supplier.contact_name', 'Ana Rojas')
+        );
+});

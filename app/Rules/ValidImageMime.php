@@ -27,8 +27,8 @@ class ValidImageMime implements ValidationRule
     /** Extensiones seguras mapeadas a MIME (doble verificación) */
     private const EXTENSION_MAP = [
         'image/jpeg' => ['jpg', 'jpeg'],
-        'image/png'  => ['png'],
-        'image/gif'  => ['gif'],
+        'image/png' => ['png'],
+        'image/gif' => ['gif'],
         'image/webp' => ['webp'],
         'image/avif' => ['avif'],
     ];
@@ -37,11 +37,13 @@ class ValidImageMime implements ValidationRule
     {
         if (! $value instanceof UploadedFile) {
             $fail('El campo :attribute debe ser un archivo subido.');
+
             return;
         }
 
         if (! $value->isValid()) {
             $fail('El archivo :attribute no se subió correctamente.');
+
             return;
         }
 
@@ -49,6 +51,7 @@ class ValidImageMime implements ValidationRule
 
         if (! $realPath || ! is_readable($realPath)) {
             $fail('No se puede leer el archivo :attribute.');
+
             return;
         }
 
@@ -57,6 +60,7 @@ class ValidImageMime implements ValidationRule
         // 1) Verificar que el MIME detectado esté en la lista de permitidos
         if (! in_array($detectedMime, self::ALLOWED, true)) {
             $fail("El archivo :attribute no es una imagen válida (JPEG, PNG, GIF, WebP, AVIF). Tipo detectado: {$detectedMime}.");
+
             return;
         }
 

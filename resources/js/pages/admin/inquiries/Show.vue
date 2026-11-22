@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Phone, ShoppingCart } from 'lucide-vue-next';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    Eye,
+    FileText,
+    Phone,
+    QrCode,
+    ShoppingCart,
+    XCircle,
+} from 'lucide-vue-next';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,12 +55,16 @@ type Inquiry = {
     message: string | null;
     source: string;
     status: string;
+    payment_status?: string;
+    payment_receipt_url?: string | null;
+    payment_verified_at?: string | null;
+    payment_notes?: string | null;
     total_estimated: string | null;
-    admin_notes: string | null;
     contacted_at: string | null;
     created_at: string;
     items: Item[];
     handler?: { id: number; name: string } | null;
+    paymentVerifier?: { id: number; name: string } | null;
     notes: Note[];
     sales: LinkedSale[];
 };
@@ -59,12 +72,33 @@ type Inquiry = {
 const props = defineProps<{
     inquiry: Inquiry;
     statuses: string[];
+    paymentStatuses?: string[];
 }>();
 
 const form = useForm({
     status: props.inquiry.status,
-    admin_notes: props.inquiry.admin_notes ?? '',
 });
+
+const paymentForm = useForm({
+    payment_status: props.inquiry.payment_status || 'sin_pago',
+    notes_pago: props.inquiry.payment_notes || '',
+});
+
+const submitPaymentStatus = () => {
+    paymentForm.patch(`/admin/inquiries/${props.inquiry.id}/payment-status`, {
+        preserveScroll: true,
+    });
+};
+
+const verifyPaymentQuick = () => {
+    paymentForm.payment_status = 'verificado';
+    submitPaymentStatus();
+};
+
+const rejectPaymentQuick = () => {
+    paymentForm.payment_status = 'rechazado';
+    submitPaymentStatus();
+};
 
 const submit = () => form.patch(`/admin/inquiries/${props.inquiry.id}`);
 
@@ -189,15 +223,6 @@ const whatsappLink = (phone: string) =>
                                 </option>
                             </select>
                         </div>
-                        <div>
-                            <Label for="admin_notes">Notas internas</Label>
-                            <textarea
-                                id="admin_notes"
-                                v-model="form.admin_notes"
-                                rows="4"
-                                class="w-full rounded-md border bg-card px-3 py-2 text-sm"
-                            ></textarea>
-                        </div>
                         <Button
                             type="submit"
                             :disabled="form.processing"
@@ -209,6 +234,199 @@ const whatsappLink = (phone: string) =>
                 </CardContent>
             </Card>
         </div>
+
+        <!-- Gestión y Validación del Pago con QR / Transferencia -->
+        <Card class="border-border">
+            <CardHeader class="flex flex-row items-center justify-between pb-3">
+                <div class="flex items-center gap-2">
+                    <QrCode class="size-5 text-primary" />
+                    <CardTitle class="text-base"
+                        >Comprobante y Estado del Pago</CardTitle
+                    >
+                </div>
+                <span
+                    class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                    :class="{
+                        'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400':
+                            inquiry.payment_status === 'verificado',
+                        'bg-blue-500/15 text-blue-700 dark:text-blue-400':
+                            inquiry.payment_status === 'comprobante_subido',
+                        'bg-destructive/15 text-destructive':
+                            inquiry.payment_status === 'rechazado',
+                        'bg-amber-500/15 text-amber-700 dark:text-amber-400':
+                            !inquiry.payment_status ||
+                            inquiry.payment_status === 'sin_pago',
+                    }"
+                >
+                    {{
+                        inquiry.payment_status === 'verificado'
+                            ? 'Pago verificado'
+                            : inquiry.payment_status === 'comprobante_subido'
+                              ? 'Comprobante recibido (en revisión)'
+                              : inquiry.payment_status === 'rechazado'
+                                ? 'Comprobante rechazado'
+                                : 'Sin comprobante'
+                    }}
+                </span>
+            </CardHeader>
+            <CardContent class="grid gap-6 md:grid-cols-2">
+                <!-- Visualización del Comprobante -->
+                <div
+                    class="flex flex-col items-center justify-center rounded-lg border bg-muted/20 p-4 text-center"
+                >
+                    <div
+                        v-if="inquiry.payment_receipt_url"
+                        class="w-full space-y-3"
+                    >
+                        <div
+                            v-if="inquiry.payment_receipt_url.endsWith('.pdf')"
+                            class="flex flex-col items-center p-4"
+                        >
+                            <FileText class="size-16 text-primary" />
+                            <p class="mt-2 text-xs font-medium">
+                                Documento PDF adjunto
+                            </p>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                as-child
+                                class="mt-3"
+                            >
+                                <a
+                                    :href="inquiry.payment_receipt_url"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <Eye class="mr-1.5 size-3.5" /> Abrir PDF en
+                                    pestaña nueva
+                                </a>
+                            </Button>
+                        </div>
+                        <div v-else class="flex flex-col items-center">
+                            <a
+                                :href="inquiry.payment_receipt_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="group relative block max-h-56 overflow-hidden rounded-md border bg-white shadow-xs"
+                            >
+                                <img
+                                    :src="inquiry.payment_receipt_url"
+                                    alt="Comprobante de pago"
+                                    class="max-h-56 w-auto object-contain transition group-hover:scale-105"
+                                />
+                            </a>
+                            <a
+                                :href="inquiry.payment_receipt_url"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="mt-2 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            >
+                                <Eye class="size-3" /> Ver comprobante a tamaño
+                                completo
+                            </a>
+                        </div>
+                    </div>
+                    <div
+                        v-else
+                        class="py-8 text-center text-sm text-muted-foreground"
+                    >
+                        <FileText class="mx-auto mb-2 size-10 opacity-40" />
+                        <p>El cliente aún no ha subido comprobante.</p>
+                    </div>
+
+                    <div
+                        v-if="inquiry.payment_verified_at"
+                        class="mt-3 w-full rounded border bg-emerald-500/10 p-2 text-left text-xs text-emerald-800 dark:text-emerald-300"
+                    >
+                        <p class="font-medium">
+                            Verificado el
+                            {{ formatDate(inquiry.payment_verified_at) }}
+                            <span v-if="inquiry.paymentVerifier">
+                                por {{ inquiry.paymentVerifier.name }}</span
+                            >
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Formulario de Validación para el Staff -->
+                <form @submit.prevent="submitPaymentStatus" class="space-y-3">
+                    <div>
+                        <Label for="payment_status"
+                            >Cambiar Estado del Pago</Label
+                        >
+                        <select
+                            id="payment_status"
+                            v-model="paymentForm.payment_status"
+                            class="mt-1 h-9 w-full rounded-md border bg-card px-3 text-sm"
+                        >
+                            <option value="sin_pago">
+                                Sin comprobante / Pendiente
+                            </option>
+                            <option value="comprobante_subido">
+                                Comprobante subido (en revisión)
+                            </option>
+                            <option value="verificado">
+                                Pago verificado (confirmado)
+                            </option>
+                            <option value="rechazado">
+                                Comprobante rechazado / observado
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <Label for="notes_pago"
+                            >Motivo u observaciones (visible para el cliente si
+                            se rechaza)</Label
+                        >
+                        <textarea
+                            id="notes_pago"
+                            v-model="paymentForm.notes_pago"
+                            rows="2"
+                            placeholder="Ej: Monto incompleto, número de cuenta incorrecto o imagen borrosa..."
+                            class="mt-1 w-full rounded-md border bg-card px-3 py-2 text-sm"
+                        ></textarea>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2 pt-1">
+                        <Button
+                            type="button"
+                            variant="default"
+                            size="sm"
+                            class="bg-emerald-600 text-white hover:bg-emerald-700"
+                            :disabled="
+                                paymentForm.processing ||
+                                inquiry.payment_status === 'verificado'
+                            "
+                            @click="verifyPaymentQuick"
+                        >
+                            <CheckCircle2 class="mr-1.5 size-3.5" />
+                            Verificar Pago
+                        </Button>
+
+                        <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            :disabled="paymentForm.processing"
+                            @click="rejectPaymentQuick"
+                        >
+                            <XCircle class="mr-1.5 size-3.5" />
+                            Rechazar Comprobante
+                        </Button>
+
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            size="sm"
+                            :disabled="paymentForm.processing"
+                        >
+                            Guardar Estado
+                        </Button>
+                    </div>
+                </form>
+            </CardContent>
+        </Card>
 
         <Card>
             <CardHeader

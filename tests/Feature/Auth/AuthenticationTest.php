@@ -11,6 +11,20 @@ test('login screen can be rendered', function () {
     $response->assertOk();
 });
 
+test('login screen hides the google button when google is not configured', function () {
+    config(['services.google.client_id' => null, 'services.google.client_secret' => null]);
+
+    $this->get(route('login'))
+        ->assertInertia(fn ($page) => $page->where('googleEnabled', false));
+});
+
+test('login screen shows the google button when google is configured', function () {
+    config(['services.google.client_id' => 'id', 'services.google.client_secret' => 'secret']);
+
+    $this->get(route('login'))
+        ->assertInertia(fn ($page) => $page->where('googleEnabled', true));
+});
+
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
 

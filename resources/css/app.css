@@ -9,11 +9,10 @@
 
 @theme inline {
     --font-sans:
-        Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        Inter, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     --font-display:
-        Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+        'Plus Jakarta Sans', Inter, ui-sans-serif, system-ui, sans-serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -82,73 +81,79 @@
     body,
     html {
         --font-sans:
-            Inter, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
+            Inter, ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+            'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
     }
 }
 
 /* ===========================================================================
-   Paleta — comercio clásico
-   Base neutra (blanco / grises fríos) + un único acento azul confiable.
-   Sin degradados, sin neón: superficies planas, bordes definidos.
+   Paleta — comercio moderno
+   Base neutra muy clara + un azul vivo como único acento. Superficies planas,
+   esquinas más redondeadas y sombras suaves en capas (sin degradados ni glow).
    =========================================================================== */
 :root {
-    /* Gris claro, no blanco: las tarjetas quedan en blanco encima y se
+    /* Gris muy claro, no blanco: las tarjetas quedan en blanco encima y se
        despegan del fondo. Los controles de formulario usan --card, no
        --background, para no verse hundidos dentro de esas tarjetas. */
-    --background: hsl(220 16% 96%);
-    --foreground: hsl(222 33% 14%);
+    --background: hsl(220 23% 97%);
+    --foreground: hsl(224 32% 12%);
 
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(222 33% 14%);
+    --card-foreground: hsl(224 32% 12%);
 
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(222 33% 14%);
+    --popover-foreground: hsl(224 32% 12%);
 
-    /* Azul comercio: confiable, sobrio, sin saturación neón */
-    --primary: hsl(218 79% 42%);
+    --primary: hsl(221 83% 50%);
     --primary-foreground: hsl(0 0% 100%);
 
-    --secondary: hsl(220 16% 95%);
-    --secondary-foreground: hsl(222 30% 20%);
+    --secondary: hsl(220 20% 95%);
+    --secondary-foreground: hsl(224 30% 18%);
 
-    --muted: hsl(220 16% 96%);
-    --muted-foreground: hsl(220 9% 43%);
+    --muted: hsl(220 20% 96%);
+    --muted-foreground: hsl(220 9% 44%);
 
-    --accent: hsl(218 60% 96%);
-    --accent-foreground: hsl(218 79% 32%);
+    --accent: hsl(221 85% 96%);
+    --accent-foreground: hsl(221 83% 38%);
 
-    /* Marca = el mismo azul; sin segundo color de degradado */
-    --brand: hsl(218 79% 42%);
+    --brand: hsl(221 83% 50%);
     --brand-foreground: hsl(0 0% 100%);
-    --accent2: hsl(222 30% 18%); /* tinta para detalles serios */
+    --accent2: hsl(224 32% 14%); /* tinta para detalles serios */
     --accent2-foreground: hsl(0 0% 100%);
 
-    --destructive: hsl(0 70% 45%);
+    --destructive: hsl(0 72% 50%);
     --destructive-foreground: hsl(0 0% 100%);
 
-    --border: hsl(220 15% 90%);
-    --input: hsl(220 15% 86%);
-    --ring: hsl(218 79% 42%);
+    --border: hsl(220 16% 91%);
+    --input: hsl(220 14% 86%);
+    --ring: hsl(221 83% 50%);
 
-    --chart-1: hsl(218 79% 46%);
-    --chart-2: hsl(199 70% 45%);
-    --chart-3: hsl(160 50% 40%);
-    --chart-4: hsl(38 80% 50%);
-    --chart-5: hsl(0 65% 55%);
+    --chart-1: hsl(221 83% 53%);
+    --chart-2: hsl(199 80% 46%);
+    --chart-3: hsl(160 60% 40%);
+    --chart-4: hsl(38 90% 52%);
+    --chart-5: hsl(0 70% 56%);
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: hsl(222 33% 13%);
-    --sidebar-foreground: hsl(220 14% 80%);
-    --sidebar-primary: hsl(218 79% 55%);
+    /* Barra lateral del panel: tinta casi negra con un toque azul */
+    --sidebar-background: hsl(224 36% 10%);
+    --sidebar-foreground: hsl(220 14% 76%);
+    --sidebar-primary: hsl(221 83% 56%);
     --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(222 24% 20%);
+    --sidebar-accent: hsl(224 26% 17%);
     --sidebar-accent-foreground: hsl(0 0% 100%);
-    --sidebar-border: hsl(222 24% 20%);
-    --sidebar-ring: hsl(218 79% 55%);
-    --sidebar: hsl(222 33% 13%);
+    --sidebar-border: hsl(224 26% 16%);
+    --sidebar-ring: hsl(221 83% 56%);
+    --sidebar: hsl(224 36% 10%);
+
+    /* Sombras en capas, neutras */
+    --shadow-soft:
+        0 1px 2px hsl(224 32% 12% / 0.04),
+        0 2px 8px -2px hsl(224 32% 12% / 0.06);
+    --shadow-lift:
+        0 2px 4px hsl(224 32% 12% / 0.04),
+        0 16px 32px -12px hsl(224 32% 12% / 0.16);
 }
 
 .dark {
@@ -200,6 +205,10 @@
     --sidebar-border: hsl(222 22% 16%);
     --sidebar-ring: hsl(214 90% 60%);
     --sidebar: hsl(222 30% 10%);
+
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.3);
+    --shadow-lift:
+        0 2px 4px hsl(0 0% 0% / 0.3), 0 16px 32px -12px hsl(0 0% 0% / 0.5);
 }
 
 @layer base {
@@ -213,7 +222,7 @@
     h2,
     h3,
     h4 {
-        letter-spacing: -0.015em;
+        letter-spacing: -0.02em;
         font-family: var(--font-display);
     }
 }
@@ -250,17 +259,13 @@
 
     /* Sombra de elevación discreta (sin glow de color) */
     .glow-brand {
-        box-shadow:
-            0 1px 2px hsl(222 33% 14% / 0.08),
-            0 8px 24px -12px hsl(222 33% 14% / 0.18);
+        box-shadow: var(--shadow-lift);
     }
 
     .admin-card {
         background: var(--card);
         border-color: var(--border);
-        box-shadow:
-            0 1px 2px hsl(222 33% 14% / 0.05),
-            0 10px 24px -20px hsl(222 33% 14% / 0.2);
+        box-shadow: var(--shadow-soft);
     }
     .dark .admin-card {
         background: var(--card);
@@ -386,6 +391,19 @@
     }
 }
 
+/* Elevación reutilizable (tarjetas del catálogo y del panel) */
+@utility elev-1 {
+    box-shadow: var(--shadow-soft);
+}
+@utility elev-2 {
+    box-shadow: var(--shadow-lift);
+}
+
 html {
     scroll-behavior: smooth;
+}
+
+/* Números alineados en precios y tablas */
+.tabular {
+    font-variant-numeric: tabular-nums;
 }

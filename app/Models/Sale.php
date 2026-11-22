@@ -19,7 +19,11 @@ class Sale extends Model
 
     public const STATUSES = ['confirmada', 'anulada'];
 
-    public const PAYMENT_METHODS = ['efectivo', 'qr', 'transferencia', 'tarjeta'];
+    /**
+     * Métodos aceptados en ventas nuevas. 'tarjeta' ya no se ofrece, pero las
+     * ventas antiguas con ese método se siguen mostrando (ver lib/sales.ts).
+     */
+    public const PAYMENT_METHODS = ['efectivo', 'qr', 'transferencia'];
 
     public const ORIGINS = ['mostrador', 'consulta'];
 
@@ -34,6 +38,7 @@ class Sale extends Model
         'subtotal',
         'discount_amount',
         'total',
+        'exchange_rate',
         'status',
         'notes',
         'created_by',
@@ -48,6 +53,7 @@ class Sale extends Model
             'subtotal' => 'decimal:2',
             'descuento_monto' => 'decimal:2',
             'total' => 'decimal:2',
+            'tipo_cambio' => 'decimal:4',
             'anulado_en' => 'datetime',
         ];
     }
@@ -71,6 +77,7 @@ class Sale extends Model
             'customer_phone' => 'cliente_telefono',
             'payment_method' => 'metodo_pago',
             'discount_amount' => 'descuento_monto',
+            'exchange_rate' => 'tipo_cambio',
             'status' => 'estado',
             'notes' => 'notas',
             'created_by' => 'creado_por',

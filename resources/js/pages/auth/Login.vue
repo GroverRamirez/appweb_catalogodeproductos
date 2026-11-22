@@ -1,23 +1,22 @@
 <script setup lang="ts">
 import { Form, Head } from '@inertiajs/vue3';
-import { ArrowLeft, Lock, Mail } from 'lucide-vue-next';
+import { Lock, Mail } from 'lucide-vue-next';
 import InputError from '@/components/InputError.vue';
-import PasskeyVerify from '@/components/PasskeyVerify.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { home } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
 
 defineOptions({
     layout: {
         title: 'Iniciar sesión',
-        description: 'Accede al panel de Mi Catálogo.',
+        description: 'Ingresa tus credenciales para continuar.',
         variant: 'split',
     },
 });
@@ -25,6 +24,7 @@ defineOptions({
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    googleEnabled?: boolean;
 }>();
 </script>
 
@@ -34,15 +34,15 @@ defineProps<{
 
         <div
             v-if="status"
-            class="mb-6 rounded-md border border-border bg-accent px-4 py-3 text-center text-sm font-medium text-accent-foreground"
+            class="mb-5 rounded-xl border border-primary/15 bg-accent px-4 py-3 text-center text-sm font-medium text-accent-foreground"
         >
             {{ status }}
         </div>
 
-        <div class="mb-6 grid gap-2.5">
+        <div v-if="googleEnabled" class="grid gap-2.5">
             <a
                 href="/login/google"
-                class="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border bg-card text-sm font-medium shadow-xs transition-colors hover:bg-accent"
+                class="flex h-12 w-full items-center justify-center gap-2.5 rounded-full border border-border bg-card text-sm font-semibold transition hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/30 focus-visible:outline-none"
             >
                 <svg class="size-4.5" viewBox="0 0 48 48" aria-hidden="true">
                     <path
@@ -66,24 +66,31 @@ defineProps<{
             </a>
         </div>
 
-        <PasskeyVerify
-            label="Entrar con passkey"
-            loading-label="Verificando passkey..."
-            separator="O usá tu correo y contraseña"
-        />
+        <div v-if="googleEnabled" class="relative my-5">
+            <div class="absolute inset-0 flex items-center">
+                <Separator class="w-full" />
+            </div>
+            <div class="relative flex justify-center text-xs uppercase">
+                <span
+                    class="bg-card px-3 text-[11px] font-medium text-muted-foreground"
+                >
+                    O ingresa con tu correo
+                </span>
+            </div>
+        </div>
 
         <Form
             v-bind="store.form()"
             :reset-on-success="['password']"
             v-slot="{ errors, processing }"
-            class="flex flex-col gap-5"
+            class="flex flex-col gap-4"
         >
-            <div class="grid gap-5">
-                <div class="grid gap-2.5">
+            <div class="grid gap-4">
+                <div class="grid gap-2">
                     <Label for="email">Correo electrónico</Label>
                     <div class="relative">
                         <Mail
-                            class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                            class="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-muted-foreground"
                         />
                         <Input
                             id="email"
@@ -94,19 +101,19 @@ defineProps<{
                             :tabindex="1"
                             autocomplete="email"
                             placeholder="correo@ejemplo.com"
-                            class="h-12 bg-card pl-10"
+                            class="h-12 rounded-xl border-transparent bg-muted pl-10 shadow-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:bg-card"
                         />
                     </div>
                     <InputError :message="errors.email" />
                 </div>
 
-                <div class="grid gap-2.5">
+                <div class="grid gap-2">
                     <div class="flex items-center justify-between">
                         <Label for="password">Contraseña</Label>
                         <TextLink
                             v-if="canResetPassword"
                             :href="request()"
-                            class="text-sm"
+                            class="text-xs font-medium sm:text-sm"
                             :tabindex="5"
                         >
                             ¿Olvidaste tu contraseña?
@@ -114,7 +121,7 @@ defineProps<{
                     </div>
                     <div class="relative">
                         <Lock
-                            class="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground"
+                            class="pointer-events-none absolute top-1/2 left-3.5 z-10 size-4 -translate-y-1/2 text-muted-foreground"
                         />
                         <PasswordInput
                             id="password"
@@ -123,7 +130,7 @@ defineProps<{
                             :tabindex="2"
                             autocomplete="current-password"
                             placeholder="Contraseña"
-                            class="h-12 bg-card pl-10"
+                            class="h-12 rounded-xl border-transparent bg-muted pl-10 shadow-none transition-colors hover:bg-secondary focus-visible:border-ring focus-visible:bg-card"
                         />
                     </div>
                     <InputError :message="errors.password" />
@@ -131,7 +138,7 @@ defineProps<{
 
                 <Label
                     for="remember"
-                    class="flex w-fit cursor-pointer items-center gap-2.5 text-sm text-muted-foreground"
+                    class="flex w-fit cursor-pointer items-center gap-2.5 py-1 text-sm text-muted-foreground"
                 >
                     <Checkbox id="remember" name="remember" :tabindex="3" />
                     Recordarme en este dispositivo
@@ -139,7 +146,7 @@ defineProps<{
 
                 <Button
                     type="submit"
-                    class="gradient-brand glow-brand mt-1 h-12 w-full font-semibold text-white hover:opacity-95"
+                    class="mt-1 h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-none hover:bg-primary/90"
                     :tabindex="4"
                     :disabled="processing"
                     data-test="login-button"
@@ -149,14 +156,5 @@ defineProps<{
                 </Button>
             </div>
         </Form>
-
-        <TextLink
-            :href="home()"
-            class="mt-8 inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-            :tabindex="6"
-        >
-            <ArrowLeft class="size-4" />
-            Volver al catálogo
-        </TextLink>
     </div>
 </template>

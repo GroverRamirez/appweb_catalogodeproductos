@@ -19,7 +19,10 @@ class StoreBannerRequest extends FormRequest
             'subtitle' => 'nullable|string|max:255',
             'image_file' => ['nullable', 'image', 'max:4096', new ValidImageMime],
             'image_url' => 'nullable|url|max:500',
-            'link' => 'nullable|string|max:500',
+            // Solo https:// o una ruta interna que empiece con una sola "/":
+            // un `javascript:` se ejecutaria al hacer clic en el banner y un
+            // "//otro.sitio" sacaria al visitante de la tienda sin aviso.
+            'link' => ['nullable', 'string', 'max:500', 'regex:#^(https?://[^\s]+|/(?!/)[^\s]*)$#i'],
             'cta_text' => 'nullable|string|max:50',
             'sort_order' => 'nullable|integer|min:0',
             'is_active' => 'boolean',

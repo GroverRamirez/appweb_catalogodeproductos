@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\StoreInquiryNoteRequest;
 use App\Http\Requests\Admin\UpdateInquiryRequest;
 use App\Models\Inquiry;
 use App\Models\Sale;
+use App\Services\ExchangeRate;
 use App\Support\CsvDownload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,7 @@ class InquiryController extends Controller
         $inquiries = Inquiry::query()
             ->withCount('items')
             ->when($request->filled('status'), fn ($q) => $q->where('estado', $request->string('status')))
+            ->when($request->filled('payment_status'), fn ($q) => $q->where('estado_pago', $request->string('payment_status')))
             ->when($request->string('q')->toString(), function ($q, $term) {
                 $q->where(function ($qq) use ($term) {
                     $qq->where('cliente_nombre', 'like', "%$term%")
@@ -34,18 +36,20 @@ class InquiryController extends Controller
 
         return Inertia::render('admin/inquiries/Index', [
             'inquiries' => $inquiries,
-            'filters' => $request->only(['q', 'status']),
+            'filters' => $request->only(['q', 'status', 'payment_status']),
             'statuses' => Inquiry::STATUSES,
+            'paymentStatuses' => Inquiry::PAYMENT_STATUSES,
         ]);
     }
 
     public function show(Inquiry $inquiry): Response
     {
-        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name', 'notes.author:id,name', 'sales:id,consulta_id,numero_recibo,estado,total', 'client:id,nombre,telefono']);
+        $inquiry->load(['items.product:id,nombre,codigo', 'handler:id,name', 'notes.author:id,name', 'sales:id,consulta_id,numero_recibo,estado,total', 'client:id,nombre,telefono', 'paymentVerifier:id,name']);
 
         return Inertia::render('admin/inquiries/Show', [
             'inquiry' => $inquiry,
             'statuses' => Inquiry::STATUSES,
+            'paymentStatuses' => Inquiry::PAYMENT_STATUSES,
         ]);
     }
 
@@ -53,24 +57,37 @@ class InquiryController extends Controller
     {
         $data = $request->validated();
 
-        $previousStatus = $inquiry->status;
+        // El cambio de estado y la venta que se desprende de él van en la misma
+        // transacción: si la venta falla, la consulta no puede quedar marcada
+        // como vendida sin venta detrás. Ese estado no se recupera solo, porque
+        // syncStockWithStatus solo actúa en la transición y volver a guardar ya
+        // no ve un cambio que reintentar.
+        $negatives = DB::transaction(function () use ($request, $inquiry, $data) {
+            $previousStatus = $inquiry->status;
 
-        $inquiry->fill($data);
-        if ($inquiry->status !== 'pendiente' && ! $inquiry->contacted_at) {
-            $inquiry->contacted_at = now();
-            $inquiry->handled_by = $request->user()->id;
-        }
-        $inquiry->save();
+            $inquiry->fill($data);
+            if ($inquiry->status !== 'pendiente' && ! $inquiry->contacted_at) {
+                $inquiry->contacted_at = now();
+                $inquiry->handled_by = $request->user()->id;
+            }
+            $inquiry->save();
 
-        // Dejar rastro del cambio de estado en el historial de seguimiento.
-        if ($inquiry->status !== $previousStatus) {
-            $inquiry->notes()->create([
-                'user_id' => $request->user()->id,
-                'body' => "Cambió el estado de \"{$previousStatus}\" a \"{$inquiry->status}\".",
-            ]);
-        }
+            // Dejar rastro del cambio de estado en el historial de seguimiento.
+            if ($inquiry->status !== $previousStatus) {
+                $inquiry->notes()->create([
+                    'user_id' => $request->user()->id,
+                    'body' => "Cambió el estado de \"{$previousStatus}\" a \"{$inquiry->status}\".",
+                ]);
+            }
 
-        $negatives = $this->syncStockWithStatus($inquiry, $previousStatus, $request->user()->id);
+            // Cerrar una consulta es decir que no se vendió: el uso del cupón
+            // que tomó en el checkout vuelve a estar disponible.
+            if ($inquiry->status === 'cerrado' && $previousStatus !== 'cerrado') {
+                $inquiry->releaseCoupon();
+            }
+
+            return $this->syncStockWithStatus($inquiry, $previousStatus, $request->user()->id);
+        });
 
         if ($negatives !== []) {
             // Canal de toast del proyecto: soporta el tipo "warning" y ya se
@@ -79,11 +96,58 @@ class InquiryController extends Controller
             Inertia::flash('toast', [
                 'type' => 'warning',
                 'message' => 'Stock negativo en: '.implode(', ', $negatives).
-                    '. Revisá el inventario de esos productos.',
+                    '. Revisa el inventario de esos productos.',
             ]);
         }
 
         return back()->with('success', 'Consulta actualizada.');
+    }
+
+    public function updatePaymentStatus(Request $request, Inquiry $inquiry): RedirectResponse
+    {
+        $data = $request->validate([
+            'payment_status' => ['required', 'string', 'in:'.implode(',', Inquiry::PAYMENT_STATUSES)],
+            'notes_pago' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $previousStatus = $inquiry->payment_status;
+        $newStatus = $data['payment_status'];
+
+        $inquiry->payment_status = $newStatus;
+        if (array_key_exists('notes_pago', $data)) {
+            $inquiry->payment_notes = $data['notes_pago'];
+        }
+
+        if ($newStatus === 'verificado') {
+            $inquiry->payment_verified_at = now();
+            $inquiry->payment_verified_by = $request->user()->id;
+        } elseif ($newStatus === 'sin_pago' || $newStatus === 'rechazado') {
+            $inquiry->payment_verified_at = null;
+            $inquiry->payment_verified_by = null;
+        }
+
+        $inquiry->save();
+
+        $statusLabels = [
+            'sin_pago' => 'Sin pago',
+            'comprobante_subido' => 'Comprobante subido',
+            'verificado' => 'Pago verificado',
+            'rechazado' => 'Comprobante rechazado',
+        ];
+        $labelPrev = $statusLabels[$previousStatus] ?? $previousStatus;
+        $labelNew = $statusLabels[$newStatus] ?? $newStatus;
+
+        $noteBody = "Actualizó estado de pago de \"{$labelPrev}\" a \"{$labelNew}\".";
+        if (! empty($data['notes_pago'])) {
+            $noteBody .= "\nDetalle/Motivo: {$data['notes_pago']}";
+        }
+
+        $inquiry->notes()->create([
+            'user_id' => $request->user()->id,
+            'body' => $noteBody,
+        ]);
+
+        return back()->with('success', 'Estado de pago actualizado.');
     }
 
     public function storeNote(StoreInquiryNoteRequest $request, Inquiry $inquiry): RedirectResponse
@@ -173,6 +237,9 @@ class InquiryController extends Controller
                 'payment_method' => 'efectivo',
                 'status' => 'confirmada',
                 'created_by' => $userId,
+                // La venta se cierra con la cotizacion con la que se cotizo la
+                // consulta: es el precio que el cliente acepto.
+                'exchange_rate' => $inquiry->exchange_rate ?: app(ExchangeRate::class)->current(),
             ]);
 
             $subtotal = SaleController::applyItems($sale, $lines, $negatives);
@@ -234,7 +301,13 @@ class InquiryController extends Controller
 
     public function destroy(Inquiry $inquiry): RedirectResponse
     {
-        $inquiry->delete();
+        DB::transaction(function () use ($inquiry) {
+            // Antes de borrarla: el uso que tenía tomado vuelve al cupón, que si
+            // no queda gastado por una consulta que ya no existe.
+            $inquiry->releaseCoupon();
+
+            $inquiry->delete();
+        });
 
         return to_route('admin.inquiries.index')->with('success', 'Consulta eliminada.');
     }
@@ -242,7 +315,10 @@ class InquiryController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $query = Inquiry::query()
-            ->with('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario')
+            ->with([
+                'items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario',
+                'notes:id,consulta_id,cuerpo,created_at',
+            ])
             ->when($request->filled('status'), fn ($q) => $q->where('estado', $request->string('status')))
             ->when($request->string('q')->toString(), function ($q, $term) {
                 $q->where(function ($qq) use ($term) {
@@ -258,10 +334,20 @@ class InquiryController extends Controller
         ];
 
         $rows = function () use ($query) {
-            foreach ($query->cursor() as $inq) {
+            // lazy() y no cursor(): cursor() ignora el with() y cargaba items
+            // y notas con una consulta por fila.
+            foreach ($query->lazy(200) as $inq) {
                 $items = $inq->items
                     ->map(fn ($i) => "{$i->quantity}x {$i->product_name_snapshot} ({$i->product_code_snapshot})")
                     ->implode(' | ');
+
+                // El historial llega del más nuevo al más viejo; en el CSV se
+                // lee mejor en orden cronológico.
+                $notes = $inq->notes
+                    ->sortBy('id')
+                    ->map(fn ($n) => optional($n->created_at)->format('Y-m-d H:i').': '.$n->body)
+                    ->implode(' | ');
+
                 yield [
                     $inq->id,
                     optional($inq->created_at)->format('Y-m-d H:i'),
@@ -272,7 +358,7 @@ class InquiryController extends Controller
                     $inq->status,
                     $inq->total_estimated,
                     $items,
-                    $inq->admin_notes,
+                    $notes,
                 ];
             }
         };

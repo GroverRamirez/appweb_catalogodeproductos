@@ -11,6 +11,8 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductView;
 use App\Models\Setting;
+use App\Services\ExchangeRate;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -96,20 +98,25 @@ class CatalogController extends Controller
         $perPage = (int) (Setting::get('products_per_page', 15)) ?: 15;
         $storeName = Setting::get('store_name', config('app.name'));
 
+        // La categoría se resuelve una sola vez acá porque la usan dos cosas: el
+        // filtro de la consulta y el SEO de la página (título, descripción y
+        // canonical de la landing de categoría).
+        $category = $request->filled('category')
+            ? Category::where('slug', $request->string('category')->toString())->first()
+            : null;
+
+        $rates = app(ExchangeRate::class);
+
         $products = Product::query()
             ->active()
             ->with(['mainImage', 'category:id,nombre', 'brand:id,nombre'])
             ->search($request->string('q')->toString() ?: null)
-            ->when($request->filled('category'), function ($q) use ($request) {
-                $slug = $request->string('category')->toString();
-                $cat = Category::where('slug', $slug)->first();
-                if ($cat) {
-                    // incluir subcategorías
-                    $ids = Category::where('id', $cat->id)
-                        ->orWhere('categoria_padre_id', $cat->id)
-                        ->pluck('id');
-                    $q->whereIn('categoria_id', $ids);
-                }
+            ->when($category, function ($q) use ($category) {
+                // incluir subcategorías
+                $ids = Category::where('id', $category->id)
+                    ->orWhere('categoria_padre_id', $category->id)
+                    ->pluck('id');
+                $q->whereIn('categoria_id', $ids);
             })
             ->when($request->filled('brand'), function ($q) use ($request) {
                 $slug = $request->string('brand')->toString();
@@ -118,8 +125,10 @@ class CatalogController extends Controller
                     $q->where('marca_id', $brand->id);
                 }
             })
-            ->when($request->filled('min_price'), fn ($q) => $q->where('precio', '>=', $request->float('min_price')))
-            ->when($request->filled('max_price'), fn ($q) => $q->where('precio', '<=', $request->float('max_price')))
+            // El visitante filtra en bolivianos y la tabla guarda dolares:
+            // los extremos se convierten antes de consultar, no despues.
+            ->when($request->filled('min_price'), fn ($q) => $q->where('precio', '>=', $rates->toUsd($request->float('min_price'))))
+            ->when($request->filled('max_price'), fn ($q) => $q->where('precio', '<=', $rates->toUsd($request->float('max_price'))))
             ->when($request->boolean('in_stock'), fn ($q) => $q->inStock())
             ->when($request->string('sort')->toString() === 'price_asc', fn ($q) => $q->orderBy('precio'))
             ->when($request->string('sort')->toString() === 'price_desc', fn ($q) => $q->orderByDesc('precio'))
@@ -134,6 +143,17 @@ class CatalogController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
+        $activeFilters = array_values(array_filter(
+            ['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort'],
+            fn (string $key) => $request->filled($key),
+        ));
+
+        // Una categoría sola es una página de aterrizaje real —tiene contenido
+        // propio y el sitemap la publica—, así que se indexa con su título y su
+        // canonical. El resto de los filtros (búsqueda, marca, precio, orden,
+        // stock) multiplica URLs sobre el mismo contenido: esas siguen noindex.
+        $isCategoryLanding = $category !== null && $activeFilters === ['category'];
+
         return Inertia::render('catalog/Index', [
             // through() transforma cada item con ProductResource pero conserva la
             // estructura plana del paginador (data, total, from, to, links[]) que
@@ -143,13 +163,54 @@ class CatalogController extends Controller
             'categories' => Category::cachedAll(),
             'brands' => Brand::cachedAll(),
             'seo' => [
-                'title' => 'Catálogo',
-                'description' => $this->excerpt("Explora nuestro catálogo de productos de {$storeName}. Filtra por categoría, marca y precio."),
-                'canonical' => url('/catalogo'),
+                'title' => $isCategoryLanding ? $category->name : 'Catálogo',
+                'description' => $this->excerpt($isCategoryLanding
+                    ? "Comprá {$category->name} en {$storeName}: precios, stock disponible y asesoramiento para elegir."
+                    : "Explora nuestro catálogo de productos de {$storeName}. Filtra por categoría, marca y precio."),
+                'canonical' => $isCategoryLanding
+                    ? url('/catalogo').'?category='.$category->slug
+                    : url('/catalogo'),
                 'og_image' => $this->assetUrl(Setting::get('logo_path')),
-                // noindex filtered/sorted views so only the canonical is indexed
-                'noindex' => $request->hasAny(['q', 'category', 'brand', 'min_price', 'max_price', 'in_stock', 'sort']),
+                'noindex' => $activeFilters !== [] && ! $isCategoryLanding,
             ],
+        ]);
+    }
+
+    public function suggestions(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->input('q', ''));
+
+        if (mb_strlen($q) < 2) {
+            return response()->json([
+                'products' => [],
+                'categories' => [],
+                'total' => 0,
+            ]);
+        }
+
+        $products = Product::query()
+            ->active()
+            ->search($q)
+            ->with(['mainImage', 'category:id,nombre,slug', 'brand:id,nombre,slug'])
+            ->limit(6)
+            ->get();
+
+        $categories = Category::query()
+            ->active()
+            ->where('nombre', 'like', "%{$q}%")
+            ->limit(3)
+            ->get(['id', 'nombre', 'slug']);
+
+        $total = Product::query()->active()->search($q)->count();
+
+        return response()->json([
+            'products' => ProductResource::collection($products),
+            'categories' => $categories->map(fn (Category $c) => [
+                'id' => $c->id,
+                'name' => $c->nombre,
+                'slug' => $c->slug,
+            ]),
+            'total' => $total,
         ]);
     }
 
@@ -178,9 +239,6 @@ class CatalogController extends Controller
             );
         }
 
-        $related = $this->buildRelated($product, 8);
-        $alsoViewed = $this->buildAlsoViewed($product, 4);
-
         // SEO — calcular antes de pasar el producto al Resource
         $mainImagePath = $product->images->firstWhere('principal', true)?->path
             ?? $product->images->first()?->path;
@@ -189,8 +247,9 @@ class CatalogController extends Controller
         $description = $this->excerpt($product->short_description ?? $product->description);
 
         $storeName = Setting::get('store_name', config('app.name'));
-        $currency = Setting::get('currency', 'PEN');
+        $currency = Setting::get('currency', 'BOB');
         $showPrices = (bool) Setting::get('show_prices', true);
+        $rates = app(ExchangeRate::class);
 
         $jsonLd = [
             '@context' => 'https://schema.org',
@@ -206,7 +265,9 @@ class CatalogController extends Controller
             'offers' => $showPrices ? [
                 '@type' => 'Offer',
                 'priceCurrency' => $currency,
-                'price' => $product->sale_price ?? $product->price,
+                // El precio estructurado es el que el comprador paga hoy,
+                // en la moneda en la que paga.
+                'price' => number_format($rates->toBs($product->sale_price ?? $product->price), 2, '.', ''),
                 'availability' => $product->stock > 0
                     ? 'https://schema.org/InStock'
                     : 'https://schema.org/OutOfStock',
@@ -216,8 +277,8 @@ class CatalogController extends Controller
 
         return Inertia::render('catalog/Show', [
             'product' => new ProductResource($product),
-            'related' => ProductResource::collection($related),
-            'alsoViewed' => ProductResource::collection($alsoViewed),
+            'related' => Inertia::defer(fn () => ProductResource::collection($this->buildRelated($product, 8))),
+            'alsoViewed' => Inertia::defer(fn () => ProductResource::collection($this->buildAlsoViewed($product, 4))),
             'seo' => [
                 'title' => $product->name,
                 'description' => $description,

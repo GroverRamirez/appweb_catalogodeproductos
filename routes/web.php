@@ -3,9 +3,12 @@
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Catalog\CartValidationController;
 use App\Http\Controllers\Catalog\CatalogController;
+use App\Http\Controllers\Catalog\ClientProfileController;
+use App\Http\Controllers\Catalog\CustomerPortalController;
 use App\Http\Controllers\Catalog\InquiryController as PublicInquiryController;
 use App\Http\Controllers\Catalog\SitemapController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Middleware\EnsureClientProfileComplete;
 use App\Models\Inquiry;
 use App\Support\AuthRedirect;
 use Illuminate\Http\Request;
@@ -15,26 +18,46 @@ use Illuminate\Support\Facades\Route;
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 // === Catálogo público ===
-Route::get('/', [CatalogController::class, 'home'])->name('home');
-Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
-Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
+// El cliente con cuenta web sin CI o teléfono va primero a completarlos.
+Route::middleware(EnsureClientProfileComplete::class)->group(function () {
+    Route::get('/', [CatalogController::class, 'home'])->name('home');
+    Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalog.index');
+    Route::get('/catalogo/sugerencias', [CatalogController::class, 'suggestions'])
+        ->middleware('throttle:60,1')
+        ->name('catalog.suggestions');
+    Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalog.show');
 
-// Carrito + checkout
-Route::inertia('/carrito', 'catalog/Cart')->name('cart.index');
+    // Carrito + checkout
+    Route::inertia('/carrito', 'catalog/Cart')->name('cart.index');
 
-// Favoritos (la lista vive en el localStorage del navegador)
-Route::inertia('/favoritos', 'catalog/Wishlist')->name('wishlist.index');
-Route::get('/carrito/gracias/{inquiry:public_token}', function (Inquiry $inquiry) {
-    $inquiry->load('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario');
+    // Favoritos (la lista vive en el localStorage del navegador)
+    Route::inertia('/favoritos', 'catalog/Wishlist')->name('wishlist.index');
+    Route::get('/carrito/gracias/{inquiry:public_token}', function (Inquiry $inquiry) {
+        $inquiry->load('items:id,consulta_id,producto_nombre_copia,producto_codigo_copia,cantidad,precio_unitario');
 
-    return inertia('catalog/CartThanks', [
-        'inquiry' => [
-            'id' => $inquiry->id,
-            'total_estimated' => $inquiry->total_estimated,
-            'items' => $inquiry->items,
-        ],
-    ]);
-})->middleware('signed')->name('cart.thanks');
+        return inertia('catalog/CartThanks', [
+            'inquiry' => [
+                'id' => $inquiry->id,
+                'public_token' => $inquiry->public_token,
+                'status' => $inquiry->status,
+                'payment_status' => $inquiry->payment_status,
+                'payment_receipt_url' => $inquiry->payment_receipt_url,
+                'total_estimated' => $inquiry->total_estimated,
+                'discount_amount' => $inquiry->discount_amount,
+                'coupon_code' => $inquiry->coupon_code,
+                'items' => $inquiry->items,
+            ],
+        ]);
+    })->middleware('signed')->name('cart.thanks');
+
+    Route::post('/carrito/gracias/{inquiry:public_token}/comprobante', [PublicInquiryController::class, 'uploadReceipt'])
+        ->middleware('throttle:10,1')
+        ->name('public.inquiries.receipt');
+});
+
+// Páginas legales (Google las pide para publicar el inicio de sesión)
+Route::inertia('/privacidad', 'catalog/Legal', ['page' => 'privacidad'])->name('legal.privacy');
+Route::inertia('/terminos', 'catalog/Legal', ['page' => 'terminos'])->name('legal.terms');
 
 // Endpoints públicos para consultas
 Route::post('/consultas', [PublicInquiryController::class, 'store'])
@@ -62,6 +85,29 @@ Route::middleware('guest')->group(function () {
     Route::get('/login/google/callback', [GoogleAuthController::class, 'callback'])
         ->middleware('throttle:20,1')
         ->name('login.google.callback');
+});
+
+// Favoritos (sincronización con BD para usuarios autenticados)
+Route::middleware('auth')->group(function () {
+    Route::post('/favoritos/sincronizar', [CustomerPortalController::class, 'syncWishlist'])->name('customer.wishlist.sync');
+    Route::post('/favoritos/toggle/{product}', [CustomerPortalController::class, 'toggleWishlist'])->name('customer.wishlist.toggle');
+});
+
+// Portal del Cliente / Mis Pedidos y Compras
+Route::middleware(['auth', EnsureClientProfileComplete::class])->group(function () {
+    Route::get('/mis-pedidos', [CustomerPortalController::class, 'index'])->name('customer.orders');
+    Route::post('/mis-pedidos/{inquiry}/comprobante', [CustomerPortalController::class, 'uploadReceipt'])
+        ->middleware('throttle:10,1')
+        ->name('customer.orders.receipt');
+    Route::get('/mis-pedidos/compras/{sale}/comprobante.pdf', [CustomerPortalController::class, 'receipt'])->name('customer.sales.receipt');
+});
+
+// Completar CI y teléfono del cliente (después de Google o del registro)
+Route::middleware('auth')->group(function () {
+    Route::get('/completar-datos', [ClientProfileController::class, 'edit'])->name('client-profile.edit');
+    Route::put('/completar-datos', [ClientProfileController::class, 'update'])
+        ->middleware('throttle:10,1')
+        ->name('client-profile.update');
 });
 
 // Dashboard del starter -> redirige según el rol

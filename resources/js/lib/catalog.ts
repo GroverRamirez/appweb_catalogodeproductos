@@ -18,6 +18,15 @@ export type CatalogProduct = {
     brand?: { id?: number; name: string; slug?: string } | null;
 };
 
+export type PaymentSettings = {
+    bank_qr_enabled: boolean;
+    bank_qr_image_url: string | null;
+    bank_name: string;
+    bank_account_holder: string;
+    bank_account_number: string;
+    bank_payment_instructions: string;
+};
+
 export type StoreSettings = {
     name: string;
     tagline: string;
@@ -30,8 +39,14 @@ export type StoreSettings = {
     currency_symbol: string;
     show_prices: boolean;
     show_stock: boolean;
+    /** Bolivianos por dólar: la lista de precios se carga en USD. */
+    exchange_rate: number;
+    /** 'bcb' si la trajo la tarea diaria, 'manual' si la fijó una persona. */
+    exchange_rate_source: string;
+    exchange_rate_updated_at: string | null;
     logo_url: string | null;
     favicon_url: string | null;
+    payment?: PaymentSettings;
 };
 
 export const imageUrl = (path?: string | null): string | null => {
@@ -71,6 +86,16 @@ export const formatPrice = (value: string | number, symbol = 'S/'): string => {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
     })}`;
+};
+
+/** Cotización con dos decimales, para el indicador de la cabecera. */
+export const formatRate = (rate: number | string): string => {
+    const value = typeof rate === 'string' ? parseFloat(rate) : rate;
+
+    return (Number.isNaN(value) ? 0 : value).toLocaleString('es-BO', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    });
 };
 
 export const buildWhatsAppLink = (

@@ -24,6 +24,7 @@ type Inquiry = {
     customer_email: string | null;
     source: string;
     status: string;
+    payment_status?: string;
     items_count: number;
     created_at: string;
 };
@@ -36,15 +37,17 @@ const props = defineProps<{
         to: number | null;
         total: number;
     };
-    filters: { q?: string; status?: string };
+    filters: { q?: string; status?: string; payment_status?: string };
     statuses: string[];
+    paymentStatuses?: string[];
 }>();
 
 const q = ref(props.filters.q ?? '');
 const status = ref(props.filters.status ?? '');
+const paymentStatus = ref(props.filters.payment_status ?? '');
 
 let timer: ReturnType<typeof setTimeout> | null = null;
-watch([q, status], () => {
+watch([q, status, paymentStatus], () => {
     if (timer) {
         clearTimeout(timer);
     }
@@ -52,7 +55,11 @@ watch([q, status], () => {
     timer = setTimeout(() => {
         router.get(
             '/admin/inquiries',
-            { q: q.value, status: status.value },
+            {
+                q: q.value,
+                status: status.value,
+                payment_status: paymentStatus.value,
+            },
             { preserveState: true, preserveScroll: true, replace: true },
         );
     }, 300);
@@ -140,6 +147,18 @@ const exportUrl = computed(() => {
                     {{ statusName }}
                 </option>
             </select>
+            <select
+                v-model="paymentStatus"
+                class="h-9 rounded-md border bg-card px-3 text-sm"
+            >
+                <option value="">Todos los pagos</option>
+                <option value="comprobante_subido">
+                    Con comprobante (en revisión)
+                </option>
+                <option value="verificado">Pago verificado</option>
+                <option value="rechazado">Comprobante rechazado</option>
+                <option value="sin_pago">Sin comprobante</option>
+            </select>
         </div>
 
         <div class="overflow-x-auto rounded-md border bg-card">
@@ -153,6 +172,7 @@ const exportUrl = computed(() => {
                         <th class="px-3 py-2">Origen</th>
                         <th class="px-3 py-2 text-right">Items</th>
                         <th class="px-3 py-2">Estado</th>
+                        <th class="px-3 py-2">Pago</th>
                         <th class="px-3 py-2">Fecha</th>
                         <th class="px-3 py-2"></th>
                     </tr>
@@ -186,6 +206,38 @@ const exportUrl = computed(() => {
                                 {{ inquiry.status }}
                             </Badge>
                         </td>
+                        <td class="px-3 py-2">
+                            <Badge
+                                :variant="
+                                    inquiry.payment_status === 'verificado'
+                                        ? 'default'
+                                        : 'outline'
+                                "
+                                :class="[
+                                    inquiry.payment_status === 'verificado'
+                                        ? 'bg-emerald-600 text-white'
+                                        : inquiry.payment_status ===
+                                            'comprobante_subido'
+                                          ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                                          : inquiry.payment_status ===
+                                              'rechazado'
+                                            ? 'border-destructive text-destructive'
+                                            : 'border-amber-500 text-amber-600 dark:text-amber-400',
+                                ]"
+                            >
+                                {{
+                                    inquiry.payment_status === 'verificado'
+                                        ? 'Verificado'
+                                        : inquiry.payment_status ===
+                                            'comprobante_subido'
+                                          ? 'En revisión'
+                                          : inquiry.payment_status ===
+                                              'rechazado'
+                                            ? 'Rechazado'
+                                            : 'Sin pago'
+                                }}
+                            </Badge>
+                        </td>
                         <td class="px-3 py-2 text-xs text-muted-foreground">
                             {{ formatDate(inquiry.created_at) }}
                         </td>
@@ -206,7 +258,7 @@ const exportUrl = computed(() => {
                     </tr>
                     <tr v-if="!inquiries.data.length">
                         <td
-                            colspan="7"
+                            colspan="8"
                             class="px-3 py-6 text-center text-muted-foreground"
                         >
                             Sin consultas todavia.

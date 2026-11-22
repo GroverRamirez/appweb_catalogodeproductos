@@ -32,7 +32,7 @@ const paginationLabel = (label: string) =>
                     :href="link.url"
                     preserve-scroll
                     preserve-state
-                    class="rounded border px-3 py-1.5 hover:bg-accent"
+                    class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border bg-card px-3 transition hover:bg-accent"
                     :class="{
                         'border-primary bg-primary text-primary-foreground hover:bg-primary/90':
                             link.active,
@@ -42,7 +42,7 @@ const paginationLabel = (label: string) =>
                 </Link>
                 <span
                     v-else
-                    class="rounded border px-3 py-1.5 text-muted-foreground"
+                    class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-muted-foreground opacity-60"
                 >
                     {{ paginationLabel(link.label) }}
                 </span>

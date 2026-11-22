@@ -39,3 +39,27 @@ test('owner can create a banner with an uploaded image', function () {
 
     Storage::disk('public')->assertExists($banner->image);
 });
+
+test('banner links only accept https or internal paths', function () {
+    Storage::fake('public');
+
+    foreach (['javascript:alert(1)', '//otro.sitio/x', 'data:text/html,hola'] as $link) {
+        $this->actingAs($this->owner)
+            ->post(route('admin.banners.store'), [
+                'image_file' => UploadedFile::fake()->image('hero.jpg', 1600, 600),
+                'link' => $link,
+            ])
+            ->assertSessionHasErrors('link');
+    }
+
+    foreach (['/catalogo?categoria=redes', 'https://wa.me/59170000000'] as $link) {
+        $this->actingAs($this->owner)
+            ->post(route('admin.banners.store'), [
+                'image_file' => UploadedFile::fake()->image('hero.jpg', 1600, 600),
+                'link' => $link,
+            ])
+            ->assertSessionHasNoErrors();
+    }
+
+    expect(Banner::count())->toBe(2);
+});

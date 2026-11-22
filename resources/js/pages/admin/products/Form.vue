@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, Boxes, Plus, Trash2 } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { formatPrice } from '@/lib/catalog';
+import type { StoreSettings } from '@/lib/catalog';
+
+const page = usePage();
+const store = computed(() => page.props.store as StoreSettings);
+
+/** Equivalente en bolivianos de un precio de lista cargado en dólares. */
+const inBs = (usd: string | number) =>
+    formatPrice(
+        (typeof usd === 'string' ? parseFloat(usd) || 0 : usd) *
+            store.value.exchange_rate,
+        store.value.currency_symbol,
+    );
 
 defineOptions({
     layout: () => ({
@@ -356,7 +369,7 @@ const submit = () => {
                     >
                     <CardContent class="space-y-3">
                         <div class="space-y-1.5">
-                            <Label for="price">Precio</Label>
+                            <Label for="price">Precio (USD)</Label>
                             <Input
                                 id="price"
                                 type="number"
@@ -370,10 +383,23 @@ const submit = () => {
                                 :message="form.errors.price"
                                 class="mt-1"
                             />
+                            <!-- El cliente ve bolivianos; acá se carga el
+                                 precio de lista en dólares, así que conviene
+                                 mostrar en cuánto queda hoy. -->
+                            <p class="text-xs text-muted-foreground">
+                                Se publica como
+                                <strong>{{ inBs(form.price) }}</strong>
+                                al tipo de cambio de hoy ({{
+                                    store.exchange_rate
+                                }}
+                                Bs por USD).
+                            </p>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div class="space-y-1.5">
-                                <Label for="sale_price">Precio oferta</Label>
+                                <Label for="sale_price"
+                                    >Precio oferta (USD)</Label
+                                >
                                 <Input
                                     id="sale_price"
                                     type="number"
@@ -388,7 +414,7 @@ const submit = () => {
                                 />
                             </div>
                             <div class="space-y-1.5">
-                                <Label for="cost">Costo (interno)</Label>
+                                <Label for="cost">Costo interno (USD)</Label>
                                 <Input
                                     id="cost"
                                     type="number"
@@ -404,9 +430,16 @@ const submit = () => {
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
+                            <!-- Al crear se carga el stock inicial, que entra
+                                 al kardex como movimiento. Al editar el campo es
+                                 de solo lectura: el stock se mueve con compras,
+                                 ventas y ajustes, nunca escribiéndolo a mano. -->
                             <div class="space-y-1.5">
-                                <Label for="stock">Stock</Label>
+                                <Label for="stock">
+                                    {{ isEdit ? 'Stock' : 'Stock inicial' }}
+                                </Label>
                                 <Input
+                                    v-if="!isEdit"
                                     id="stock"
                                     type="number"
                                     min="0"
@@ -414,6 +447,22 @@ const submit = () => {
                                     :aria-invalid="!!form.errors.stock"
                                     required
                                 />
+                                <template v-else>
+                                    <Input
+                                        id="stock"
+                                        type="number"
+                                        :model-value="product?.stock ?? 0"
+                                        readonly
+                                        disabled
+                                    />
+                                    <Link
+                                        :href="`/admin/products/${product?.id}/inventario`"
+                                        class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                                    >
+                                        <Boxes class="size-3.5" /> Ver kardex y
+                                        ajustar
+                                    </Link>
+                                </template>
                                 <InputError
                                     :message="form.errors.stock"
                                     class="mt-1"

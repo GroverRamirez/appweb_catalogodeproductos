@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { ArrowRight, Star } from 'lucide-vue-next';
+import { ArrowRight, Flame, Star } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -32,15 +32,18 @@ const discountPct = computed(() => {
 });
 
 const outOfStock = computed(() => props.product.stock <= 0);
+const lowStock = computed(
+    () => props.product.stock > 0 && props.product.stock <= 5,
+);
 </script>
 
 <template>
     <Link
         :href="`/catalogo/${product.slug}`"
-        class="group flex gap-4 rounded-lg border bg-card p-3 transition hover:border-primary/40 hover:shadow-md"
+        class="group flex gap-4 rounded-2xl bg-card p-3 ring-1 elev-1 ring-border/70 transition hover:[box-shadow:var(--shadow-lift)] hover:ring-primary/30"
     >
         <div
-            class="relative size-32 shrink-0 overflow-hidden rounded-md bg-muted sm:size-40"
+            class="relative size-32 shrink-0 overflow-hidden rounded-xl bg-muted sm:size-40"
         >
             <img
                 v-if="image"
@@ -96,7 +99,9 @@ const outOfStock = computed(() => props.product.stock <= 0);
             <div class="mt-auto flex items-end justify-between gap-2 pt-2">
                 <div v-if="store.show_prices">
                     <div class="flex items-baseline gap-2">
-                        <span class="text-lg font-semibold">
+                        <span
+                            class="tabular font-display text-lg font-extrabold tracking-tight"
+                        >
                             {{
                                 formatPrice(
                                     product.sale_price ?? product.price,
@@ -122,13 +127,21 @@ const outOfStock = computed(() => props.product.stock <= 0);
                         :class="
                             outOfStock
                                 ? 'text-destructive'
-                                : 'text-muted-foreground'
+                                : lowStock
+                                  ? 'inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400'
+                                  : 'text-muted-foreground'
                         "
                     >
+                        <Flame
+                            v-if="lowStock"
+                            class="size-3 animate-pulse fill-current text-amber-500"
+                        />
                         {{
                             outOfStock
                                 ? 'Sin stock'
-                                : `${product.stock} disponibles`
+                                : lowStock
+                                  ? `¡Últimas ${product.stock} unidades!`
+                                  : `${product.stock} disponibles`
                         }}
                     </p>
                 </div>

@@ -2,6 +2,7 @@
 
 use App\Models\Product;
 use App\Models\User;
+use App\Services\ExchangeRate;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -9,6 +10,9 @@ use Inertia\Testing\AssertableInertia as Assert;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Estos tests verifican la logica en una sola moneda: con cotizacion 1
+    // un dolar vale un boliviano. La conversion la cubre ExchangeRateTest.
+    app(ExchangeRate::class)->store(1.0);
     $this->seed(RoleSeeder::class);
 
     $this->owner = User::factory()->create();

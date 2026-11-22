@@ -42,6 +42,7 @@ return [
         'brand_id' => 'marca',
         'category_id' => 'categoría',
         'code' => 'código',
+        'contact_name' => 'persona de contacto',
         'cost' => 'costo',
         'coupon_code' => 'código de cupón',
         'current_password' => 'contraseña actual',

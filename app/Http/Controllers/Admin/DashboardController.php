@@ -7,6 +7,7 @@ use App\Models\Inquiry;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Services\ExchangeRate;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -69,6 +70,16 @@ class DashboardController extends Controller
             ];
         });
 
+        // El valor del inventario y el gasto en compras salen de la lista de
+        // precios, que está en dólares; las ventas ya están en bolivianos. El
+        // panel habla en una sola moneda, así que se convierten acá —fuera del
+        // caché, para que un cambio de cotización se vea enseguida.
+        $rates = app(ExchangeRate::class);
+
+        foreach (['inventory_cost', 'inventory_retail', 'purchases_spend_30d'] as $key) {
+            $stats[$key] = $rates->toBs($stats[$key]);
+        }
+
         $topProducts = Cache::remember('dashboard.top_products.'.self::V, self::CACHE_TTL, fn () => Product::query()
             ->select('id', 'nombre', 'codigo', 'visitas', 'stock')
             ->orderByDesc('visitas')
@@ -121,10 +132,26 @@ class DashboardController extends Controller
                 ->all()
         );
 
+        // Ingresos por ventas confirmadas de los últimos 6 meses, para comparar
+        // ventas vs compras y evaluar el margen operativo bruto en el tiempo.
+        $salesByMonth = Cache::remember("dashboard.sales_6m.{$today}.".self::V, self::CACHE_TTL,
+            fn () => Sale::query()
+                ->selectRaw("{$monthExpr} as month, SUM(total) as total")
+                ->where('estado', 'confirmada')
+                ->where('created_at', '>=', now()->startOfMonth()->subMonths(5))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get()
+                ->map(fn ($row) => ['month' => $row->month, 'total' => (float) $row->total])
+                ->values()
+                ->all()
+        );
+
         // ── Datos sin cache (operacionales, el admin necesita verlos en tiempo real)
         $recentInquiries = Inquiry::query()
             ->select('id', 'cliente_nombre', 'cliente_telefono', 'estado', 'origen', 'created_at')
             ->latest()
+            ->latest('id')
             ->take(5)
             ->get();
 
@@ -132,8 +159,26 @@ class DashboardController extends Controller
             ->with('supplier:id,nombre')
             ->withCount('items')
             ->latest()
+            ->latest('id')
             ->take(5)
             ->get(['id', 'proveedor_id', 'numero_referencia', 'estado', 'costo_total', 'created_at']);
+
+        $recentSales = Sale::query()
+            ->with('client:id,nombre')
+            ->withCount('items')
+            ->latest()
+            ->latest('id')
+            ->take(5)
+            ->get(['id', 'numero_recibo', 'cliente_id', 'cliente_nombre', 'metodo_pago', 'estado', 'total', 'created_at']);
+
+        // Mismo criterio que las stats: las compras estan en dolares y el
+        // panel habla en bolivianos, asi que se convierten fuera del cache.
+        $spendByMonth = array_map(
+            fn ($row) => ['month' => $row['month'], 'total' => $rates->toBs($row['total'])],
+            $spendByMonth,
+        );
+
+        $recentPurchases->each(fn (Purchase $p) => $p->setAttribute('total_cost', $rates->toBs($p->total_cost)));
 
         return Inertia::render('admin/Dashboard', [
             'stats' => $stats,
@@ -141,8 +186,10 @@ class DashboardController extends Controller
             'lowStockProducts' => $lowStockProducts,
             'recentInquiries' => $recentInquiries,
             'recentPurchases' => $recentPurchases,
+            'recentSales' => $recentSales,
             'viewsLast7Days' => $viewsLast7Days,
             'spendByMonth' => $spendByMonth,
+            'salesByMonth' => $salesByMonth,
         ]);
     }
 
@@ -160,5 +207,6 @@ class DashboardController extends Controller
         Cache::forget('dashboard.low_stock.'.self::V);
         Cache::forget("dashboard.views_7d.{$today}.".self::V);
         Cache::forget("dashboard.spend_6m.{$today}.".self::V);
+        Cache::forget("dashboard.sales_6m.{$today}.".self::V);
     }
 }

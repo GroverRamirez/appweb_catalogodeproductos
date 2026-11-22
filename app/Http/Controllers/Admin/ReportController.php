@@ -2,219 +2,178 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\ReportExport;
 use App\Http\Controllers\Controller;
-use App\Models\Inquiry;
-use App\Models\InquiryItem;
-use App\Models\Product;
-use App\Models\ProductView;
-use App\Models\Sale;
-use App\Models\SaleItem;
+use App\Models\Setting;
+use App\Services\SalesReport;
 use App\Support\CsvDownload;
-use Carbon\CarbonImmutable;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
-use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+/**
+ * Reportes gerenciales: panel en pantalla y las tres exportaciones (CSV, PDF y
+ * Excel). Todas las salidas se arman con `SalesReport`, de modo que el PDF que
+ * se imprime dice exactamente lo mismo que la pantalla desde la que se pidio.
+ */
 class ReportController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): \Inertia\Response
     {
-        $end = $request->date('to') ?? CarbonImmutable::now()->endOfDay();
-        $start = $request->date('from') ?? $end->subDays(29)->startOfDay();
-
-        $inquiriesInRange = Inquiry::query()
-            ->whereBetween('created_at', [$start, $end]);
-
-        $totalInquiries = (clone $inquiriesInRange)->count();
-        $soldInquiries = (clone $inquiriesInRange)->where('estado', 'vendido')->count();
-        $pendingInquiries = (clone $inquiriesInRange)->where('estado', 'pendiente')->count();
-        $closedInquiries = (clone $inquiriesInRange)->where('estado', 'cerrado')->count();
-
-        $conversionRate = $totalInquiries > 0
-            ? round(($soldInquiries / $totalInquiries) * 100, 1)
-            : 0.0;
-
-        // Los ingresos salen de las ventas confirmadas, no de las consultas: el
-        // total estimado de una consulta es lo que el cliente pidió, no lo que
-        // se cobró (no contempla descuento en mostrador ni cambio de precio).
-        $salesInRange = Sale::query()
-            ->where('estado', 'confirmada')
-            ->whereBetween('created_at', [$start, $end]);
-
-        $revenue = (float) (clone $salesInRange)->sum('total');
-        $salesCount = (clone $salesInRange)->count();
-        $averageTicket = $salesCount > 0 ? round($revenue / $salesCount, 2) : 0.0;
-
-        // Margen bruto con el costo congelado en cada línea al momento de
-        // vender. El descuento del total no se prorratea por línea: se resta
-        // entero, que es como efectivamente se pierde.
-        $grossMargin = (float) SaleItem::query()
-            ->whereHas('sale', fn ($q) => $q->where('estado', 'confirmada')
-                ->whereBetween('created_at', [$start, $end]))
-            ->selectRaw('SUM((precio_unitario - COALESCE(costo_unitario, 0)) * cantidad) as margen')
-            ->value('margen');
-
-        $discounts = (float) (clone $salesInRange)->sum('descuento_monto');
-        $margin = $grossMargin - $discounts;
-
-        // Serie diaria: las consultas salen de `consultas`, los ingresos de
-        // `ventas`. Son dos consultas distintas porque miden cosas distintas.
-        $dailyInquiries = (clone $inquiriesInRange)
-            ->select(DB::raw('DATE(created_at) as day'), DB::raw('COUNT(*) as total'))
-            ->groupBy('day')
-            ->get()
-            ->keyBy('day');
-
-        $dailyRevenue = (clone $salesInRange)
-            ->select(DB::raw('DATE(created_at) as day'), DB::raw('SUM(total) as revenue'))
-            ->groupBy('day')
-            ->get()
-            ->keyBy('day');
-
-        $series = [];
-        $cursor = $start->startOfDay();
-        while ($cursor->lessThanOrEqualTo($end)) {
-            $key = $cursor->format('Y-m-d');
-            $series[] = [
-                'day' => $key,
-                'total' => (int) ($dailyInquiries[$key]->total ?? 0),
-                'revenue' => (float) ($dailyRevenue[$key]->revenue ?? 0),
-            ];
-            $cursor = $cursor->addDay();
-        }
-
-        // Top productos efectivamente vendidos. Convive con "más solicitados"
-        // (que sale de las consultas): interés y venta concretada no son lo
-        // mismo, y perder el primero sería una regresión.
-        $topSold = SaleItem::query()
-            ->select(
-                'producto_id as product_id',
-                'producto_nombre_copia as name',
-                'producto_codigo_copia as code',
-                DB::raw('SUM(cantidad) as qty'),
-                DB::raw('SUM(cantidad * precio_unitario) as revenue'),
-            )
-            ->whereHas('sale', fn ($q) => $q->where('estado', 'confirmada')
-                ->whereBetween('created_at', [$start, $end]))
-            ->groupBy('producto_id', 'producto_nombre_copia', 'producto_codigo_copia')
-            ->orderByDesc('qty')
-            ->take(10)
-            ->get();
-
-        // Top productos solicitados (por cantidad en items)
-        $topProducts = InquiryItem::query()
-            ->select(
-                'producto_id as product_id',
-                'producto_nombre_copia as name',
-                'producto_codigo_copia as code',
-                DB::raw('SUM(cantidad) as qty'),
-                DB::raw('SUM(cantidad * precio_unitario) as revenue'),
-            )
-            ->whereHas('inquiry', fn ($q) => $q->whereBetween('created_at', [$start, $end]))
-            ->groupBy('producto_id', 'producto_nombre_copia', 'producto_codigo_copia')
-            ->orderByDesc('qty')
-            ->take(10)
-            ->get();
-
-        // Productos más vistos
-        $topViewed = ProductView::query()
-            ->select('producto_id', DB::raw('COUNT(*) as views'))
-            ->whereBetween('visto_en', [$start, $end])
-            ->groupBy('producto_id')
-            ->orderByDesc('views')
-            ->take(10)
-            ->get();
-
-        $topViewedHydrated = Product::query()
-            ->whereIn('id', $topViewed->pluck('producto_id'))
-            ->get(['id', 'nombre', 'codigo'])
-            ->keyBy('id');
-
-        $topViewedFinal = $topViewed->map(fn ($v) => [
-            'product_id' => $v->product_id,
-            'views' => (int) $v->views,
-            'name' => $topViewedHydrated[$v->product_id]->name ?? '—',
-            'code' => $topViewedHydrated[$v->product_id]->code ?? '',
-        ]);
+        $report = SalesReport::fromRequest($request);
 
         return Inertia::render('admin/reports/Index', [
-            'range' => [
-                'from' => $start->format('Y-m-d'),
-                'to' => $end->format('Y-m-d'),
-            ],
-            'kpis' => [
-                'total_inquiries' => $totalInquiries,
-                'sold' => $soldInquiries,
-                'pending' => $pendingInquiries,
-                'closed' => $closedInquiries,
-                'conversion_rate' => $conversionRate,
-                'revenue' => $revenue,
-                'sales_count' => $salesCount,
-                'average_ticket' => $averageTicket,
-                'margin' => $margin,
-            ],
-            'series' => $series,
-            'topProducts' => $topProducts,
-            'topSold' => $topSold,
-            'topViewed' => $topViewedFinal,
+            'range' => $report->range(),
+            'kpis' => $report->kpis(),
+            'series' => $report->series(),
+            'topProducts' => $report->topRequested(),
+            'topSold' => $report->topSold(),
+            'topViewed' => $report->topViewed(),
+            // Alimentan los graficos del panel: embudo de consultas por estado
+            // e ingresos por categoria de producto.
+            'statusBreakdown' => $report->statusBreakdown(),
+            'byCategory' => $report->revenueByCategory(),
         ]);
     }
 
+    /**
+     * CSV de la serie diaria, en streaming: el archivo se arma fila por fila,
+     * sin cargar el rango entero en memoria.
+     */
     public function export(Request $request): StreamedResponse
     {
-        $end = $request->date('to') ?? CarbonImmutable::now()->endOfDay();
-        $start = $request->date('from') ?? $end->subDays(29)->startOfDay();
+        $report = SalesReport::fromRequest($request);
 
-        $rows = function () use ($start, $end) {
-            // Serie diaria: consultas de `consultas`, ingresos reales de `ventas`.
-            $daily = Inquiry::query()
-                ->whereBetween('created_at', [$start, $end])
-                ->select(
-                    DB::raw('DATE(created_at) as day'),
-                    DB::raw('COUNT(*) as total'),
-                    DB::raw("SUM(CASE WHEN estado = 'vendido' THEN 1 ELSE 0 END) as vendidas"),
-                )
-                ->groupBy('day')
-                ->get()
-                ->keyBy('day');
-
-            $sales = Sale::query()
-                ->where('estado', 'confirmada')
-                ->whereBetween('created_at', [$start, $end])
-                ->select(
-                    DB::raw('DATE(created_at) as day'),
-                    DB::raw('COUNT(*) as ventas'),
-                    DB::raw('SUM(total) as ingresos'),
-                )
-                ->groupBy('day')
-                ->get()
-                ->keyBy('day');
-
-            // Se recorre el rango completo para no saltear días sin datos en
-            // una de las dos tablas.
-            $cursor = $start->startOfDay();
-
-            while ($cursor->lessThanOrEqualTo($end)) {
-                $day = $cursor->format('Y-m-d');
-
+        $rows = function () use ($report) {
+            foreach ($report->series() as $row) {
                 yield [
-                    $day,
-                    (int) ($daily[$day]->total ?? 0),
-                    (int) ($daily[$day]->vendidas ?? 0),
-                    (int) ($sales[$day]->ventas ?? 0),
-                    number_format((float) ($sales[$day]->ingresos ?? 0), 2, '.', ''),
+                    $row['day'],
+                    $row['total'],
+                    $row['sold'],
+                    $row['sales'],
+                    number_format($row['revenue'], 2, '.', ''),
                 ];
-
-                $cursor = $cursor->addDay();
             }
         };
 
         return CsvDownload::stream(
-            'reporte-'.$start->format('Y-m-d').'_'.$end->format('Y-m-d').'.csv',
+            $report->filename('csv'),
             ['Fecha', 'Consultas', 'Consultas vendidas', 'Ventas', 'Ingresos'],
             $rows(),
         );
+    }
+
+    /**
+     * Reporte en PDF con encabezado institucional, filtros de fecha aplicados y
+     * fila de totales.
+     *
+     * Con `?inline=1` se abre en el navegador en vez de descargarse, que es lo
+     * comodo para mostrarlo en clase; por defecto descarga el archivo.
+     */
+    public function pdf(Request $request): Response
+    {
+        $report = SalesReport::fromRequest($request);
+
+        $pdf = Pdf::loadView('reports.pdf', $this->documentData($report, $request))
+            // Carta es el tamano que usan las impresoras del laboratorio;
+            // cambiar a 'a4' si el papel institucional es A4.
+            ->setPaper('letter');
+
+        return $request->boolean('inline')
+            ? $pdf->stream($report->filename('pdf'))
+            : $pdf->download($report->filename('pdf'));
+    }
+
+    /**
+     * Libro Excel con una hoja por bloque del reporte.
+     */
+    public function excel(Request $request): BinaryFileResponse
+    {
+        $report = SalesReport::fromRequest($request);
+
+        return Excel::download(
+            new ReportExport($report, $this->storeHeader()),
+            $report->filename('xlsx'),
+        );
+    }
+
+    /**
+     * Datos que comparten el PDF y el Excel: cabecera institucional, rango y
+     * los bloques del reporte.
+     *
+     * @return array<string, mixed>
+     */
+    private function documentData(SalesReport $report, Request $request): array
+    {
+        $store = $this->storeHeader();
+        $symbol = $store['moneda'];
+
+        return [
+            'titulo' => 'Reporte gerencial',
+            'tienda' => $store,
+            'logo' => $this->logoDataUri(),
+            'rango' => $report->label(),
+            'emitidoEl' => now()->format('d/m/Y H:i'),
+            'emitidoPor' => $request->user()?->name,
+            'kpis' => $report->kpis(),
+            'serie' => $report->series(),
+            'totales' => $report->seriesTotals(),
+            'masVendidos' => $report->topSold(),
+            'masSolicitados' => $report->topRequested(),
+            'categorias' => $report->revenueByCategory(),
+            // Formateador unico para todo el documento: el simbolo sale de la
+            // configuracion de la tienda, no esta escrito en la plantilla.
+            'moneda' => fn (float|int|string $valor) => $symbol.' '.number_format((float) $valor, 2, ',', '.'),
+        ];
+    }
+
+    /**
+     * Identidad institucional para la cabecera de los documentos.
+     *
+     * @return array<string, string>
+     */
+    private function storeHeader(): array
+    {
+        return [
+            'nombre' => (string) Setting::get('store_name', config('app.name')),
+            'direccion' => (string) Setting::get('address', ''),
+            'telefono' => (string) Setting::get('whatsapp_number', ''),
+            'email' => (string) Setting::get('email_contact', ''),
+            'moneda' => (string) Setting::get('currency_symbol', 'Bs'),
+        ];
+    }
+
+    /**
+     * Logo incrustado como data URI.
+     *
+     * DomPDF no descarga imagenes remotas (`isRemoteEnabled` viene apagado a
+     * proposito: habilitarlo convierte la plantilla en un lector de URLs
+     * arbitrarias), asi que el logo se lee del disco y viaja dentro del PDF.
+     * Si falta o falla la lectura, el documento se emite sin logo: un reporte
+     * sin imagen sirve, uno que revienta al imprimirse no.
+     */
+    private function logoDataUri(): ?string
+    {
+        $path = Setting::get('logo_path');
+
+        if (! $path || str_starts_with((string) $path, 'http')) {
+            return null;
+        }
+
+        try {
+            if (! Storage::exists((string) $path)) {
+                return null;
+            }
+
+            return 'data:'.Storage::mimeType((string) $path)
+                .';base64,'.base64_encode(Storage::get((string) $path));
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }

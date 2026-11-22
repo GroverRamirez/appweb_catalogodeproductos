@@ -22,6 +22,7 @@ type Supplier = {
     name: string;
     contact_name: string | null;
     phone: string | null;
+    address: string | null;
     email: string | null;
     is_active: boolean;
 };
@@ -107,8 +108,9 @@ const destroy = (s: Supplier) => {
                 >
                     <tr>
                         <th class="px-3 py-2">Nombre</th>
-                        <th class="px-3 py-2">Contacto</th>
+                        <th class="px-3 py-2">Persona de contacto</th>
                         <th class="px-3 py-2">Teléfono</th>
+                        <th class="px-3 py-2">Dirección</th>
                         <th class="w-24 px-3 py-2">Estado</th>
                         <th class="w-32 px-3 py-2"></th>
                     </tr>
@@ -130,6 +132,12 @@ const destroy = (s: Supplier) => {
                         </td>
                         <td class="px-3 py-2 text-muted-foreground">
                             {{ s.phone ?? '—' }}
+                        </td>
+                        <td
+                            class="max-w-64 truncate px-3 py-2 text-muted-foreground"
+                            :title="s.address ?? undefined"
+                        >
+                            {{ s.address || '—' }}
                         </td>
                         <td class="px-3 py-2">
                             <Badge
@@ -155,7 +163,7 @@ const destroy = (s: Supplier) => {
                     </tr>
                     <tr v-if="!suppliers.data.length">
                         <td
-                            colspan="5"
+                            colspan="6"
                             class="px-3 py-6 text-center text-muted-foreground"
                         >
                             Sin resultados.

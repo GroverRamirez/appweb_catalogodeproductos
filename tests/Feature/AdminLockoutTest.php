@@ -26,12 +26,12 @@ test('owner cannot remove their own propietario role', function () {
     expect($this->owner->fresh()->hasRole('propietario'))->toBeTrue();
 });
 
-test('owner cannot delete their own account', function () {
+test('owner cannot deactivate their own account', function () {
     $this->actingAs($this->owner)
-        ->delete(route('admin.users.destroy', $this->owner))
+        ->patch(route('admin.users.toggle-active', $this->owner))
         ->assertSessionHas('error');
 
-    $this->assertModelExists($this->owner);
+    expect($this->owner->fresh()->is_active)->toBeTrue();
 });
 
 test('admin guard detects the last owner', function () {

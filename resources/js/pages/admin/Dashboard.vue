@@ -14,6 +14,7 @@ import {
     Wallet,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import SalesVsSpendChart from '@/components/admin/SalesVsSpendChart.vue';
 import SpendTrendChart from '@/components/admin/SpendTrendChart.vue';
 import StatCard from '@/components/admin/StatCard.vue';
 import ViewsTrendChart from '@/components/admin/ViewsTrendChart.vue';
@@ -23,6 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePermissions } from '@/composables/usePermissions';
 import { formatPrice } from '@/lib/catalog';
 import type { StoreSettings } from '@/lib/catalog';
+import { receiptNumber } from '@/lib/sales';
 
 defineOptions({
     layout: () => ({
@@ -74,19 +76,38 @@ type PurchaseRow = {
     supplier: { id: number; name: string } | null;
 };
 
+type SaleRow = {
+    id: number;
+    receipt_number: number;
+    customer_name: string | null;
+    payment_method: string;
+    status: string;
+    total: string;
+    items_count: number;
+    created_at: string;
+    client: { id: number; name: string } | null;
+};
+
 const props = defineProps<{
     stats: Stats;
     topProducts: ProductRow[];
     lowStockProducts: ProductRow[];
     recentInquiries: InquiryRow[];
     recentPurchases: PurchaseRow[];
+    recentSales: SaleRow[];
     viewsLast7Days: { day: string; total: number }[];
     spendByMonth: { month: string; total: number }[];
+    salesByMonth: { month: string; total: number }[];
 }>();
 
 const { can } = usePermissions();
 const page = usePage();
 const store = computed(() => page.props.store as StoreSettings);
+const firstName = computed(() => {
+    const name = page.props.auth?.user?.name?.trim();
+
+    return name ? name.split(/\s+/)[0] : '';
+});
 const cur = (n: string | number) => formatPrice(n, store.value.currency_symbol);
 
 // Margen potencial: lo que dejaría vender todo el stock al precio de lista,
@@ -124,45 +145,62 @@ const statusColor = (s: string) => {
 <template>
     <Head title="Panel administrativo" />
 
-    <div class="space-y-8 p-4 md:p-8">
+    <div class="space-y-6 p-4 md:p-6 xl:p-8">
         <!-- Hero del panel -->
         <div
-            class="flex flex-wrap items-end justify-between gap-4 border-b border-border pb-6"
+            class="relative overflow-hidden rounded-2xl border border-primary/15 bg-card p-5 shadow-sm md:p-6"
         >
-            <div>
-                <p
-                    class="mb-1 text-xs font-medium tracking-wide text-muted-foreground uppercase"
+            <div
+                class="pointer-events-none absolute top-0 right-0 size-48 translate-x-1/3 -translate-y-1/2 rounded-full bg-primary/[0.07]"
+                aria-hidden="true"
+            />
+            <div
+                class="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between"
+            >
+                <div>
+                    <p
+                        class="mb-1 text-xs font-semibold tracking-wide text-primary uppercase"
+                    >
+                        Panel administrativo
+                    </p>
+                    <h1 class="font-display text-2xl font-bold md:text-3xl">
+                        Bienvenido<span v-if="firstName"
+                            >, {{ firstName }}</span
+                        >
+                    </h1>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Resumen general del catálogo, inventario y atención al
+                        cliente.
+                    </p>
+                </div>
+                <div
+                    class="grid w-full grid-cols-1 gap-2 sm:grid-cols-3 lg:w-auto"
                 >
-                    Panel administrativo
-                </p>
-                <h1 class="font-display text-2xl font-bold md:text-3xl">
-                    Bienvenido de vuelta
-                </h1>
-                <p class="mt-1 text-sm text-muted-foreground">
-                    Resumen del catálogo, stock y consultas en tiempo real.
-                </p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-                <Button as-child class="rounded-md px-4">
-                    <Link href="/admin/products/create">
-                        <Package class="size-4" /> Nuevo producto
-                    </Link>
-                </Button>
-                <Button
-                    v-if="can('inventory.adjust')"
-                    as-child
-                    variant="outline"
-                    class="rounded-md px-4"
-                >
-                    <Link href="/admin/purchases/create">
-                        <PackagePlus class="size-4" /> Registrar compra
-                    </Link>
-                </Button>
-                <Button as-child variant="outline" class="rounded-md px-4">
-                    <Link href="/admin/inquiries">
-                        <MessageSquare class="size-4" /> Ver consultas
-                    </Link>
-                </Button>
+                    <Button as-child class="w-full rounded-lg px-4">
+                        <Link href="/admin/products/create">
+                            <Package class="size-4" /> Nuevo producto
+                        </Link>
+                    </Button>
+                    <Button
+                        v-if="can('inventory.adjust')"
+                        as-child
+                        variant="outline"
+                        class="w-full rounded-lg bg-card px-4"
+                    >
+                        <Link href="/admin/purchases/create">
+                            <PackagePlus class="size-4" /> Registrar compra
+                        </Link>
+                    </Button>
+                    <Button
+                        as-child
+                        variant="outline"
+                        class="w-full rounded-lg bg-card px-4"
+                    >
+                        <Link href="/admin/inquiries">
+                            <MessageSquare class="size-4" /> Ver consultas
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </div>
 
@@ -192,72 +230,91 @@ const statusColor = (s: string) => {
         </Link>
 
         <!-- KPIs de dinero -->
-        <div
-            v-if="can('inventory.view')"
-            class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-        >
-            <StatCard
-                label="Valor del inventario"
-                :value="cur(stats.inventory_cost)"
-                hint="Stock actual valorizado a costo"
-                :icon="Wallet"
-            />
-            <StatCard
-                label="Compras (30 días)"
-                :value="cur(stats.purchases_spend_30d)"
-                :hint="`${stats.purchases_count_30d} compras registradas`"
-                :icon="ShoppingCart"
-            />
-            <StatCard
-                v-if="can('sales.view')"
-                label="Ventas (30 días)"
-                :value="cur(stats.sales_revenue_30d)"
-                :hint="`${stats.sales_count_30d} ventas confirmadas`"
-                tone="success"
-                :icon="Receipt"
-            />
-            <StatCard
-                label="Margen potencial"
-                :value="cur(potentialMargin)"
-                hint="Si se vendiera todo el stock a precio de lista"
-                tone="success"
-                :icon="TrendingUp"
-            />
-        </div>
+        <section v-if="can('inventory.view')" class="grid gap-3">
+            <div class="flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-primary" />
+                <h2 class="text-sm font-bold tracking-wide text-foreground">
+                    Resumen financiero
+                </h2>
+                <span class="text-xs text-muted-foreground">
+                    últimos 30 días
+                </span>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    label="Valor del inventario"
+                    :value="cur(stats.inventory_cost)"
+                    hint="Stock actual valorizado a costo"
+                    :icon="Wallet"
+                />
+                <StatCard
+                    label="Compras (30 días)"
+                    :value="cur(stats.purchases_spend_30d)"
+                    :hint="`${stats.purchases_count_30d} compras registradas`"
+                    :icon="ShoppingCart"
+                />
+                <StatCard
+                    v-if="can('sales.view')"
+                    label="Ventas (30 días)"
+                    :value="cur(stats.sales_revenue_30d)"
+                    :hint="`${stats.sales_count_30d} ventas confirmadas`"
+                    tone="success"
+                    :icon="Receipt"
+                />
+                <StatCard
+                    label="Margen potencial"
+                    :value="cur(potentialMargin)"
+                    hint="Si se vendiera todo el stock a precio de lista"
+                    tone="success"
+                    :icon="TrendingUp"
+                />
+            </div>
+        </section>
 
         <!-- KPIs de operación -->
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard
-                label="Productos activos"
-                :value="`${stats.products_active} / ${stats.products_total}`"
-                hint="Visibles en el catálogo"
-                :icon="Package"
-            />
-            <StatCard
-                label="Stock bajo"
-                :value="stats.products_low_stock"
-                hint="Productos por reponer"
-                tone="warn"
-                :icon="AlertTriangle"
-            />
-            <StatCard
-                label="Sin stock"
-                :value="stats.products_out_of_stock"
-                hint="Agotados en el catálogo"
-                tone="danger"
-                :icon="PackageX"
-            />
-            <StatCard
-                label="Consultas pendientes"
-                :value="stats.inquiries_pending"
-                :hint="`${stats.inquiries_total} en total`"
-                tone="warn"
-                :icon="MessageSquare"
-            />
-        </div>
+        <section class="grid gap-3">
+            <div class="flex items-center gap-2">
+                <span class="h-4 w-1 rounded-full bg-emerald-600" />
+                <h2 class="text-sm font-bold tracking-wide text-foreground">
+                    Estado del catálogo
+                </h2>
+                <span class="text-xs text-muted-foreground">
+                    actualización en tiempo real
+                </span>
+            </div>
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <StatCard
+                    label="Productos activos"
+                    :value="`${stats.products_active} / ${stats.products_total}`"
+                    hint="Visibles en el catálogo"
+                    :icon="Package"
+                />
+                <StatCard
+                    label="Stock bajo"
+                    :value="stats.products_low_stock"
+                    hint="Productos por reponer"
+                    tone="warn"
+                    :icon="AlertTriangle"
+                />
+                <StatCard
+                    label="Sin stock"
+                    :value="stats.products_out_of_stock"
+                    hint="Agotados en el catálogo"
+                    tone="danger"
+                    :icon="PackageX"
+                />
+                <StatCard
+                    label="Consultas pendientes"
+                    :value="stats.inquiries_pending"
+                    :hint="`${stats.inquiries_total} en total`"
+                    tone="warn"
+                    :icon="MessageSquare"
+                />
+            </div>
+        </section>
 
         <!-- Gráficos -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2">
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader
                     class="admin-card-header flex flex-row items-center justify-between space-y-0"
@@ -286,7 +343,7 @@ const statusColor = (s: string) => {
             </Card>
 
             <Card
-                v-if="can('inventory.view')"
+                v-if="can('sales.view') || can('inventory.view')"
                 class="admin-card overflow-hidden rounded-xl border"
             >
                 <CardHeader
@@ -294,30 +351,48 @@ const statusColor = (s: string) => {
                 >
                     <CardTitle class="flex items-center gap-2 font-display">
                         <span
-                            class="grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground shadow-sm"
+                            class="grid size-9 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm"
                         >
-                            <ShoppingCart class="size-4" />
+                            <TrendingUp class="size-4" />
                         </span>
-                        Gasto en compras
+                        {{
+                            can('sales.view')
+                                ? 'Ingresos vs. Gasto en compras'
+                                : 'Gasto en compras'
+                        }}
                     </CardTitle>
                     <Link
-                        href="/admin/purchases"
+                        :href="
+                            can('sales.view')
+                                ? '/admin/sales'
+                                : '/admin/purchases'
+                        "
                         class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                     >
-                        Ver compras
+                        {{ can('sales.view') ? 'Ver ventas' : 'Ver compras' }}
                         <ArrowRight
                             class="size-3 transition-transform group-hover:translate-x-1"
                         />
                     </Link>
                 </CardHeader>
                 <CardContent class="pt-6">
-                    <SpendTrendChart :data="spendByMonth" :format="cur" />
+                    <SalesVsSpendChart
+                        v-if="can('sales.view')"
+                        :sales-data="salesByMonth"
+                        :spend-data="spendByMonth"
+                        :format="cur"
+                    />
+                    <SpendTrendChart
+                        v-else
+                        :data="spendByMonth"
+                        :format="cur"
+                    />
                 </CardContent>
             </Card>
         </div>
 
         <!-- Tarjetas inferiores -->
-        <div class="grid gap-6 lg:grid-cols-2">
+        <div class="grid gap-4 lg:grid-cols-2">
             <Card class="admin-card overflow-hidden rounded-xl border">
                 <CardHeader class="admin-card-header">
                     <CardTitle class="flex items-center gap-2 font-display">
@@ -398,13 +473,22 @@ const statusColor = (s: string) => {
                         </span>
                         Stock bajo
                     </CardTitle>
-                    <Link
-                        v-if="can('inventory.adjust')"
-                        href="/admin/purchases/create"
-                        class="text-xs font-semibold text-primary hover:underline"
-                    >
-                        Registrar compra
-                    </Link>
+                    <div class="flex items-center gap-3">
+                        <Link
+                            v-if="can('inventory.view')"
+                            href="/admin/purchases/suggested"
+                            class="text-xs font-semibold text-amber-700 hover:underline dark:text-amber-400"
+                        >
+                            Reposición sugerida
+                        </Link>
+                        <Link
+                            v-if="can('inventory.adjust')"
+                            href="/admin/purchases/create"
+                            class="text-xs font-semibold text-primary hover:underline"
+                        >
+                            Registrar compra
+                        </Link>
+                    </div>
                 </CardHeader>
                 <CardContent class="p-0">
                     <table
@@ -468,6 +552,92 @@ const statusColor = (s: string) => {
             </Card>
 
             <Card
+                v-if="can('sales.view')"
+                class="admin-card overflow-hidden rounded-xl border"
+            >
+                <CardHeader
+                    class="admin-card-header flex flex-row items-center justify-between space-y-0"
+                >
+                    <CardTitle class="flex items-center gap-2 font-display">
+                        <span
+                            class="grid size-9 place-items-center rounded-lg bg-emerald-600 text-white shadow-sm"
+                        >
+                            <Receipt class="size-4" />
+                        </span>
+                        Últimas ventas
+                    </CardTitle>
+                    <Link
+                        href="/admin/sales"
+                        class="group inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
+                    >
+                        Ver todas
+                        <ArrowRight
+                            class="size-3 transition-transform group-hover:translate-x-1"
+                        />
+                    </Link>
+                </CardHeader>
+                <CardContent class="p-0">
+                    <table v-if="recentSales.length" class="w-full text-sm">
+                        <tbody class="divide-y divide-border/80">
+                            <tr
+                                v-for="s in recentSales"
+                                :key="s.id"
+                                class="transition hover:bg-accent/45"
+                            >
+                                <td class="px-4 py-3">
+                                    <Link
+                                        :href="`/admin/sales/${s.id}`"
+                                        class="font-medium hover:text-primary hover:underline"
+                                    >
+                                        Recibo #{{
+                                            receiptNumber(s.receipt_number)
+                                        }}
+                                    </Link>
+                                    <span
+                                        class="block text-xs text-muted-foreground"
+                                    >
+                                        {{
+                                            s.client?.name ??
+                                            s.customer_name ??
+                                            'Consumidor final'
+                                        }}
+                                        · {{ s.items_count }}
+                                        {{
+                                            s.items_count === 1
+                                                ? 'producto'
+                                                : 'productos'
+                                        }}
+                                        · {{ s.payment_method }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="font-mono font-semibold">
+                                        {{ cur(s.total) }}
+                                    </span>
+                                    <Badge
+                                        v-if="s.status === 'anulada'"
+                                        variant="secondary"
+                                        class="ml-2"
+                                    >
+                                        Anulada
+                                    </Badge>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div
+                        v-else
+                        class="flex flex-col items-center gap-2 px-4 py-10 text-center"
+                    >
+                        <Receipt class="size-6 text-muted-foreground/50" />
+                        <p class="text-sm text-muted-foreground">
+                            Todavía no registraste ventas.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card
                 v-if="can('inventory.view')"
                 class="admin-card overflow-hidden rounded-xl border"
             >
@@ -505,7 +675,7 @@ const statusColor = (s: string) => {
                                         :href="`/admin/purchases/${p.id}`"
                                         class="font-medium hover:text-primary hover:underline"
                                     >
-                                        {{ p.reference_number ?? `#${p.id}` }}
+                                        #{{ p.id }}
                                     </Link>
                                     <span
                                         class="block text-xs text-muted-foreground"

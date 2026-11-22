@@ -10,6 +10,14 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
+        // Usuarios de demostracion con la contrasena "password": nunca en
+        // produccion. El primer propietario real lo crea `app:instalar`.
+        if (app()->isProduction()) {
+            $this->command?->warn('AdminUserSeeder omitido en produccion: crea el propietario con php artisan app:instalar.');
+
+            return;
+        }
+
         $propietario = User::updateOrCreate(
             ['email' => 'admin@catalogo.test'],
             [

@@ -46,7 +46,11 @@ const moveToCart = (productId: number) => {
 
     <div class="mx-auto w-full max-w-[1400px] px-6 py-8 lg:px-8">
         <div class="mb-6 flex items-center justify-between">
-            <h1 class="text-2xl font-semibold">Tus favoritos</h1>
+            <h1
+                class="font-display text-2xl font-extrabold tracking-tight md:text-3xl"
+            >
+                Tus favoritos
+            </h1>
             <Button
                 v-if="mounted && items.length"
                 variant="ghost"
@@ -94,10 +98,7 @@ const moveToCart = (productId: number) => {
                     >
                         {{ item.name }}
                     </Link>
-                    <p
-                        v-if="store.show_prices"
-                        class="text-base font-semibold"
-                    >
+                    <p v-if="store.show_prices" class="text-base font-semibold">
                         {{ formatPrice(item.price, store.currency_symbol) }}
                     </p>
 
@@ -126,10 +127,7 @@ const moveToCart = (productId: number) => {
             </div>
         </div>
 
-        <div
-            v-else
-            class="rounded-lg border bg-card p-12 text-center"
-        >
+        <div v-else class="rounded-lg border bg-card p-12 text-center">
             <Heart class="mx-auto mb-3 size-12 text-muted-foreground/40" />
             <p class="mb-4 text-muted-foreground">
                 Aún no tienes productos favoritos. Marca el corazón de un

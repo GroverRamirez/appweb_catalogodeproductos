@@ -13,16 +13,17 @@ beforeEach(function () {
     $this->seed(RoleSeeder::class);
 });
 
-test('seller cannot delete products without delete permission', function () {
-    $seller = User::factory()->create();
-    $seller->assignRole('vendedor');
-    $product = Product::factory()->create();
+test('products cannot be deleted, only deactivated', function () {
+    $owner = User::factory()->create();
+    $owner->assignRole('propietario');
+    $product = Product::factory()->create(['is_active' => true]);
 
-    $this->actingAs($seller)
-        ->delete(route('admin.products.destroy', $product))
-        ->assertForbidden();
+    $this->actingAs($owner)
+        ->delete("/admin/products/{$product->id}")
+        ->assertStatus(405);
 
     $this->assertModelExists($product);
+    expect($product->fresh()->trashed())->toBeFalse();
 });
 
 test('seller cannot delete inquiries without delete permission', function () {

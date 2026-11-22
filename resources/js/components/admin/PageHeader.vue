@@ -16,7 +16,7 @@ defineProps<{
         <div class="flex items-start gap-3">
             <span
                 v-if="icon"
-                class="grid size-10 shrink-0 place-items-center rounded-md bg-accent text-primary"
+                class="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-primary"
             >
                 <component :is="icon" class="size-5" />
             </span>
@@ -28,7 +28,7 @@ defineProps<{
                     {{ eyebrow }}
                 </p>
                 <h1
-                    class="font-display text-xl leading-tight font-bold md:text-2xl"
+                    class="font-display text-xl leading-tight font-extrabold tracking-tight md:text-2xl"
                 >
                     {{ title }}
                 </h1>
